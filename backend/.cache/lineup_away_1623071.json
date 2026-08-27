@@ -1,0 +1,173 @@
+{
+  "expireAt": 1787877445189,
+  "data": {
+    "lineup": {
+      "id": 128,
+      "name": "Santos",
+      "formation": "4-2-3-1",
+      "starters": [
+        {
+          "id": 31007,
+          "name": "Gabriel Brazão",
+          "shirtNumber": "77",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.1
+          }
+        },
+        {
+          "id": 9949,
+          "name": "Igor Vinícius",
+          "shirtNumber": "18",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 9991,
+          "name": "Lucas Veríssimo",
+          "shirtNumber": "4",
+          "verticalLayout": {
+            "x": 0.6333333333333333,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 71,
+          "name": "Luan Peres",
+          "shirtNumber": "14",
+          "verticalLayout": {
+            "x": 0.3666666666666667,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 6637,
+          "name": "Gonzalo Escobar",
+          "shirtNumber": "31",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 32901,
+          "name": "João Schmidt",
+          "shirtNumber": "5",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.475
+          }
+        },
+        {
+          "id": 10173,
+          "name": "Willian Arão",
+          "shirtNumber": "15",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.475
+          }
+        },
+        {
+          "id": 506480,
+          "name": "Gustavinho",
+          "shirtNumber": "48",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 119485,
+          "name": "Benjamín Rollheiser",
+          "shirtNumber": "32",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 6052,
+          "name": "Álvaro Barreal",
+          "shirtNumber": "22",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 119128,
+          "name": "Gustavo Caballero",
+          "shirtNumber": "17",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.85
+          }
+        }
+      ],
+      "subs": [
+        {
+          "id": 9979,
+          "name": "João Paulo",
+          "shirtNumber": "34"
+        },
+        {
+          "id": 609540,
+          "name": "Rafael Gonzaga",
+          "shirtNumber": "38"
+        },
+        {
+          "id": 527683,
+          "name": "João Paulo Ananias",
+          "shirtNumber": "26"
+        },
+        {
+          "id": 506275,
+          "name": "Gabriel Bontempo",
+          "shirtNumber": "8"
+        },
+        {
+          "id": 10492,
+          "name": "Thaciano",
+          "shirtNumber": "16"
+        },
+        {
+          "id": 30568,
+          "name": "Christian Oliva",
+          "shirtNumber": "28"
+        },
+        {
+          "id": 345756,
+          "name": "Miguelito",
+          "shirtNumber": "30"
+        },
+        {
+          "id": 609523,
+          "name": "Samuel Mendes",
+          "shirtNumber": "81"
+        },
+        {
+          "id": 609619,
+          "name": "Davizinho",
+          "shirtNumber": "27"
+        },
+        {
+          "id": 10174,
+          "name": "Gabriel Barbosa",
+          "shirtNumber": "9"
+        },
+        {
+          "id": 10143,
+          "name": "Rony",
+          "shirtNumber": "11"
+        },
+        {
+          "id": 153454,
+          "name": "Moisés",
+          "shirtNumber": "21"
+        }
+      ]
+    }
+  }
+}

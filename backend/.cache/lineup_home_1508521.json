@@ -1,0 +1,158 @@
+{
+  "expireAt": 1787877096128,
+  "data": {
+    "lineup": {
+      "id": 2999,
+      "name": "North Carolina Courage W",
+      "formation": "4-2-3-1",
+      "starters": [
+        {
+          "id": 68941,
+          "name": "Kailen Sheridan",
+          "shirtNumber": "1",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.1
+          }
+        },
+        {
+          "id": 102259,
+          "name": "Ryan Williams",
+          "shirtNumber": "13",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 464225,
+          "name": "Natalia Staude",
+          "shirtNumber": "12",
+          "verticalLayout": {
+            "x": 0.6333333333333333,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 536145,
+          "name": "Maycee Bell",
+          "shirtNumber": "25",
+          "verticalLayout": {
+            "x": 0.3666666666666667,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 68645,
+          "name": "Felicitas Rauch",
+          "shirtNumber": "11",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 298666,
+          "name": "Carly Wickenheiser",
+          "shirtNumber": "14",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.475
+          }
+        },
+        {
+          "id": 380067,
+          "name": "Shinomi Koyama",
+          "shirtNumber": "20",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.475
+          }
+        },
+        {
+          "id": 614817,
+          "name": "Chioma Okafor",
+          "shirtNumber": "8",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 560072,
+          "name": "Erica Meg Parkinson",
+          "shirtNumber": "19",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 228898,
+          "name": "Ashley Sanchez",
+          "shirtNumber": "2",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 546079,
+          "name": "Evelyn Ijeh",
+          "shirtNumber": "10",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.85
+          }
+        }
+      ],
+      "subs": [
+        {
+          "id": 536245,
+          "name": "Madison White",
+          "shirtNumber": "99"
+        },
+        {
+          "id": 614802,
+          "name": "Uno Shiragaki",
+          "shirtNumber": "18"
+        },
+        {
+          "id": 546068,
+          "name": "Cameron Brooks",
+          "shirtNumber": "5"
+        },
+        {
+          "id": 76233,
+          "name": "Dani Weatherholt",
+          "shirtNumber": "17"
+        },
+        {
+          "id": 367230,
+          "name": "Riley Jackson",
+          "shirtNumber": "16"
+        },
+        {
+          "id": 68551,
+          "name": "Vilde Bøe Risa",
+          "shirtNumber": "26"
+        },
+        {
+          "id": 321607,
+          "name": "Hannah Betfort",
+          "shirtNumber": "33"
+        },
+        {
+          "id": 647498,
+          "name": "Ivy Garner",
+          "shirtNumber": "6"
+        },
+        {
+          "id": 413085,
+          "name": "Olivia Wingate",
+          "shirtNumber": "9"
+        }
+      ]
+    }
+  }
+}

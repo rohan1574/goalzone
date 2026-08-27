@@ -1,0 +1,149 @@
+{
+  "expireAt": 1787806431997,
+  "data": [
+    {
+      "teamId": 3702,
+      "teamName": "Bolívar",
+      "logoUrl": "https://media.api-sports.io/football/teams/3702.png",
+      "pos": 1,
+      "played": 30,
+      "goalsDiff": 51,
+      "points": 67
+    },
+    {
+      "teamId": 3711,
+      "teamName": "The Strongest",
+      "logoUrl": "https://media.api-sports.io/football/teams/3711.png",
+      "pos": 2,
+      "played": 30,
+      "goalsDiff": 28,
+      "points": 60
+    },
+    {
+      "teamId": 22266,
+      "teamName": "Gualberto Villarroel SJ",
+      "logoUrl": "https://media.api-sports.io/football/teams/22266.png",
+      "pos": 3,
+      "played": 30,
+      "goalsDiff": 22,
+      "points": 48
+    },
+    {
+      "teamId": 3637,
+      "teamName": "Aurora",
+      "logoUrl": "https://media.api-sports.io/football/teams/3637.png",
+      "pos": 4,
+      "played": 30,
+      "goalsDiff": 9,
+      "points": 48
+    },
+    {
+      "teamId": 3700,
+      "teamName": "Always Ready",
+      "logoUrl": "https://media.api-sports.io/football/teams/3700.png",
+      "pos": 5,
+      "played": 30,
+      "goalsDiff": 11,
+      "points": 46
+    },
+    {
+      "teamId": 3706,
+      "teamName": "Nacional Potosí",
+      "logoUrl": "https://media.api-sports.io/football/teams/3706.png",
+      "pos": 6,
+      "played": 30,
+      "goalsDiff": 5,
+      "points": 46
+    },
+    {
+      "teamId": 3701,
+      "teamName": "Blooming",
+      "logoUrl": "https://media.api-sports.io/football/teams/3701.png",
+      "pos": 7,
+      "played": 30,
+      "goalsDiff": -7,
+      "points": 45
+    },
+    {
+      "teamId": 3705,
+      "teamName": "Jorge Wilstermann",
+      "logoUrl": "https://media.api-sports.io/football/teams/3705.png",
+      "pos": 8,
+      "played": 30,
+      "goalsDiff": 5,
+      "points": 44
+    },
+    {
+      "teamId": 15708,
+      "teamName": "Real Tomayapo",
+      "logoUrl": "https://media.api-sports.io/football/teams/15708.png",
+      "pos": 9,
+      "played": 30,
+      "goalsDiff": 0,
+      "points": 43
+    },
+    {
+      "teamId": 15702,
+      "teamName": "Independiente Petrolero",
+      "logoUrl": "https://media.api-sports.io/football/teams/15702.png",
+      "pos": 10,
+      "played": 30,
+      "goalsDiff": -10,
+      "points": 36
+    },
+    {
+      "teamId": 3707,
+      "teamName": "Oriente Petrolero",
+      "logoUrl": "https://media.api-sports.io/football/teams/3707.png",
+      "pos": 11,
+      "played": 30,
+      "goalsDiff": -14,
+      "points": 35
+    },
+    {
+      "teamId": 17762,
+      "teamName": "Universitario de Vinto",
+      "logoUrl": "https://media.api-sports.io/football/teams/17762.png",
+      "pos": 12,
+      "played": 30,
+      "goalsDiff": -11,
+      "points": 34
+    },
+    {
+      "teamId": 17760,
+      "teamName": "San Antonio Bulo Bulo",
+      "logoUrl": "https://media.api-sports.io/football/teams/17760.png",
+      "pos": 13,
+      "played": 30,
+      "goalsDiff": -18,
+      "points": 31
+    },
+    {
+      "teamId": 3704,
+      "teamName": "Guabirá",
+      "logoUrl": "https://media.api-sports.io/football/teams/3704.png",
+      "pos": 14,
+      "played": 30,
+      "goalsDiff": -17,
+      "points": 30
+    },
+    {
+      "teamId": 3709,
+      "teamName": "Royal Pari",
+      "logoUrl": "https://media.api-sports.io/football/teams/3709.png",
+      "pos": 15,
+      "played": 30,
+      "goalsDiff": -16,
+      "points": 29
+    },
+    {
+      "teamId": 12259,
+      "teamName": "Santa Cruz",
+      "logoUrl": "https://media.api-sports.io/football/teams/12259.png",
+      "pos": 16,
+      "played": 30,
+      "goalsDiff": -38,
+      "points": 22
+    }
+  ]
+}

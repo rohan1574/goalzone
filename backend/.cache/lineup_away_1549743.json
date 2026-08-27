@@ -1,0 +1,158 @@
+{
+  "expireAt": 1787877135442,
+  "data": {
+    "lineup": {
+      "id": 1135,
+      "name": "Junior",
+      "formation": "4-1-4-1",
+      "starters": [
+        {
+          "id": 51764,
+          "name": "Mauro Silveira",
+          "shirtNumber": "1",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.1
+          }
+        },
+        {
+          "id": 13787,
+          "name": "Edwin Herrera",
+          "shirtNumber": "3",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 59634,
+          "name": "Daniel Rivera",
+          "shirtNumber": "5",
+          "verticalLayout": {
+            "x": 0.6333333333333333,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 277769,
+          "name": "Pablo Ortíz",
+          "shirtNumber": "23",
+          "verticalLayout": {
+            "x": 0.3666666666666667,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 59441,
+          "name": "Yeison Suárez",
+          "shirtNumber": "26",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 13152,
+          "name": "Juan David Ríos",
+          "shirtNumber": "14",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.475
+          }
+        },
+        {
+          "id": 13709,
+          "name": "Cristian Barrios",
+          "shirtNumber": "77",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 13756,
+          "name": "Jesús Rivas",
+          "shirtNumber": "22",
+          "verticalLayout": {
+            "x": 0.6333333333333333,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 6648,
+          "name": "Guillermo Celis",
+          "shirtNumber": "28",
+          "verticalLayout": {
+            "x": 0.3666666666666667,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 13524,
+          "name": "Bryan Castrillón",
+          "shirtNumber": "88",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 2493,
+          "name": "Luis Muriel",
+          "shirtNumber": "10",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.85
+          }
+        }
+      ],
+      "subs": [
+        {
+          "id": 13457,
+          "name": "Jefersson Martínez",
+          "shirtNumber": "30"
+        },
+        {
+          "id": 642908,
+          "name": "Daniel Socarras",
+          "shirtNumber": "34"
+        },
+        {
+          "id": 13261,
+          "name": "Jean Carlos Pestaña",
+          "shirtNumber": "24"
+        },
+        {
+          "id": 555289,
+          "name": "Dilan Villareal",
+          "shirtNumber": "6"
+        },
+        {
+          "id": 59403,
+          "name": "Fabián Ángel",
+          "shirtNumber": "80"
+        },
+        {
+          "id": 6358,
+          "name": "Francisco Fydriszewski",
+          "shirtNumber": "19"
+        },
+        {
+          "id": 431436,
+          "name": "Joel Canchimbo",
+          "shirtNumber": "21"
+        },
+        {
+          "id": 13408,
+          "name": "Déiber Caicedo",
+          "shirtNumber": "25"
+        },
+        {
+          "id": 53128,
+          "name": "Guillermo Paiva",
+          "shirtNumber": "9"
+        }
+      ]
+    }
+  }
+}

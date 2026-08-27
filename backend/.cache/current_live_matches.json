@@ -1,0 +1,320 @@
+{
+  "expireAt": 1787792443434,
+  "data": [
+    {
+      "id": "1498653",
+      "league": "Primera Nacional",
+      "leagueId": "129",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/129.png",
+      "home": {
+        "id": 1951,
+        "name": "Central Norte",
+        "short": "CEN",
+        "logo": "https://media.api-sports.io/football/teams/1951.png"
+      },
+      "away": {
+        "id": 469,
+        "name": "Deportivo Moron",
+        "short": "DEP",
+        "logo": "https://media.api-sports.io/football/teams/469.png"
+      },
+      "score": "0 - 0",
+      "minute": "27'",
+      "status": "1H"
+    },
+    {
+      "id": "1508521",
+      "league": "NWSL Women",
+      "leagueId": "254",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/254.png",
+      "home": {
+        "id": 2999,
+        "name": "North Carolina Courage W",
+        "short": "NOR",
+        "logo": "https://media.api-sports.io/football/teams/2999.png"
+      },
+      "away": {
+        "id": 18450,
+        "name": "Angel City W",
+        "short": "ANG",
+        "logo": "https://media.api-sports.io/football/teams/18450.png"
+      },
+      "score": "1 - 0",
+      "minute": "44'",
+      "status": "1H"
+    },
+    {
+      "id": "1548370",
+      "league": "CONCACAF Central American Cup",
+      "leagueId": "1028",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1028.png",
+      "home": {
+        "id": 815,
+        "name": "CS Herediano",
+        "short": "CS ",
+        "logo": "https://media.api-sports.io/football/teams/815.png"
+      },
+      "away": {
+        "id": 3656,
+        "name": "Antigua GFC",
+        "short": "ANT",
+        "logo": "https://media.api-sports.io/football/teams/3656.png"
+      },
+      "score": "0 - 0",
+      "minute": "29'",
+      "status": "1H"
+    },
+    {
+      "id": "1548371",
+      "league": "CONCACAF Central American Cup",
+      "leagueId": "1028",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1028.png",
+      "home": {
+        "id": 1050,
+        "name": "CD Marathon",
+        "short": "CD ",
+        "logo": "https://media.api-sports.io/football/teams/1050.png"
+      },
+      "away": {
+        "id": 4645,
+        "name": "Real Estelí",
+        "short": "REA",
+        "logo": "https://media.api-sports.io/football/teams/4645.png"
+      },
+      "score": "0 - 0",
+      "minute": "29'",
+      "status": "1H"
+    },
+    {
+      "id": "1567350",
+      "league": "Copa Chile",
+      "leagueId": "267",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/267.png",
+      "home": {
+        "id": 2315,
+        "name": "Colo Colo",
+        "short": "COL",
+        "logo": "https://media.api-sports.io/football/teams/2315.png"
+      },
+      "away": {
+        "id": 2321,
+        "name": "Union Espanola",
+        "short": "UNI",
+        "logo": "https://media.api-sports.io/football/teams/2321.png"
+      },
+      "score": "1 - 0",
+      "minute": "28'",
+      "status": "1H"
+    },
+    {
+      "id": "1567351",
+      "league": "Copa Chile",
+      "leagueId": "267",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/267.png",
+      "home": {
+        "id": 5644,
+        "name": "Recoleta",
+        "short": "REC",
+        "logo": "https://media.api-sports.io/football/teams/5644.png"
+      },
+      "away": {
+        "id": 2320,
+        "name": "O'Higgins",
+        "short": "O'H",
+        "logo": "https://media.api-sports.io/football/teams/2320.png"
+      },
+      "score": "0 - 0",
+      "minute": "28'",
+      "status": "1H"
+    },
+    {
+      "id": "1607652",
+      "league": "CONMEBOL Sudamericana",
+      "leagueId": "11",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/11.png",
+      "home": {
+        "id": 435,
+        "name": "River Plate",
+        "short": "RIV",
+        "logo": "https://media.api-sports.io/football/teams/435.png"
+      },
+      "away": {
+        "id": 1139,
+        "name": "Santa Fe",
+        "short": "SAN",
+        "logo": "https://media.api-sports.io/football/teams/1139.png"
+      },
+      "score": "0 - 0",
+      "minute": "28'",
+      "status": "1H"
+    },
+    {
+      "id": "1618992",
+      "league": "Primera División",
+      "leagueId": "344",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/344.png",
+      "home": {
+        "id": 3701,
+        "name": "Blooming",
+        "short": "BLO",
+        "logo": "https://media.api-sports.io/football/teams/3701.png"
+      },
+      "away": {
+        "id": 20252,
+        "name": "Real Oruro",
+        "short": "REA",
+        "logo": "https://media.api-sports.io/football/teams/20252.png"
+      },
+      "score": "0 - 0",
+      "minute": "29'",
+      "status": "1H"
+    },
+    {
+      "id": "1623071",
+      "league": "Copa Do Brasil",
+      "leagueId": "73",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/73.png",
+      "home": {
+        "id": 121,
+        "name": "Palmeiras",
+        "short": "PAL",
+        "logo": "https://media.api-sports.io/football/teams/121.png"
+      },
+      "away": {
+        "id": 128,
+        "name": "Santos",
+        "short": "SAN",
+        "logo": "https://media.api-sports.io/football/teams/128.png"
+      },
+      "score": "0 - 0",
+      "minute": "28'",
+      "status": "1H"
+    },
+    {
+      "id": "1623072",
+      "league": "Copa Do Brasil",
+      "leagueId": "73",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/73.png",
+      "home": {
+        "id": 133,
+        "name": "Vasco DA Gama",
+        "short": "VAS",
+        "logo": "https://media.api-sports.io/football/teams/133.png"
+      },
+      "away": {
+        "id": 136,
+        "name": "Vitoria",
+        "short": "VIT",
+        "logo": "https://media.api-sports.io/football/teams/136.png"
+      },
+      "score": "0 - 0",
+      "minute": "28'",
+      "status": "1H"
+    },
+    {
+      "id": "1623479",
+      "league": "Copa Rio",
+      "leagueId": "1035",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1035.png",
+      "home": {
+        "id": 7780,
+        "name": "Madureira",
+        "short": "MAD",
+        "logo": "https://media.api-sports.io/football/teams/7780.png"
+      },
+      "away": {
+        "id": 2206,
+        "name": "Boavista SC",
+        "short": "BOA",
+        "logo": "https://media.api-sports.io/football/teams/2206.png"
+      },
+      "score": "0 - 0",
+      "minute": "6'",
+      "status": "1H"
+    },
+    {
+      "id": "1627560",
+      "league": "Leagues Cup",
+      "leagueId": "772",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/772.png",
+      "home": {
+        "id": 2281,
+        "name": "Toluca",
+        "short": "TOL",
+        "logo": "https://media.api-sports.io/football/teams/2281.png"
+      },
+      "away": {
+        "id": 16489,
+        "name": "Austin",
+        "short": "AUS",
+        "logo": "https://media.api-sports.io/football/teams/16489.png"
+      },
+      "score": "0 - 0",
+      "minute": "17'",
+      "status": "1H"
+    },
+    {
+      "id": "1493962",
+      "league": "USL League One",
+      "leagueId": "489",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/489.png",
+      "home": {
+        "id": 25485,
+        "name": "Naples",
+        "short": "NAP",
+        "logo": "https://media.api-sports.io/football/teams/25485.png"
+      },
+      "away": {
+        "id": 10283,
+        "name": "Union Omaha",
+        "short": "UNI",
+        "logo": "https://media.api-sports.io/football/teams/10283.png"
+      },
+      "score": "1 - 0",
+      "minute": "56'",
+      "status": "2H"
+    },
+    {
+      "id": "1549743",
+      "league": "Primera A",
+      "leagueId": "239",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/239.png",
+      "home": {
+        "id": 1138,
+        "name": "America de Cali",
+        "short": "AME",
+        "logo": "https://media.api-sports.io/football/teams/1138.png"
+      },
+      "away": {
+        "id": 1135,
+        "name": "Junior",
+        "short": "JUN",
+        "logo": "https://media.api-sports.io/football/teams/1135.png"
+      },
+      "score": "4 - 1",
+      "minute": "81'",
+      "status": "2H"
+    },
+    {
+      "id": "1632407",
+      "league": "Copa Uruguay",
+      "leagueId": "930",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/930.png",
+      "home": {
+        "id": 2348,
+        "name": "Penarol",
+        "short": "PEN",
+        "logo": "https://media.api-sports.io/football/teams/2348.png"
+      },
+      "away": {
+        "id": 2365,
+        "name": "Atletico Torque",
+        "short": "ATL",
+        "logo": "https://media.api-sports.io/football/teams/2365.png"
+      },
+      "score": "1 - 0",
+      "minute": "83'",
+      "status": "2H"
+    }
+  ]
+}

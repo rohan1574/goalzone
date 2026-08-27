@@ -1,0 +1,176 @@
+{
+  "expireAt": 1787806742693,
+  "data": [
+    {
+      "teamId": 463,
+      "teamName": "Aldosivi",
+      "logoUrl": "https://media.api-sports.io/football/teams/463.png",
+      "pos": 1,
+      "played": 38,
+      "goalsDiff": 17,
+      "points": 64
+    },
+    {
+      "teamId": 1929,
+      "teamName": "Deportivo Madryn",
+      "logoUrl": "https://media.api-sports.io/football/teams/1929.png",
+      "pos": 2,
+      "played": 38,
+      "goalsDiff": 15,
+      "points": 64
+    },
+    {
+      "teamId": 484,
+      "teamName": "Nueva Chicago",
+      "logoUrl": "https://media.api-sports.io/football/teams/484.png",
+      "pos": 3,
+      "played": 38,
+      "goalsDiff": 14,
+      "points": 64
+    },
+    {
+      "teamId": 1066,
+      "teamName": "Gimnasia M.",
+      "logoUrl": "https://media.api-sports.io/football/teams/1066.png",
+      "pos": 4,
+      "played": 38,
+      "goalsDiff": 11,
+      "points": 63
+    },
+    {
+      "teamId": 1932,
+      "teamName": "San Telmo",
+      "logoUrl": "https://media.api-sports.io/football/teams/1932.png",
+      "pos": 5,
+      "played": 38,
+      "goalsDiff": 24,
+      "points": 62
+    },
+    {
+      "teamId": 448,
+      "teamName": "Colon Santa Fe",
+      "logoUrl": "https://media.api-sports.io/football/teams/448.png",
+      "pos": 6,
+      "played": 38,
+      "goalsDiff": 14,
+      "points": 58
+    },
+    {
+      "teamId": 1067,
+      "teamName": "Defensores De Belgrano",
+      "logoUrl": "https://media.api-sports.io/football/teams/1067.png",
+      "pos": 7,
+      "played": 38,
+      "goalsDiff": 14,
+      "points": 58
+    },
+    {
+      "teamId": 1928,
+      "teamName": "Gimnasia Y Tiro",
+      "logoUrl": "https://media.api-sports.io/football/teams/1928.png",
+      "pos": 8,
+      "played": 38,
+      "goalsDiff": 5,
+      "points": 58
+    },
+    {
+      "teamId": 466,
+      "teamName": "Atletico Mitre",
+      "logoUrl": "https://media.api-sports.io/football/teams/466.png",
+      "pos": 9,
+      "played": 38,
+      "goalsDiff": 7,
+      "points": 57
+    },
+    {
+      "teamId": 454,
+      "teamName": "Temperley",
+      "logoUrl": "https://media.api-sports.io/football/teams/454.png",
+      "pos": 10,
+      "played": 38,
+      "goalsDiff": 5,
+      "points": 52
+    },
+    {
+      "teamId": 2424,
+      "teamName": "Estudiantes de Rio Cuarto",
+      "logoUrl": "https://media.api-sports.io/football/teams/2424.png",
+      "pos": 11,
+      "played": 38,
+      "goalsDiff": -1,
+      "points": 51
+    },
+    {
+      "teamId": 1948,
+      "teamName": "Atlanta",
+      "logoUrl": "https://media.api-sports.io/football/teams/1948.png",
+      "pos": 12,
+      "played": 38,
+      "goalsDiff": -4,
+      "points": 51
+    },
+    {
+      "teamId": 469,
+      "teamName": "Deportivo Moron",
+      "logoUrl": "https://media.api-sports.io/football/teams/469.png",
+      "pos": 13,
+      "played": 38,
+      "goalsDiff": -11,
+      "points": 41
+    },
+    {
+      "teamId": 482,
+      "teamName": "Almagro",
+      "logoUrl": "https://media.api-sports.io/football/teams/482.png",
+      "pos": 14,
+      "played": 38,
+      "goalsDiff": -20,
+      "points": 38
+    },
+    {
+      "teamId": 1946,
+      "teamName": "Chaco For Ever",
+      "logoUrl": "https://media.api-sports.io/football/teams/1946.png",
+      "pos": 15,
+      "played": 38,
+      "goalsDiff": -6,
+      "points": 37
+    },
+    {
+      "teamId": 8375,
+      "teamName": "Almirante Brown",
+      "logoUrl": "https://media.api-sports.io/football/teams/8375.png",
+      "pos": 16,
+      "played": 38,
+      "goalsDiff": -14,
+      "points": 37
+    },
+    {
+      "teamId": 1945,
+      "teamName": "Defensores Unidos",
+      "logoUrl": "https://media.api-sports.io/football/teams/1945.png",
+      "pos": 17,
+      "played": 38,
+      "goalsDiff": -16,
+      "points": 35
+    },
+    {
+      "teamId": 465,
+      "teamName": "Atletico DE Rafaela",
+      "logoUrl": "https://media.api-sports.io/football/teams/465.png",
+      "pos": 18,
+      "played": 38,
+      "goalsDiff": -19,
+      "points": 30
+    },
+    {
+      "teamId": 468,
+      "teamName": "Brown DE Adrogue",
+      "logoUrl": "https://media.api-sports.io/football/teams/468.png",
+      "pos": 19,
+      "played": 38,
+      "goalsDiff": -29,
+      "points": 30
+    }
+  ]
+}

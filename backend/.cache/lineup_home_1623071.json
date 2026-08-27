@@ -1,0 +1,173 @@
+{
+  "expireAt": 1787877443530,
+  "data": {
+    "lineup": {
+      "id": 121,
+      "name": "Palmeiras",
+      "formation": "3-4-1-2",
+      "starters": [
+        {
+          "id": 10373,
+          "name": "Carlos Miguel",
+          "shirtNumber": "1",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.1
+          }
+        },
+        {
+          "id": 306706,
+          "name": "Agustín Giay",
+          "shirtNumber": "4",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 2502,
+          "name": "Gustavo Gómez",
+          "shirtNumber": "15",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 10083,
+          "name": "Murilo",
+          "shirtNumber": "26",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 13708,
+          "name": "Jhon Arias",
+          "shirtNumber": "11",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.475
+          }
+        },
+        {
+          "id": 899,
+          "name": "Andreas Pereira",
+          "shirtNumber": "8",
+          "verticalLayout": {
+            "x": 0.6333333333333333,
+            "y": 0.475
+          }
+        },
+        {
+          "id": 9218,
+          "name": "Marlon Freitas",
+          "shirtNumber": "17",
+          "verticalLayout": {
+            "x": 0.3666666666666667,
+            "y": 0.475
+          }
+        },
+        {
+          "id": 51466,
+          "name": "Joaquín Piquerez",
+          "shirtNumber": "22",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.475
+          }
+        },
+        {
+          "id": 106485,
+          "name": "Mauricio",
+          "shirtNumber": "18",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 295513,
+          "name": "José Manuel López",
+          "shirtNumber": "42",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.85
+          }
+        },
+        {
+          "id": 340279,
+          "name": "Vitor Roque",
+          "shirtNumber": "9",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.85
+          }
+        }
+      ],
+      "subs": [
+        {
+          "id": 10372,
+          "name": "Marcelo Lomba",
+          "shirtNumber": "14"
+        },
+        {
+          "id": 5933,
+          "name": "Alexander Barboza",
+          "shirtNumber": "2"
+        },
+        {
+          "id": 425715,
+          "name": "Arthur Gabriel",
+          "shirtNumber": "56"
+        },
+        {
+          "id": 10125,
+          "name": "Khellven",
+          "shirtNumber": "12"
+        },
+        {
+          "id": 10379,
+          "name": "Bruno Fuchs",
+          "shirtNumber": "3"
+        },
+        {
+          "id": 575323,
+          "name": "Larson",
+          "shirtNumber": "48"
+        },
+        {
+          "id": 153083,
+          "name": "Emiliano Martínez",
+          "shirtNumber": "32"
+        },
+        {
+          "id": 574837,
+          "name": "Luis Pacheco",
+          "shirtNumber": "50"
+        },
+        {
+          "id": 21095,
+          "name": "Lucas Evangelista",
+          "shirtNumber": "30"
+        },
+        {
+          "id": 2412,
+          "name": "Felipe Anderson",
+          "shirtNumber": "7"
+        },
+        {
+          "id": 575324,
+          "name": "Heittor",
+          "shirtNumber": "39"
+        },
+        {
+          "id": 414357,
+          "name": "Riquelme Fillipi",
+          "shirtNumber": "37"
+        }
+      ]
+    }
+  }
+}

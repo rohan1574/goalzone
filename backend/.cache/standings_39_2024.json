@@ -1,0 +1,185 @@
+{
+  "expireAt": 1787806625629,
+  "data": [
+    {
+      "teamId": 40,
+      "teamName": "Liverpool",
+      "logoUrl": "https://media.api-sports.io/football/teams/40.png",
+      "pos": 1,
+      "played": 38,
+      "goalsDiff": 45,
+      "points": 84
+    },
+    {
+      "teamId": 42,
+      "teamName": "Arsenal",
+      "logoUrl": "https://media.api-sports.io/football/teams/42.png",
+      "pos": 2,
+      "played": 38,
+      "goalsDiff": 35,
+      "points": 74
+    },
+    {
+      "teamId": 50,
+      "teamName": "Manchester City",
+      "logoUrl": "https://media.api-sports.io/football/teams/50.png",
+      "pos": 3,
+      "played": 38,
+      "goalsDiff": 28,
+      "points": 71
+    },
+    {
+      "teamId": 49,
+      "teamName": "Chelsea",
+      "logoUrl": "https://media.api-sports.io/football/teams/49.png",
+      "pos": 4,
+      "played": 38,
+      "goalsDiff": 21,
+      "points": 69
+    },
+    {
+      "teamId": 34,
+      "teamName": "Newcastle",
+      "logoUrl": "https://media.api-sports.io/football/teams/34.png",
+      "pos": 5,
+      "played": 38,
+      "goalsDiff": 21,
+      "points": 66
+    },
+    {
+      "teamId": 66,
+      "teamName": "Aston Villa",
+      "logoUrl": "https://media.api-sports.io/football/teams/66.png",
+      "pos": 6,
+      "played": 38,
+      "goalsDiff": 7,
+      "points": 66
+    },
+    {
+      "teamId": 65,
+      "teamName": "Nottingham Forest",
+      "logoUrl": "https://media.api-sports.io/football/teams/65.png",
+      "pos": 7,
+      "played": 38,
+      "goalsDiff": 12,
+      "points": 65
+    },
+    {
+      "teamId": 51,
+      "teamName": "Brighton",
+      "logoUrl": "https://media.api-sports.io/football/teams/51.png",
+      "pos": 8,
+      "played": 38,
+      "goalsDiff": 7,
+      "points": 61
+    },
+    {
+      "teamId": 35,
+      "teamName": "Bournemouth",
+      "logoUrl": "https://media.api-sports.io/football/teams/35.png",
+      "pos": 9,
+      "played": 38,
+      "goalsDiff": 12,
+      "points": 56
+    },
+    {
+      "teamId": 55,
+      "teamName": "Brentford",
+      "logoUrl": "https://media.api-sports.io/football/teams/55.png",
+      "pos": 10,
+      "played": 38,
+      "goalsDiff": 9,
+      "points": 56
+    },
+    {
+      "teamId": 36,
+      "teamName": "Fulham",
+      "logoUrl": "https://media.api-sports.io/football/teams/36.png",
+      "pos": 11,
+      "played": 38,
+      "goalsDiff": 0,
+      "points": 54
+    },
+    {
+      "teamId": 52,
+      "teamName": "Crystal Palace",
+      "logoUrl": "https://media.api-sports.io/football/teams/52.png",
+      "pos": 12,
+      "played": 38,
+      "goalsDiff": 0,
+      "points": 53
+    },
+    {
+      "teamId": 45,
+      "teamName": "Everton",
+      "logoUrl": "https://media.api-sports.io/football/teams/45.png",
+      "pos": 13,
+      "played": 38,
+      "goalsDiff": -2,
+      "points": 48
+    },
+    {
+      "teamId": 48,
+      "teamName": "West Ham",
+      "logoUrl": "https://media.api-sports.io/football/teams/48.png",
+      "pos": 14,
+      "played": 38,
+      "goalsDiff": -16,
+      "points": 43
+    },
+    {
+      "teamId": 33,
+      "teamName": "Manchester United",
+      "logoUrl": "https://media.api-sports.io/football/teams/33.png",
+      "pos": 15,
+      "played": 38,
+      "goalsDiff": -10,
+      "points": 42
+    },
+    {
+      "teamId": 39,
+      "teamName": "Wolves",
+      "logoUrl": "https://media.api-sports.io/football/teams/39.png",
+      "pos": 16,
+      "played": 38,
+      "goalsDiff": -15,
+      "points": 42
+    },
+    {
+      "teamId": 47,
+      "teamName": "Tottenham",
+      "logoUrl": "https://media.api-sports.io/football/teams/47.png",
+      "pos": 17,
+      "played": 38,
+      "goalsDiff": -1,
+      "points": 38
+    },
+    {
+      "teamId": 46,
+      "teamName": "Leicester",
+      "logoUrl": "https://media.api-sports.io/football/teams/46.png",
+      "pos": 18,
+      "played": 38,
+      "goalsDiff": -47,
+      "points": 25
+    },
+    {
+      "teamId": 57,
+      "teamName": "Ipswich",
+      "logoUrl": "https://media.api-sports.io/football/teams/57.png",
+      "pos": 19,
+      "played": 38,
+      "goalsDiff": -46,
+      "points": 22
+    },
+    {
+      "teamId": 41,
+      "teamName": "Southampton",
+      "logoUrl": "https://media.api-sports.io/football/teams/41.png",
+      "pos": 20,
+      "played": 38,
+      "goalsDiff": -60,
+      "points": 12
+    }
+  ]
+}

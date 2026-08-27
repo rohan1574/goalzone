@@ -1,0 +1,47 @@
+{
+  "expireAt": 1787790793720,
+  "data": [
+    {
+      "name": "Possession",
+      "home": "61%",
+      "away": "39%",
+      "homePct": 61,
+      "awayPct": 39
+    },
+    {
+      "name": "Shots",
+      "home": "14",
+      "away": "6",
+      "homePct": 70,
+      "awayPct": 30
+    },
+    {
+      "name": "Shots on Target",
+      "home": "6",
+      "away": "2",
+      "homePct": 75,
+      "awayPct": 25
+    },
+    {
+      "name": "Fouls",
+      "home": "3",
+      "away": "5",
+      "homePct": 38,
+      "awayPct": 63
+    },
+    {
+      "name": "Corner Kicks",
+      "home": "2",
+      "away": "0",
+      "homePct": 100,
+      "awayPct": 0
+    },
+    {
+      "name": "Yellow Cards",
+      "home": "2",
+      "away": "0",
+      "homePct": 100,
+      "awayPct": 0
+    }
+  ]
+}

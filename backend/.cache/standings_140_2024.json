@@ -1,0 +1,185 @@
+{
+  "expireAt": 1787806550114,
+  "data": [
+    {
+      "teamId": 529,
+      "teamName": "Barcelona",
+      "logoUrl": "https://media.api-sports.io/football/teams/529.png",
+      "pos": 1,
+      "played": 38,
+      "goalsDiff": 63,
+      "points": 88
+    },
+    {
+      "teamId": 541,
+      "teamName": "Real Madrid",
+      "logoUrl": "https://media.api-sports.io/football/teams/541.png",
+      "pos": 2,
+      "played": 38,
+      "goalsDiff": 40,
+      "points": 84
+    },
+    {
+      "teamId": 530,
+      "teamName": "Atletico Madrid",
+      "logoUrl": "https://media.api-sports.io/football/teams/530.png",
+      "pos": 3,
+      "played": 38,
+      "goalsDiff": 38,
+      "points": 76
+    },
+    {
+      "teamId": 531,
+      "teamName": "Athletic Club",
+      "logoUrl": "https://media.api-sports.io/football/teams/531.png",
+      "pos": 4,
+      "played": 38,
+      "goalsDiff": 25,
+      "points": 70
+    },
+    {
+      "teamId": 533,
+      "teamName": "Villarreal",
+      "logoUrl": "https://media.api-sports.io/football/teams/533.png",
+      "pos": 5,
+      "played": 38,
+      "goalsDiff": 20,
+      "points": 70
+    },
+    {
+      "teamId": 543,
+      "teamName": "Real Betis",
+      "logoUrl": "https://media.api-sports.io/football/teams/543.png",
+      "pos": 6,
+      "played": 38,
+      "goalsDiff": 7,
+      "points": 60
+    },
+    {
+      "teamId": 538,
+      "teamName": "Celta Vigo",
+      "logoUrl": "https://media.api-sports.io/football/teams/538.png",
+      "pos": 7,
+      "played": 38,
+      "goalsDiff": 2,
+      "points": 55
+    },
+    {
+      "teamId": 728,
+      "teamName": "Rayo Vallecano",
+      "logoUrl": "https://media.api-sports.io/football/teams/728.png",
+      "pos": 8,
+      "played": 38,
+      "goalsDiff": -4,
+      "points": 52
+    },
+    {
+      "teamId": 727,
+      "teamName": "Osasuna",
+      "logoUrl": "https://media.api-sports.io/football/teams/727.png",
+      "pos": 9,
+      "played": 38,
+      "goalsDiff": -4,
+      "points": 52
+    },
+    {
+      "teamId": 798,
+      "teamName": "Mallorca",
+      "logoUrl": "https://media.api-sports.io/football/teams/798.png",
+      "pos": 10,
+      "played": 38,
+      "goalsDiff": -9,
+      "points": 48
+    },
+    {
+      "teamId": 548,
+      "teamName": "Real Sociedad",
+      "logoUrl": "https://media.api-sports.io/football/teams/548.png",
+      "pos": 11,
+      "played": 38,
+      "goalsDiff": -11,
+      "points": 46
+    },
+    {
+      "teamId": 532,
+      "teamName": "Valencia",
+      "logoUrl": "https://media.api-sports.io/football/teams/532.png",
+      "pos": 12,
+      "played": 38,
+      "goalsDiff": -10,
+      "points": 46
+    },
+    {
+      "teamId": 546,
+      "teamName": "Getafe",
+      "logoUrl": "https://media.api-sports.io/football/teams/546.png",
+      "pos": 13,
+      "played": 38,
+      "goalsDiff": -5,
+      "points": 42
+    },
+    {
+      "teamId": 540,
+      "teamName": "Espanyol",
+      "logoUrl": "https://media.api-sports.io/football/teams/540.png",
+      "pos": 14,
+      "played": 38,
+      "goalsDiff": -11,
+      "points": 42
+    },
+    {
+      "teamId": 542,
+      "teamName": "Alaves",
+      "logoUrl": "https://media.api-sports.io/football/teams/542.png",
+      "pos": 15,
+      "played": 38,
+      "goalsDiff": -10,
+      "points": 42
+    },
+    {
+      "teamId": 547,
+      "teamName": "Girona",
+      "logoUrl": "https://media.api-sports.io/football/teams/547.png",
+      "pos": 16,
+      "played": 38,
+      "goalsDiff": -16,
+      "points": 41
+    },
+    {
+      "teamId": 536,
+      "teamName": "Sevilla",
+      "logoUrl": "https://media.api-sports.io/football/teams/536.png",
+      "pos": 17,
+      "played": 38,
+      "goalsDiff": -13,
+      "points": 41
+    },
+    {
+      "teamId": 537,
+      "teamName": "Leganes",
+      "logoUrl": "https://media.api-sports.io/football/teams/537.png",
+      "pos": 18,
+      "played": 38,
+      "goalsDiff": -17,
+      "points": 40
+    },
+    {
+      "teamId": 534,
+      "teamName": "Las Palmas",
+      "logoUrl": "https://media.api-sports.io/football/teams/534.png",
+      "pos": 19,
+      "played": 38,
+      "goalsDiff": -21,
+      "points": 32
+    },
+    {
+      "teamId": 720,
+      "teamName": "Valladolid",
+      "logoUrl": "https://media.api-sports.io/football/teams/720.png",
+      "pos": 20,
+      "played": 38,
+      "goalsDiff": -64,
+      "points": 16
+    }
+  ]
+}

@@ -1,0 +1,158 @@
+{
+  "expireAt": 1787877097939,
+  "data": {
+    "lineup": {
+      "id": 18450,
+      "name": "Angel City W",
+      "formation": "4-2-3-1",
+      "starters": [
+        {
+          "id": 416228,
+          "name": "Angelina Anderson",
+          "shirtNumber": "19",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.1
+          }
+        },
+        {
+          "id": 536140,
+          "name": "Gisele Thompson",
+          "shirtNumber": "20",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 536183,
+          "name": "Emily Sams",
+          "shirtNumber": "6",
+          "verticalLayout": {
+            "x": 0.6333333333333333,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 102235,
+          "name": "Sarah Gorden",
+          "shirtNumber": "11",
+          "verticalLayout": {
+            "x": 0.3666666666666667,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 524492,
+          "name": "Evelyn Shores",
+          "shirtNumber": "15",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.2875
+          }
+        },
+        {
+          "id": 200033,
+          "name": "Ary Borges",
+          "shirtNumber": "8",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.475
+          }
+        },
+        {
+          "id": 647487,
+          "name": "Carina Rose Lageyre",
+          "shirtNumber": "16",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.475
+          }
+        },
+        {
+          "id": 68885,
+          "name": "Claire Emslie",
+          "shirtNumber": "10",
+          "verticalLayout": {
+            "x": 0.9,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 536152,
+          "name": "Ally Sentnor",
+          "shirtNumber": "17",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 647488,
+          "name": "Taylor Marie Suarez",
+          "shirtNumber": "99",
+          "verticalLayout": {
+            "x": 0.1,
+            "y": 0.6625
+          }
+        },
+        {
+          "id": 306344,
+          "name": "Prisca Chilufya",
+          "shirtNumber": "24",
+          "verticalLayout": {
+            "x": 0.5,
+            "y": 0.85
+          }
+        }
+      ],
+      "subs": [
+        {
+          "id": 647508,
+          "name": "Faith Nguyen",
+          "shirtNumber": "30"
+        },
+        {
+          "id": 648735,
+          "name": "Jennie Immethun",
+          "shirtNumber": "40"
+        },
+        {
+          "id": 536138,
+          "name": "Savannah King",
+          "shirtNumber": "3"
+        },
+        {
+          "id": 536187,
+          "name": "Sophia Mattice",
+          "shirtNumber": "25"
+        },
+        {
+          "id": null,
+          "name": "Karsyn Cherry",
+          "shirtNumber": "4"
+        },
+        {
+          "id": 310547,
+          "name": "Nealy Martin",
+          "shirtNumber": "14"
+        },
+        {
+          "id": 153018,
+          "name": "Sydney Leroux",
+          "shirtNumber": "2"
+        },
+        {
+          "id": 262807,
+          "name": "Sveindís Jónsdóttir",
+          "shirtNumber": "32"
+        },
+        {
+          "id": 536143,
+          "name": "Riley Tiernan",
+          "shirtNumber": "33"
+        }
+      ]
+    }
+  }
+}

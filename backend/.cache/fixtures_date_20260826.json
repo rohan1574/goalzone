@@ -1,0 +1,6197 @@
+{
+  "expireAt": 1787765541781,
+  "data": [
+    {
+      "id": "1623069",
+      "league": "Copa Do Brasil",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/73.png",
+      "home": {
+        "name": "Cruzeiro",
+        "short": "CRU",
+        "logo": "https://media.api-sports.io/football/teams/135.png"
+      },
+      "away": {
+        "name": "Atletico-MG",
+        "short": "ATL",
+        "logo": "https://media.api-sports.io/football/teams/1062.png"
+      },
+      "score": "1 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1547769",
+      "league": "CONMEBOL Libertadores",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/13.png",
+      "home": {
+        "name": "Independiente del Valle",
+        "short": "IND",
+        "logo": "https://media.api-sports.io/football/teams/1153.png"
+      },
+      "away": {
+        "name": "Deportes Tolima",
+        "short": "DEP",
+        "logo": "https://media.api-sports.io/football/teams/1142.png"
+      },
+      "score": "3 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1611970",
+      "league": "Reserve League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/906.png",
+      "home": {
+        "name": "River Plate Res.",
+        "short": "RIV",
+        "logo": "https://media.api-sports.io/football/teams/18695.png"
+      },
+      "away": {
+        "name": "Unión Santa Fe Res.",
+        "short": "UNI",
+        "logo": "https://media.api-sports.io/football/teams/18701.png"
+      },
+      "score": "2 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1627558",
+      "league": "Leagues Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/772.png",
+      "home": {
+        "name": "Monterrey",
+        "short": "MON",
+        "logo": "https://media.api-sports.io/football/teams/2282.png"
+      },
+      "away": {
+        "name": "Chicago Fire",
+        "short": "CHI",
+        "logo": "https://media.api-sports.io/football/teams/1607.png"
+      },
+      "score": "2 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1549747",
+      "league": "Primera A",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/239.png",
+      "home": {
+        "name": "Cucuta",
+        "short": "CUC",
+        "logo": "https://media.api-sports.io/football/teams/1470.png"
+      },
+      "away": {
+        "name": "Alianza Valledupar",
+        "short": "ALI",
+        "logo": "https://media.api-sports.io/football/teams/1141.png"
+      },
+      "score": "1 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1549752",
+      "league": "Primera A",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/239.png",
+      "home": {
+        "name": "Santa Fe",
+        "short": "SAN",
+        "logo": "https://media.api-sports.io/football/teams/1139.png"
+      },
+      "away": {
+        "name": "Jaguares",
+        "short": "JAG",
+        "logo": "https://media.api-sports.io/football/teams/1133.png"
+      },
+      "score": "0 - 0",
+      "minute": "PST",
+      "status": "PST"
+    },
+    {
+      "id": "1548368",
+      "league": "CONCACAF Central American Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1028.png",
+      "home": {
+        "name": "CS Cartagines",
+        "short": "CS ",
+        "logo": "https://media.api-sports.io/football/teams/820.png"
+      },
+      "away": {
+        "name": "FAS",
+        "short": "FAS",
+        "logo": "https://media.api-sports.io/football/teams/4302.png"
+      },
+      "score": "2 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1548369",
+      "league": "CONCACAF Central American Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1028.png",
+      "home": {
+        "name": "Municipal",
+        "short": "MUN",
+        "logo": "https://media.api-sports.io/football/teams/3665.png"
+      },
+      "away": {
+        "name": "CD Motagua",
+        "short": "CD ",
+        "logo": "https://media.api-sports.io/football/teams/1055.png"
+      },
+      "score": "1 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1627559",
+      "league": "Leagues Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/772.png",
+      "home": {
+        "name": "Leon",
+        "short": "LEO",
+        "logo": "https://media.api-sports.io/football/teams/2289.png"
+      },
+      "away": {
+        "name": "Real Salt Lake",
+        "short": "REA",
+        "logo": "https://media.api-sports.io/football/teams/1606.png"
+      },
+      "score": "3 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630054",
+      "league": "U19 league",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1241.png",
+      "home": {
+        "name": "Crvena Zvezda U18",
+        "short": "CRV",
+        "logo": "https://media.api-sports.io/football/teams/23030.png"
+      },
+      "away": {
+        "name": "OFK Beograd U19",
+        "short": "OFK",
+        "logo": "https://media.api-sports.io/football/teams/28274.png"
+      },
+      "score": "2 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1565057",
+      "league": "1. Liga U19",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/668.png",
+      "home": {
+        "name": "Hradec Králové U19",
+        "short": "HRA",
+        "logo": "https://media.api-sports.io/football/teams/14831.png"
+      },
+      "away": {
+        "name": "Slavia Praha U19",
+        "short": "SLA",
+        "logo": "https://media.api-sports.io/football/teams/7933.png"
+      },
+      "score": "4 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630056",
+      "league": "U19 league",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1241.png",
+      "home": {
+        "name": "Partizan U19",
+        "short": "PAR",
+        "logo": "https://media.api-sports.io/football/teams/22398.png"
+      },
+      "away": {
+        "name": "IMT Novi Beograd U19",
+        "short": "IMT",
+        "logo": "https://media.api-sports.io/football/teams/24982.png"
+      },
+      "score": "4 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630057",
+      "league": "U19 league",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1241.png",
+      "home": {
+        "name": "TSC U19",
+        "short": "TSC",
+        "logo": "https://media.api-sports.io/football/teams/28272.png"
+      },
+      "away": {
+        "name": "Novi Pazar U19",
+        "short": "NOV",
+        "logo": "https://media.api-sports.io/football/teams/28275.png"
+      },
+      "score": "4 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1565164",
+      "league": "1. Liga U19",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/668.png",
+      "home": {
+        "name": "Teplice U19",
+        "short": "TEP",
+        "logo": "https://media.api-sports.io/football/teams/27891.png"
+      },
+      "away": {
+        "name": "Slovácko U19",
+        "short": "SLO",
+        "logo": "https://media.api-sports.io/football/teams/14838.png"
+      },
+      "score": "6 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1633886",
+      "league": "Mediterranean Games",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/919.png",
+      "home": {
+        "name": "North Macedonia U21",
+        "short": "NOR",
+        "logo": "https://media.api-sports.io/football/teams/8212.png"
+      },
+      "away": {
+        "name": "Morocco U20",
+        "short": "MOR",
+        "logo": "https://media.api-sports.io/football/teams/11039.png"
+      },
+      "score": "1 - 5",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1633887",
+      "league": "Mediterranean Games",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/919.png",
+      "home": {
+        "name": "Türkiye U20",
+        "short": "TÜR",
+        "logo": "https://media.api-sports.io/football/teams/23431.png"
+      },
+      "away": {
+        "name": "Tunisia U21",
+        "short": "TUN",
+        "logo": "https://media.api-sports.io/football/teams/28333.png"
+      },
+      "score": "1 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1594350",
+      "league": "NB III - Southeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1023.png",
+      "home": {
+        "name": "Újpest II",
+        "short": "ÚJP",
+        "logo": "https://media.api-sports.io/football/teams/11860.png"
+      },
+      "away": {
+        "name": "Szeged-Csanád II",
+        "short": "SZE",
+        "logo": "https://media.api-sports.io/football/teams/21857.png"
+      },
+      "score": "2 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1595553",
+      "league": "U19 Bundesliga",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/488.png",
+      "home": {
+        "name": "MSV Duisburg U19",
+        "short": "MSV",
+        "logo": "https://media.api-sports.io/football/teams/10266.png"
+      },
+      "away": {
+        "name": "Borussia Dortmund U19",
+        "short": "BOR",
+        "logo": "https://media.api-sports.io/football/teams/7890.png"
+      },
+      "score": "1 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1611745",
+      "league": "U19 League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1065.png",
+      "home": {
+        "name": "LNZ Cherkasy U19",
+        "short": "LNZ",
+        "logo": "https://media.api-sports.io/football/teams/23077.png"
+      },
+      "away": {
+        "name": "Zhytomyr U19",
+        "short": "ZHY",
+        "logo": "https://media.api-sports.io/football/teams/23084.png"
+      },
+      "score": "2 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1611748",
+      "league": "U19 League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1065.png",
+      "home": {
+        "name": "Shakhtar Donetsk U19",
+        "short": "SHA",
+        "logo": "https://media.api-sports.io/football/teams/7929.png"
+      },
+      "away": {
+        "name": "Dynamo Kyiv U19",
+        "short": "DYN",
+        "logo": "https://media.api-sports.io/football/teams/7898.png"
+      },
+      "score": "1 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1611867",
+      "league": "U19 League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1065.png",
+      "home": {
+        "name": "Lviv U19",
+        "short": "LVI",
+        "logo": "https://media.api-sports.io/football/teams/28083.png"
+      },
+      "away": {
+        "name": "Obolon' Kyiv U19",
+        "short": "OBO",
+        "logo": "https://media.api-sports.io/football/teams/23080.png"
+      },
+      "score": "1 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1632329",
+      "league": "Friendlies Clubs",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/667.png",
+      "home": {
+        "name": "Bắc Ninh",
+        "short": "BẮC",
+        "logo": "https://media.api-sports.io/football/teams/26601.png"
+      },
+      "away": {
+        "name": "Hung Yen",
+        "short": "HUN",
+        "logo": "https://media.api-sports.io/football/teams/28214.png"
+      },
+      "score": "2 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1623386",
+      "league": "Australia Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/874.png",
+      "home": {
+        "name": "Preston Lions",
+        "short": "PRE",
+        "logo": "https://media.api-sports.io/football/teams/19705.png"
+      },
+      "away": {
+        "name": "South Melbourne",
+        "short": "SOU",
+        "logo": "https://media.api-sports.io/football/teams/3811.png"
+      },
+      "score": "1 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630749",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Cerezo Osaka",
+        "short": "CER",
+        "logo": "https://media.api-sports.io/football/teams/291.png"
+      },
+      "away": {
+        "name": "FC Gifu",
+        "short": "FC ",
+        "logo": "https://media.api-sports.io/football/teams/297.png"
+      },
+      "score": "3 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630750",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Machida Zelvia",
+        "short": "MAC",
+        "logo": "https://media.api-sports.io/football/teams/303.png"
+      },
+      "away": {
+        "name": "Grulla Morioka",
+        "short": "GRU",
+        "logo": "https://media.api-sports.io/football/teams/4321.png"
+      },
+      "score": "3 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630751",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Nagoya Grampus",
+        "short": "NAG",
+        "logo": "https://media.api-sports.io/football/teams/288.png"
+      },
+      "away": {
+        "name": "Gainare Tottori",
+        "short": "GAI",
+        "logo": "https://media.api-sports.io/football/teams/4319.png"
+      },
+      "score": "1 - 3",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630752",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Sanfrecce Hiroshima",
+        "short": "SAN",
+        "logo": "https://media.api-sports.io/football/teams/282.png"
+      },
+      "away": {
+        "name": "Okinawa SV",
+        "short": "OKI",
+        "logo": "https://media.api-sports.io/football/teams/7137.png"
+      },
+      "score": "4 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630753",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Tokushima Vortis",
+        "short": "TOK",
+        "logo": "https://media.api-sports.io/football/teams/299.png"
+      },
+      "away": {
+        "name": "FC Tokushima",
+        "short": "FC ",
+        "logo": "https://media.api-sports.io/football/teams/7118.png"
+      },
+      "score": "3 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630754",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Tokyo Verdy",
+        "short": "TOK",
+        "logo": "https://media.api-sports.io/football/teams/306.png"
+      },
+      "away": {
+        "name": "Thespakusatsu Gunma",
+        "short": "THE",
+        "logo": "https://media.api-sports.io/football/teams/756.png"
+      },
+      "score": "4 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630755",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Yokohama FC",
+        "short": "YOK",
+        "logo": "https://media.api-sports.io/football/teams/307.png"
+      },
+      "away": {
+        "name": "Criacao Shinjuku",
+        "short": "CRI",
+        "logo": "https://media.api-sports.io/football/teams/18378.png"
+      },
+      "score": "3 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1635055",
+      "league": "Calcutta Premier Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1020.png",
+      "home": {
+        "name": "Bidhannagar",
+        "short": "BID",
+        "logo": "https://media.api-sports.io/football/teams/28010.png"
+      },
+      "away": {
+        "name": "Bhawanipore",
+        "short": "BHA",
+        "logo": "https://media.api-sports.io/football/teams/15749.png"
+      },
+      "score": "0 - 3",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1635056",
+      "league": "Calcutta Premier Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1020.png",
+      "home": {
+        "name": "Calcutta Customs",
+        "short": "CAL",
+        "logo": "https://media.api-sports.io/football/teams/21599.png"
+      },
+      "away": {
+        "name": "United Kolkata",
+        "short": "UNI",
+        "logo": "https://media.api-sports.io/football/teams/26118.png"
+      },
+      "score": "2 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1635057",
+      "league": "Calcutta Premier Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1020.png",
+      "home": {
+        "name": "George Telegraph",
+        "short": "GEO",
+        "logo": "https://media.api-sports.io/football/teams/21604.png"
+      },
+      "away": {
+        "name": "Mohun Bagan",
+        "short": "MOH",
+        "logo": "https://media.api-sports.io/football/teams/3467.png"
+      },
+      "score": "0 - 6",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1635058",
+      "league": "Calcutta Premier Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1020.png",
+      "home": {
+        "name": "Patha Chakra",
+        "short": "PAT",
+        "logo": "https://media.api-sports.io/football/teams/21607.png"
+      },
+      "away": {
+        "name": "BSS Sporting",
+        "short": "BSS",
+        "logo": "https://media.api-sports.io/football/teams/21597.png"
+      },
+      "score": "3 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1611746",
+      "league": "U19 League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1065.png",
+      "home": {
+        "name": "Oleksandria U19",
+        "short": "OLE",
+        "logo": "https://media.api-sports.io/football/teams/23081.png"
+      },
+      "away": {
+        "name": "Karpaty Lviv U19",
+        "short": "KAR",
+        "logo": "https://media.api-sports.io/football/teams/24177.png"
+      },
+      "score": "2 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1623340",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Consadole Sapporo",
+        "short": "CON",
+        "logo": "https://media.api-sports.io/football/teams/279.png"
+      },
+      "away": {
+        "name": "Ventforet Kofu",
+        "short": "VEN",
+        "logo": "https://media.api-sports.io/football/teams/308.png"
+      },
+      "score": "1 - 3",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1623341",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Imabari",
+        "short": "IMA",
+        "logo": "https://media.api-sports.io/football/teams/10075.png"
+      },
+      "away": {
+        "name": "Blaublitz Akita",
+        "short": "BLA",
+        "logo": "https://media.api-sports.io/football/teams/4315.png"
+      },
+      "score": "4 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1623342",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Iwaki",
+        "short": "IWA",
+        "logo": "https://media.api-sports.io/football/teams/7127.png"
+      },
+      "away": {
+        "name": "Oita Trinita",
+        "short": "OIT",
+        "logo": "https://media.api-sports.io/football/teams/298.png"
+      },
+      "score": "2 - 0",
+      "minute": "120'",
+      "status": "AET"
+    },
+    {
+      "id": "1623343",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Jubilo Iwata",
+        "short": "JUB",
+        "logo": "https://media.api-sports.io/football/teams/280.png"
+      },
+      "away": {
+        "name": "Tegevajaro Miyazaki",
+        "short": "TEG",
+        "logo": "https://media.api-sports.io/football/teams/10409.png"
+      },
+      "score": "0 - 1",
+      "minute": "120'",
+      "status": "AET"
+    },
+    {
+      "id": "1623344",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Montedio Yamagata",
+        "short": "MON",
+        "logo": "https://media.api-sports.io/football/teams/312.png"
+      },
+      "away": {
+        "name": "Fujieda MYFC",
+        "short": "FUJ",
+        "logo": "https://media.api-sports.io/football/teams/4317.png"
+      },
+      "score": "3 - 5",
+      "minute": "120'",
+      "status": "AET"
+    },
+    {
+      "id": "1623345",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Omiya Ardija",
+        "short": "OMI",
+        "logo": "https://media.api-sports.io/football/teams/313.png"
+      },
+      "away": {
+        "name": "Vanraure Hachinohe",
+        "short": "VAN",
+        "logo": "https://media.api-sports.io/football/teams/4326.png"
+      },
+      "score": "2 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1623346",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Sagan Tosu",
+        "short": "SAG",
+        "logo": "https://media.api-sports.io/football/teams/295.png"
+      },
+      "away": {
+        "name": "Kataller Toyama",
+        "short": "KAT",
+        "logo": "https://media.api-sports.io/football/teams/4322.png"
+      },
+      "score": "4 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1623347",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Vegalta Sendai",
+        "short": "VEG",
+        "logo": "https://media.api-sports.io/football/teams/286.png"
+      },
+      "away": {
+        "name": "Tochigi City",
+        "short": "TOC",
+        "logo": "https://media.api-sports.io/football/teams/7145.png"
+      },
+      "score": "1 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630756",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Albirex Niigata",
+        "short": "ALB",
+        "logo": "https://media.api-sports.io/football/teams/311.png"
+      },
+      "away": {
+        "name": "Kagoshima United",
+        "short": "KAG",
+        "logo": "https://media.api-sports.io/football/teams/2236.png"
+      },
+      "score": "0 - 4",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630758",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "JEF United Chiba",
+        "short": "JEF",
+        "logo": "https://media.api-sports.io/football/teams/301.png"
+      },
+      "away": {
+        "name": "Azul Claro Numazu",
+        "short": "AZU",
+        "logo": "https://media.api-sports.io/football/teams/4314.png"
+      },
+      "score": "1 - 1",
+      "minute": "120'",
+      "status": "PEN"
+    },
+    {
+      "id": "1630759",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "FC Tokyo",
+        "short": "FC ",
+        "logo": "https://media.api-sports.io/football/teams/292.png"
+      },
+      "away": {
+        "name": "Parceiro Nagano",
+        "short": "PAR",
+        "logo": "https://media.api-sports.io/football/teams/4323.png"
+      },
+      "score": "6 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630760",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Gamba Osaka",
+        "short": "GAM",
+        "logo": "https://media.api-sports.io/football/teams/293.png"
+      },
+      "away": {
+        "name": "Biwako Shiga",
+        "short": "BIW",
+        "logo": "https://media.api-sports.io/football/teams/7117.png"
+      },
+      "score": "2 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630761",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Kashima",
+        "short": "KAS",
+        "logo": "https://media.api-sports.io/football/teams/290.png"
+      },
+      "away": {
+        "name": "Suzuka Unlimited",
+        "short": "SUZ",
+        "logo": "https://media.api-sports.io/football/teams/10408.png"
+      },
+      "score": "3 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630762",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Kashiwa Reysol",
+        "short": "KAS",
+        "logo": "https://media.api-sports.io/football/teams/281.png"
+      },
+      "away": {
+        "name": "Senshu University",
+        "short": "SEN",
+        "logo": "https://media.api-sports.io/football/teams/28189.png"
+      },
+      "score": "2 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630763",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Kawasaki Frontale",
+        "short": "KAW",
+        "logo": "https://media.api-sports.io/football/teams/294.png"
+      },
+      "away": {
+        "name": "Tochigi SC",
+        "short": "TOC",
+        "logo": "https://media.api-sports.io/football/teams/315.png"
+      },
+      "score": "3 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630764",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Kyoto Sanga",
+        "short": "KYO",
+        "logo": "https://media.api-sports.io/football/teams/302.png"
+      },
+      "away": {
+        "name": "Maruyasu Okazaki",
+        "short": "MAR",
+        "logo": "https://media.api-sports.io/football/teams/10405.png"
+      },
+      "score": "1 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630765",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Mito Hollyhock",
+        "short": "MIT",
+        "logo": "https://media.api-sports.io/football/teams/305.png"
+      },
+      "away": {
+        "name": "Kyoto Sangyo University",
+        "short": "KYO",
+        "logo": "https://media.api-sports.io/football/teams/11431.png"
+      },
+      "score": "0 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630766",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Fagiano Okayama",
+        "short": "FAG",
+        "logo": "https://media.api-sports.io/football/teams/310.png"
+      },
+      "away": {
+        "name": "Beluga Rosso Iwami",
+        "short": "BEL",
+        "logo": "https://media.api-sports.io/football/teams/21344.png"
+      },
+      "score": "3 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630767",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Shimizu S-pulse",
+        "short": "SHI",
+        "logo": "https://media.api-sports.io/football/teams/283.png"
+      },
+      "away": {
+        "name": "Osaka",
+        "short": "OSA",
+        "logo": "https://media.api-sports.io/football/teams/7138.png"
+      },
+      "score": "2 - 1",
+      "minute": "120'",
+      "status": "AET"
+    },
+    {
+      "id": "1630768",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Shonan Bellmare",
+        "short": "SHO",
+        "logo": "https://media.api-sports.io/football/teams/284.png"
+      },
+      "away": {
+        "name": "Reinmeer Aomori",
+        "short": "REI",
+        "logo": "https://media.api-sports.io/football/teams/10406.png"
+      },
+      "score": "1 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630769",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Urawa",
+        "short": "URA",
+        "logo": "https://media.api-sports.io/football/teams/287.png"
+      },
+      "away": {
+        "name": "Yamanashi Gakuin",
+        "short": "YAM",
+        "logo": "https://media.api-sports.io/football/teams/7153.png"
+      },
+      "score": "3 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630770",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Vissel Kobe",
+        "short": "VIS",
+        "logo": "https://media.api-sports.io/football/teams/289.png"
+      },
+      "away": {
+        "name": "Veroskronos Tsuno",
+        "short": "VER",
+        "logo": "https://media.api-sports.io/football/teams/11437.png"
+      },
+      "score": "2 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630771",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "V-varen Nagasaki",
+        "short": "V-V",
+        "logo": "https://media.api-sports.io/football/teams/285.png"
+      },
+      "away": {
+        "name": "Ehime FC",
+        "short": "EHI",
+        "logo": "https://media.api-sports.io/football/teams/318.png"
+      },
+      "score": "3 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630772",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Yokohama F. Marinos",
+        "short": "YOK",
+        "logo": "https://media.api-sports.io/football/teams/296.png"
+      },
+      "away": {
+        "name": "Fukushima United",
+        "short": "FUK",
+        "logo": "https://media.api-sports.io/football/teams/4318.png"
+      },
+      "score": "1 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1507043",
+      "league": "K League 1",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/292.png",
+      "home": {
+        "name": "FC Anyang",
+        "short": "FC ",
+        "logo": "https://media.api-sports.io/football/teams/2748.png"
+      },
+      "away": {
+        "name": "Incheon United",
+        "short": "INC",
+        "logo": "https://media.api-sports.io/football/teams/2763.png"
+      },
+      "score": "2 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1507044",
+      "league": "K League 1",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/292.png",
+      "home": {
+        "name": "Daejeon Citizen",
+        "short": "DAE",
+        "logo": "https://media.api-sports.io/football/teams/2750.png"
+      },
+      "away": {
+        "name": "Ulsan Hyundai FC",
+        "short": "ULS",
+        "logo": "https://media.api-sports.io/football/teams/2767.png"
+      },
+      "score": "2 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1507045",
+      "league": "K League 1",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/292.png",
+      "home": {
+        "name": "Gangwon FC",
+        "short": "GAN",
+        "logo": "https://media.api-sports.io/football/teams/2746.png"
+      },
+      "away": {
+        "name": "Gwangju FC",
+        "short": "GWA",
+        "logo": "https://media.api-sports.io/football/teams/2759.png"
+      },
+      "score": "2 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1627490",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/237.png",
+      "home": {
+        "name": "KDV",
+        "short": "KDV",
+        "logo": "https://media.api-sports.io/football/teams/25867.png"
+      },
+      "away": {
+        "name": "Chertanovo Moscow",
+        "short": "CHE",
+        "logo": "https://media.api-sports.io/football/teams/2014.png"
+      },
+      "score": "2 - 4",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1627495",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/237.png",
+      "home": {
+        "name": "Torpedo Miass",
+        "short": "TOR",
+        "logo": "https://media.api-sports.io/football/teams/16864.png"
+      },
+      "away": {
+        "name": "Volna Nizhegorodskaya",
+        "short": "VOL",
+        "logo": "https://media.api-sports.io/football/teams/14124.png"
+      },
+      "score": "0 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1627496",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/237.png",
+      "home": {
+        "name": "Nosta",
+        "short": "NOS",
+        "logo": "https://media.api-sports.io/football/teams/6818.png"
+      },
+      "away": {
+        "name": "FK Sokol Saratov",
+        "short": "FK ",
+        "logo": "https://media.api-sports.io/football/teams/1995.png"
+      },
+      "score": "1 - 1",
+      "minute": "120'",
+      "status": "PEN"
+    },
+    {
+      "id": "1630060",
+      "league": "U19 league",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1241.png",
+      "home": {
+        "name": "Vozdovac U19",
+        "short": "VOZ",
+        "logo": "https://media.api-sports.io/football/teams/28269.png"
+      },
+      "away": {
+        "name": "Brodarac U19",
+        "short": "BRO",
+        "logo": "https://media.api-sports.io/football/teams/7891.png"
+      },
+      "score": "3 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630757",
+      "league": "Emperor Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/102.png",
+      "home": {
+        "name": "Avispa Fukuoka",
+        "short": "AVI",
+        "logo": "https://media.api-sports.io/football/teams/316.png"
+      },
+      "away": {
+        "name": "Verspah Oita",
+        "short": "VER",
+        "logo": "https://media.api-sports.io/football/teams/7151.png"
+      },
+      "score": "0 - 0",
+      "minute": "120'",
+      "status": "PEN"
+    },
+    {
+      "id": "1588812",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/709.png",
+      "home": {
+        "name": "Lernayin Artsakh",
+        "short": "LER",
+        "logo": "https://media.api-sports.io/football/teams/6281.png"
+      },
+      "away": {
+        "name": "Ecoville",
+        "short": "ECO",
+        "logo": "https://media.api-sports.io/football/teams/22562.png"
+      },
+      "score": "5 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1588813",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/709.png",
+      "home": {
+        "name": "Mika",
+        "short": "MIK",
+        "logo": "https://media.api-sports.io/football/teams/11174.png"
+      },
+      "away": {
+        "name": "Bentonit Ijevan",
+        "short": "BEN",
+        "logo": "https://media.api-sports.io/football/teams/24965.png"
+      },
+      "score": "3 - 3",
+      "minute": "120'",
+      "status": "PEN"
+    },
+    {
+      "id": "1611747",
+      "league": "U19 League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1065.png",
+      "home": {
+        "name": "Rukh Vynnyky U19",
+        "short": "RUK",
+        "logo": "https://media.api-sports.io/football/teams/20240.png"
+      },
+      "away": {
+        "name": "Veres Rivne U19",
+        "short": "VER",
+        "logo": "https://media.api-sports.io/football/teams/23082.png"
+      },
+      "score": "3 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1611868",
+      "league": "U19 League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1065.png",
+      "home": {
+        "name": "SK Metalurh U19",
+        "short": "SK ",
+        "logo": "https://media.api-sports.io/football/teams/28082.png"
+      },
+      "away": {
+        "name": "Metalist 1925 U19",
+        "short": "MET",
+        "logo": "https://media.api-sports.io/football/teams/23078.png"
+      },
+      "score": "3 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1601146",
+      "league": "Super League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/278.png",
+      "home": {
+        "name": "Johor Darul Takzim FC",
+        "short": "JOH",
+        "logo": "https://media.api-sports.io/football/teams/2523.png"
+      },
+      "away": {
+        "name": "Kelantan Red Warrior FC",
+        "short": "KEL",
+        "logo": "https://media.api-sports.io/football/teams/27373.png"
+      },
+      "score": "9 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1507425",
+      "league": "Liga 3",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1104.png",
+      "home": {
+        "name": "WIT Georgia",
+        "short": "WIT",
+        "logo": "https://media.api-sports.io/football/teams/3504.png"
+      },
+      "away": {
+        "name": "Iberia 2010",
+        "short": "IBE",
+        "logo": "https://media.api-sports.io/football/teams/16505.png"
+      },
+      "score": "2 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1496271",
+      "league": "2. Division - Group 2",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/474.png",
+      "home": {
+        "name": "Rana",
+        "short": "RAN",
+        "logo": "https://media.api-sports.io/football/teams/16229.png"
+      },
+      "away": {
+        "name": "Follo",
+        "short": "FOL",
+        "logo": "https://media.api-sports.io/football/teams/6985.png"
+      },
+      "score": "3 - 3",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1565131",
+      "league": "1. Liga U19",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/668.png",
+      "home": {
+        "name": "Zlín U19",
+        "short": "ZLÍ",
+        "logo": "https://media.api-sports.io/football/teams/14840.png"
+      },
+      "away": {
+        "name": "Pardubice U19",
+        "short": "PAR",
+        "logo": "https://media.api-sports.io/football/teams/14836.png"
+      },
+      "score": "0 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1601147",
+      "league": "Super League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/278.png",
+      "home": {
+        "name": "Kuala Lumpur FA",
+        "short": "KUA",
+        "logo": "https://media.api-sports.io/football/teams/2517.png"
+      },
+      "away": {
+        "name": "Kuching FA",
+        "short": "KUC",
+        "logo": "https://media.api-sports.io/football/teams/10108.png"
+      },
+      "score": "0 - 6",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1611744",
+      "league": "U19 League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1065.png",
+      "home": {
+        "name": "Livyi Bereh U19",
+        "short": "LIV",
+        "logo": "https://media.api-sports.io/football/teams/25118.png"
+      },
+      "away": {
+        "name": "Kolos Kovalivka U19",
+        "short": "KOL",
+        "logo": "https://media.api-sports.io/football/teams/23075.png"
+      },
+      "score": "2 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1627186",
+      "league": "Pernambucano - U20",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1088.png",
+      "home": {
+        "name": "America PE U20",
+        "short": "AME",
+        "logo": "https://media.api-sports.io/football/teams/23488.png"
+      },
+      "away": {
+        "name": "Nautico U20",
+        "short": "NAU",
+        "logo": "https://media.api-sports.io/football/teams/13029.png"
+      },
+      "score": "2 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630226",
+      "league": "ASEAN Championship",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/24.png",
+      "home": {
+        "name": "Vietnam",
+        "short": "VIE",
+        "logo": "https://media.api-sports.io/football/teams/1542.png"
+      },
+      "away": {
+        "name": "Thailand",
+        "short": "THA",
+        "logo": "https://media.api-sports.io/football/teams/1564.png"
+      },
+      "score": "2 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1516116",
+      "league": "Super League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/369.png",
+      "home": {
+        "name": "Lokomotiv",
+        "short": "LOK",
+        "logo": "https://media.api-sports.io/football/teams/3695.png"
+      },
+      "away": {
+        "name": "Bunyodkor",
+        "short": "BUN",
+        "logo": "https://media.api-sports.io/football/teams/4210.png"
+      },
+      "score": "4 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1516117",
+      "league": "Super League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/369.png",
+      "home": {
+        "name": "Mash'al",
+        "short": "MAS",
+        "logo": "https://media.api-sports.io/football/teams/4213.png"
+      },
+      "away": {
+        "name": "Navbahor",
+        "short": "NAV",
+        "logo": "https://media.api-sports.io/football/teams/4216.png"
+      },
+      "score": "0 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1612209",
+      "league": "Premier League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/233.png",
+      "home": {
+        "name": "Smouha SC",
+        "short": "SMO",
+        "logo": "https://media.api-sports.io/football/teams/1044.png"
+      },
+      "away": {
+        "name": "Asyut Petrol",
+        "short": "ASY",
+        "logo": "https://media.api-sports.io/football/teams/18021.png"
+      },
+      "score": "0 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1627254",
+      "league": "Girabola",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/397.png",
+      "home": {
+        "name": "Sporting de Cabinda",
+        "short": "SPO",
+        "logo": "https://media.api-sports.io/football/teams/4926.png"
+      },
+      "away": {
+        "name": "Desportivo Huíla",
+        "short": "DES",
+        "logo": "https://media.api-sports.io/football/teams/4918.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1627489",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/237.png",
+      "home": {
+        "name": "Dinamo Stavropol",
+        "short": "DIN",
+        "logo": "https://media.api-sports.io/football/teams/6796.png"
+      },
+      "away": {
+        "name": "Astrakhan",
+        "short": "AST",
+        "logo": "https://media.api-sports.io/football/teams/21540.png"
+      },
+      "score": "1 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630058",
+      "league": "U19 league",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1241.png",
+      "home": {
+        "name": "Usce U19",
+        "short": "USC",
+        "logo": "https://media.api-sports.io/football/teams/28271.png"
+      },
+      "away": {
+        "name": "Sp. Subotica U19",
+        "short": "SP.",
+        "logo": "https://media.api-sports.io/football/teams/28273.png"
+      },
+      "score": "5 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1534302",
+      "league": "1. Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/117.png",
+      "home": {
+        "name": "Orsha",
+        "short": "ORS",
+        "logo": "https://media.api-sports.io/football/teams/3390.png"
+      },
+      "away": {
+        "name": "Dinamo Minsk II",
+        "short": "DIN",
+        "logo": "https://media.api-sports.io/football/teams/11266.png"
+      },
+      "score": "1 - 4",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1602065",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/212.png",
+      "home": {
+        "name": "Dinamo Predavac",
+        "short": "DIN",
+        "logo": "https://media.api-sports.io/football/teams/6240.png"
+      },
+      "away": {
+        "name": "Hrvatski Dragovoljac",
+        "short": "HRV",
+        "logo": "https://media.api-sports.io/football/teams/1472.png"
+      },
+      "score": "0 - 2",
+      "minute": "120'",
+      "status": "AET"
+    },
+    {
+      "id": "1602066",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/212.png",
+      "home": {
+        "name": "Graničar Kotoriba",
+        "short": "GRA",
+        "logo": "https://media.api-sports.io/football/teams/21967.png"
+      },
+      "away": {
+        "name": "Zagorec",
+        "short": "ZAG",
+        "logo": "https://media.api-sports.io/football/teams/5732.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1602071",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/212.png",
+      "home": {
+        "name": "Slavonija Požega",
+        "short": "SLA",
+        "logo": "https://media.api-sports.io/football/teams/6250.png"
+      },
+      "away": {
+        "name": "Moslavina",
+        "short": "MOS",
+        "logo": "https://media.api-sports.io/football/teams/17407.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1602072",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/212.png",
+      "home": {
+        "name": "Svacic Stari Slatnik",
+        "short": "SVA",
+        "logo": "https://media.api-sports.io/football/teams/28034.png"
+      },
+      "away": {
+        "name": "Koprivnica",
+        "short": "KOP",
+        "logo": "https://media.api-sports.io/football/teams/5710.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1602074",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/212.png",
+      "home": {
+        "name": "Cuba U20",
+        "short": "CUB",
+        "logo": "https://media.api-sports.io/football/teams/10994.png"
+      },
+      "away": {
+        "name": "Uljanik",
+        "short": "ULJ",
+        "logo": "https://media.api-sports.io/football/teams/8582.png"
+      },
+      "score": "4 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1602075",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/212.png",
+      "home": {
+        "name": "Uskok Klis",
+        "short": "USK",
+        "logo": "https://media.api-sports.io/football/teams/8589.png"
+      },
+      "away": {
+        "name": "Podravina Ludbreg",
+        "short": "POD",
+        "logo": "https://media.api-sports.io/football/teams/8595.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1602076",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/212.png",
+      "home": {
+        "name": "Vardarac",
+        "short": "VAR",
+        "logo": "https://media.api-sports.io/football/teams/21974.png"
+      },
+      "away": {
+        "name": "Liznjan",
+        "short": "LIZ",
+        "logo": "https://media.api-sports.io/football/teams/28032.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1602077",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/212.png",
+      "home": {
+        "name": "Varteks Varaždin",
+        "short": "VAR",
+        "logo": "https://media.api-sports.io/football/teams/8599.png"
+      },
+      "away": {
+        "name": "Bedem Ivankovo",
+        "short": "BED",
+        "logo": "https://media.api-sports.io/football/teams/8610.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1602078",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/212.png",
+      "home": {
+        "name": "Vrbovec",
+        "short": "VRB",
+        "logo": "https://media.api-sports.io/football/teams/8608.png"
+      },
+      "away": {
+        "name": "Daruvar",
+        "short": "DAR",
+        "logo": "https://media.api-sports.io/football/teams/26696.png"
+      },
+      "score": "4 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1602080",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/212.png",
+      "home": {
+        "name": "Zagora",
+        "short": "ZAG",
+        "logo": "https://media.api-sports.io/football/teams/5731.png"
+      },
+      "away": {
+        "name": "Bratstvo Jurovec",
+        "short": "BRA",
+        "logo": "https://media.api-sports.io/football/teams/28031.png"
+      },
+      "score": "4 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1610983",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/680.png",
+      "home": {
+        "name": "Geča",
+        "short": "GEČ",
+        "logo": "https://media.api-sports.io/football/teams/21927.png"
+      },
+      "away": {
+        "name": "Spišská Nová Ves",
+        "short": "SPI",
+        "logo": "https://media.api-sports.io/football/teams/10555.png"
+      },
+      "score": "0 - 4",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1610984",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/680.png",
+      "home": {
+        "name": "Gerlachov",
+        "short": "GER",
+        "logo": "https://media.api-sports.io/football/teams/14972.png"
+      },
+      "away": {
+        "name": "Liptovský Mikuláš",
+        "short": "LIP",
+        "logo": "https://media.api-sports.io/football/teams/10536.png"
+      },
+      "score": "0 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1611025",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/680.png",
+      "home": {
+        "name": "V. Kapusany",
+        "short": "V. ",
+        "logo": "https://media.api-sports.io/football/teams/28076.png"
+      },
+      "away": {
+        "name": "Zemplín Michalovce",
+        "short": "ZEM",
+        "logo": "https://media.api-sports.io/football/teams/3552.png"
+      },
+      "score": "0 - 3",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1627534",
+      "league": "Nasjonal U19 Champions League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/823.png",
+      "home": {
+        "name": "Lillestrøm U19",
+        "short": "LIL",
+        "logo": "https://media.api-sports.io/football/teams/16559.png"
+      },
+      "away": {
+        "name": "Tromsø U19",
+        "short": "TRO",
+        "logo": "https://media.api-sports.io/football/teams/16566.png"
+      },
+      "score": "4 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1516119",
+      "league": "Super League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/369.png",
+      "home": {
+        "name": "Qizilqum",
+        "short": "QIZ",
+        "logo": "https://media.api-sports.io/football/teams/4221.png"
+      },
+      "away": {
+        "name": "Nasaf",
+        "short": "NAS",
+        "logo": "https://media.api-sports.io/football/teams/4215.png"
+      },
+      "score": "1 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1594349",
+      "league": "NB III - Southeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1023.png",
+      "home": {
+        "name": "Gyulai Termál",
+        "short": "GYU",
+        "logo": "https://media.api-sports.io/football/teams/11729.png"
+      },
+      "away": {
+        "name": "Vasas II",
+        "short": "VAS",
+        "logo": "https://media.api-sports.io/football/teams/19462.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1606099",
+      "league": "1st League - FBiH",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/316.png",
+      "home": {
+        "name": "Igman Konjic",
+        "short": "IGM",
+        "logo": "https://media.api-sports.io/football/teams/3367.png"
+      },
+      "away": {
+        "name": "Stupčanica Olovo",
+        "short": "STU",
+        "logo": "https://media.api-sports.io/football/teams/17901.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1610978",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/680.png",
+      "home": {
+        "name": "Divina",
+        "short": "DIV",
+        "logo": "https://media.api-sports.io/football/teams/28071.png"
+      },
+      "away": {
+        "name": "Žilina",
+        "short": "ŽIL",
+        "logo": "https://media.api-sports.io/football/teams/3554.png"
+      },
+      "score": "0 - 8",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1611002",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/680.png",
+      "home": {
+        "name": "Priechod",
+        "short": "PRI",
+        "logo": "https://media.api-sports.io/football/teams/19384.png"
+      },
+      "away": {
+        "name": "Zlaté Moravce",
+        "short": "ZLA",
+        "logo": "https://media.api-sports.io/football/teams/3553.png"
+      },
+      "score": "0 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1611003",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/680.png",
+      "home": {
+        "name": "Priehrada",
+        "short": "PRI",
+        "logo": "https://media.api-sports.io/football/teams/26786.png"
+      },
+      "away": {
+        "name": "Baník Prievidza",
+        "short": "BAN",
+        "logo": "https://media.api-sports.io/football/teams/14943.png"
+      },
+      "score": "1 - 3",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1611011",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/680.png",
+      "home": {
+        "name": "Slovan Halic",
+        "short": "SLO",
+        "logo": "https://media.api-sports.io/football/teams/26790.png"
+      },
+      "away": {
+        "name": "Novohrad Lučenec",
+        "short": "NOV",
+        "logo": "https://media.api-sports.io/football/teams/14087.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1611028",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/680.png",
+      "home": {
+        "name": "Zahradne",
+        "short": "ZAH",
+        "logo": "https://media.api-sports.io/football/teams/28072.png"
+      },
+      "away": {
+        "name": "Vranov nad Topľou",
+        "short": "VRA",
+        "logo": "https://media.api-sports.io/football/teams/14079.png"
+      },
+      "score": "3 - 3",
+      "minute": "BT",
+      "status": "BT"
+    },
+    {
+      "id": "1611263",
+      "league": "David Kipiani Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/672.png",
+      "home": {
+        "name": "Dila",
+        "short": "DIL",
+        "logo": "https://media.api-sports.io/football/teams/3499.png"
+      },
+      "away": {
+        "name": "Samgurali",
+        "short": "SAM",
+        "logo": "https://media.api-sports.io/football/teams/10017.png"
+      },
+      "score": "1 - 1",
+      "minute": "97'",
+      "status": "ET"
+    },
+    {
+      "id": "1626821",
+      "league": "Third League - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/175.png",
+      "home": {
+        "name": "Aksakovo",
+        "short": "AKS",
+        "logo": "https://media.api-sports.io/football/teams/24544.png"
+      },
+      "away": {
+        "name": "Ludogorets III",
+        "short": "LUD",
+        "logo": "https://media.api-sports.io/football/teams/14222.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1626822",
+      "league": "Third League - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/175.png",
+      "home": {
+        "name": "Benkovski Isperih",
+        "short": "BEN",
+        "logo": "https://media.api-sports.io/football/teams/21835.png"
+      },
+      "away": {
+        "name": "Septemvri Tervel",
+        "short": "SEP",
+        "logo": "https://media.api-sports.io/football/teams/8514.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1626824",
+      "league": "Third League - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/175.png",
+      "home": {
+        "name": "Cherno more II",
+        "short": "CHE",
+        "logo": "https://media.api-sports.io/football/teams/19891.png"
+      },
+      "away": {
+        "name": "Chernolomets 1919",
+        "short": "CHE",
+        "logo": "https://media.api-sports.io/football/teams/8510.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1626825",
+      "league": "Third League - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/175.png",
+      "home": {
+        "name": "Olympic Varna",
+        "short": "OLY",
+        "logo": "https://media.api-sports.io/football/teams/26846.png"
+      },
+      "away": {
+        "name": "Septemvri Dragoevo",
+        "short": "SEP",
+        "logo": "https://media.api-sports.io/football/teams/28220.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1626826",
+      "league": "Third League - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/175.png",
+      "home": {
+        "name": "Riltzi",
+        "short": "RIL",
+        "logo": "https://media.api-sports.io/football/teams/17309.png"
+      },
+      "away": {
+        "name": "Dorostol",
+        "short": "DOR",
+        "logo": "https://media.api-sports.io/football/teams/14220.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1626827",
+      "league": "Third League - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/175.png",
+      "home": {
+        "name": "Svetkavitsa 14",
+        "short": "SVE",
+        "logo": "https://media.api-sports.io/football/teams/26249.png"
+      },
+      "away": {
+        "name": "Fratria II",
+        "short": "FRA",
+        "logo": "https://media.api-sports.io/football/teams/24545.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1626828",
+      "league": "Third League - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/175.png",
+      "home": {
+        "name": "Volov Shumen",
+        "short": "VOL",
+        "logo": "https://media.api-sports.io/football/teams/8551.png"
+      },
+      "away": {
+        "name": "Devnya 2005",
+        "short": "DEV",
+        "logo": "https://media.api-sports.io/football/teams/28219.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1626949",
+      "league": "UEFA Europa Cup - Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1191.png",
+      "home": {
+        "name": "Apollon Limassol W",
+        "short": "APO",
+        "logo": "https://media.api-sports.io/football/teams/10911.png"
+      },
+      "away": {
+        "name": "FH W",
+        "short": "FH ",
+        "logo": "https://media.api-sports.io/football/teams/14848.png"
+      },
+      "score": "0 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1626950",
+      "league": "UEFA Europa Cup - Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1191.png",
+      "home": {
+        "name": "SFK 2000 W",
+        "short": "SFK",
+        "logo": "https://media.api-sports.io/football/teams/10902.png"
+      },
+      "away": {
+        "name": "Slovan Liberec W",
+        "short": "SLO",
+        "logo": "https://media.api-sports.io/football/teams/14846.png"
+      },
+      "score": "2 - 3",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1626954",
+      "league": "UEFA Europa Cup - Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1191.png",
+      "home": {
+        "name": "Mitrovica W",
+        "short": "MIT",
+        "logo": "https://media.api-sports.io/football/teams/10896.png"
+      },
+      "away": {
+        "name": "Metalist 1925 W",
+        "short": "MET",
+        "logo": "https://media.api-sports.io/football/teams/26298.png"
+      },
+      "score": "0 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1626956",
+      "league": "UEFA Europa Cup - Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1191.png",
+      "home": {
+        "name": "SeaSters Odesa W",
+        "short": "SEA",
+        "logo": "https://media.api-sports.io/football/teams/27875.png"
+      },
+      "away": {
+        "name": "Rosenborg W",
+        "short": "ROS",
+        "logo": "https://media.api-sports.io/football/teams/15956.png"
+      },
+      "score": "1 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1626971",
+      "league": "UEFA Europa Cup - Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1191.png",
+      "home": {
+        "name": "Radomlje W",
+        "short": "RAD",
+        "logo": "https://media.api-sports.io/football/teams/28221.png"
+      },
+      "away": {
+        "name": "Vålerenga W",
+        "short": "VÅL",
+        "logo": "https://media.api-sports.io/football/teams/15535.png"
+      },
+      "score": "0 - 2",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1627494",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/237.png",
+      "home": {
+        "name": "Druzhba",
+        "short": "DRU",
+        "logo": "https://media.api-sports.io/football/teams/6798.png"
+      },
+      "away": {
+        "name": "Izberbash",
+        "short": "IZB",
+        "logo": "https://media.api-sports.io/football/teams/27646.png"
+      },
+      "score": "2 - 1",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1627577",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Sparta Brno",
+        "short": "SPA",
+        "logo": "https://media.api-sports.io/football/teams/20825.png"
+      },
+      "away": {
+        "name": "Baník Ostrava",
+        "short": "BAN",
+        "logo": "https://media.api-sports.io/football/teams/3713.png"
+      },
+      "score": "0 - 9",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1629899",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/657.png",
+      "home": {
+        "name": "Trans Narva",
+        "short": "TRA",
+        "logo": "https://media.api-sports.io/football/teams/2274.png"
+      },
+      "away": {
+        "name": "Kalju Nomme",
+        "short": "KAL",
+        "logo": "https://media.api-sports.io/football/teams/662.png"
+      },
+      "score": "2 - 0",
+      "minute": "90'",
+      "status": "FT"
+    },
+    {
+      "id": "1630779",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Kozlovice",
+        "short": "KOZ",
+        "logo": "https://media.api-sports.io/football/teams/7311.png"
+      },
+      "away": {
+        "name": "Karviná",
+        "short": "KAR",
+        "logo": "https://media.api-sports.io/football/teams/3716.png"
+      },
+      "score": "1 - 1",
+      "minute": "120'",
+      "status": "PEN"
+    },
+    {
+      "id": "1589695",
+      "league": "3. SNL - East",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/794.png",
+      "home": {
+        "name": "Rače",
+        "short": "RAČ",
+        "logo": "https://media.api-sports.io/football/teams/20192.png"
+      },
+      "away": {
+        "name": "Korotan Prevalje",
+        "short": "KOR",
+        "logo": "https://media.api-sports.io/football/teams/16303.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1593868",
+      "league": "NB III - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/633.png",
+      "home": {
+        "name": "Debrecen II",
+        "short": "DEB",
+        "logo": "https://media.api-sports.io/football/teams/13153.png"
+      },
+      "away": {
+        "name": "Eger",
+        "short": "EGE",
+        "logo": "https://media.api-sports.io/football/teams/5089.png"
+      },
+      "score": "3 - 2",
+      "minute": "77'",
+      "status": "2H"
+    },
+    {
+      "id": "1593869",
+      "league": "NB III - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/633.png",
+      "home": {
+        "name": "Nyiregyhaza II",
+        "short": "NYI",
+        "logo": "https://media.api-sports.io/football/teams/24538.png"
+      },
+      "away": {
+        "name": "Ózd Sajóvölgye",
+        "short": "ÓZD",
+        "logo": "https://media.api-sports.io/football/teams/26196.png"
+      },
+      "score": "0 - 5",
+      "minute": "77'",
+      "status": "2H"
+    },
+    {
+      "id": "1593870",
+      "league": "NB III - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/633.png",
+      "home": {
+        "name": "Salgótarjáni BTC",
+        "short": "SAL",
+        "logo": "https://media.api-sports.io/football/teams/5134.png"
+      },
+      "away": {
+        "name": "Hajdúnánás",
+        "short": "HAJ",
+        "logo": "https://media.api-sports.io/football/teams/24497.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1593871",
+      "league": "NB III - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/633.png",
+      "home": {
+        "name": "Gödöllő",
+        "short": "GÖD",
+        "logo": "https://media.api-sports.io/football/teams/11701.png"
+      },
+      "away": {
+        "name": "Füzesabony",
+        "short": "FÜZ",
+        "logo": "https://media.api-sports.io/football/teams/24493.png"
+      },
+      "score": "1 - 0",
+      "minute": "77'",
+      "status": "2H"
+    },
+    {
+      "id": "1593872",
+      "league": "NB III - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/633.png",
+      "home": {
+        "name": "Kisvárda II",
+        "short": "KIS",
+        "logo": "https://media.api-sports.io/football/teams/14122.png"
+      },
+      "away": {
+        "name": "DEAC",
+        "short": "DEA",
+        "logo": "https://media.api-sports.io/football/teams/5082.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1593873",
+      "league": "NB III - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/633.png",
+      "home": {
+        "name": "Mátészalka",
+        "short": "MÁT",
+        "logo": "https://media.api-sports.io/football/teams/11760.png"
+      },
+      "away": {
+        "name": "Diósgyőr II",
+        "short": "DIÓ",
+        "logo": "https://media.api-sports.io/football/teams/13154.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1593874",
+      "league": "NB III - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/633.png",
+      "home": {
+        "name": "Tarpa",
+        "short": "TAR",
+        "logo": "https://media.api-sports.io/football/teams/15198.png"
+      },
+      "away": {
+        "name": "Tiszaújváros",
+        "short": "TIS",
+        "logo": "https://media.api-sports.io/football/teams/5149.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1593875",
+      "league": "NB III - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/633.png",
+      "home": {
+        "name": "Tiszafuredi VSE",
+        "short": "TIS",
+        "logo": "https://media.api-sports.io/football/teams/5147.png"
+      },
+      "away": {
+        "name": "Cigand SE",
+        "short": "CIG",
+        "logo": "https://media.api-sports.io/football/teams/2419.png"
+      },
+      "score": "0 - 2",
+      "minute": "74'",
+      "status": "2H"
+    },
+    {
+      "id": "1594108",
+      "league": "NB III - Northwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/635.png",
+      "home": {
+        "name": "Gyori ETO II",
+        "short": "GYO",
+        "logo": "https://media.api-sports.io/football/teams/11851.png"
+      },
+      "away": {
+        "name": "Király SZE",
+        "short": "KIR",
+        "logo": "https://media.api-sports.io/football/teams/5112.png"
+      },
+      "score": "1 - 0",
+      "minute": "76'",
+      "status": "2H"
+    },
+    {
+      "id": "1594109",
+      "league": "NB III - Northwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/635.png",
+      "home": {
+        "name": "Veszprém",
+        "short": "VES",
+        "logo": "https://media.api-sports.io/football/teams/7569.png"
+      },
+      "away": {
+        "name": "Haladás VSE",
+        "short": "HAL",
+        "logo": "https://media.api-sports.io/football/teams/17285.png"
+      },
+      "score": "2 - 4",
+      "minute": "72'",
+      "status": "2H"
+    },
+    {
+      "id": "1594110",
+      "league": "NB III - Northwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/635.png",
+      "home": {
+        "name": "MTE 1904",
+        "short": "MTE",
+        "logo": "https://media.api-sports.io/football/teams/2412.png"
+      },
+      "away": {
+        "name": "1908 SZAC",
+        "short": "190",
+        "logo": "https://media.api-sports.io/football/teams/5068.png"
+      },
+      "score": "4 - 0",
+      "minute": "76'",
+      "status": "2H"
+    },
+    {
+      "id": "1594111",
+      "league": "NB III - Northwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/635.png",
+      "home": {
+        "name": "Tatabánya",
+        "short": "TAT",
+        "logo": "https://media.api-sports.io/football/teams/5145.png"
+      },
+      "away": {
+        "name": "Sárisápi Bányász",
+        "short": "SÁR",
+        "logo": "https://media.api-sports.io/football/teams/5140.png"
+      },
+      "score": "3 - 0",
+      "minute": "75'",
+      "status": "2H"
+    },
+    {
+      "id": "1594112",
+      "league": "NB III - Northwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/635.png",
+      "home": {
+        "name": "Bicskei",
+        "short": "BIC",
+        "logo": "https://media.api-sports.io/football/teams/7536.png"
+      },
+      "away": {
+        "name": "Balatonalmádi",
+        "short": "BAL",
+        "logo": "https://media.api-sports.io/football/teams/11750.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1594113",
+      "league": "NB III - Northwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/635.png",
+      "home": {
+        "name": "Pápai Perutz",
+        "short": "PÁP",
+        "logo": "https://media.api-sports.io/football/teams/5129.png"
+      },
+      "away": {
+        "name": "Zalaegerszegi TE II",
+        "short": "ZAL",
+        "logo": "https://media.api-sports.io/football/teams/11859.png"
+      },
+      "score": "1 - 0",
+      "minute": "76'",
+      "status": "2H"
+    },
+    {
+      "id": "1594114",
+      "league": "NB III - Northwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/635.png",
+      "home": {
+        "name": "Puskás II",
+        "short": "PUS",
+        "logo": "https://media.api-sports.io/football/teams/13155.png"
+      },
+      "away": {
+        "name": "SC Sopron",
+        "short": "SC ",
+        "logo": "https://media.api-sports.io/football/teams/7557.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1594115",
+      "league": "NB III - Northwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/635.png",
+      "home": {
+        "name": "Dorogi FC",
+        "short": "DOR",
+        "logo": "https://media.api-sports.io/football/teams/2401.png"
+      },
+      "away": {
+        "name": "Komárom",
+        "short": "KOM",
+        "logo": "https://media.api-sports.io/football/teams/5113.png"
+      },
+      "score": "0 - 0",
+      "minute": "74'",
+      "status": "2H"
+    },
+    {
+      "id": "1594348",
+      "league": "NB III - Southeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1023.png",
+      "home": {
+        "name": "ESMTK",
+        "short": "ESM",
+        "logo": "https://media.api-sports.io/football/teams/5087.png"
+      },
+      "away": {
+        "name": "Sándorfalva",
+        "short": "SÁN",
+        "logo": "https://media.api-sports.io/football/teams/24505.png"
+      },
+      "score": "3 - 0",
+      "minute": "79'",
+      "status": "2H"
+    },
+    {
+      "id": "1594351",
+      "league": "NB III - Southeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1023.png",
+      "home": {
+        "name": "Csepel",
+        "short": "CSE",
+        "logo": "https://media.api-sports.io/football/teams/5081.png"
+      },
+      "away": {
+        "name": "BKV Előre",
+        "short": "BKV",
+        "logo": "https://media.api-sports.io/football/teams/5070.png"
+      },
+      "score": "9 - 0",
+      "minute": "78'",
+      "status": "2H"
+    },
+    {
+      "id": "1594352",
+      "league": "NB III - Southeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1023.png",
+      "home": {
+        "name": "Honvéd II",
+        "short": "HON",
+        "logo": "https://media.api-sports.io/football/teams/11853.png"
+      },
+      "away": {
+        "name": "Szegedi VSE",
+        "short": "SZE",
+        "logo": "https://media.api-sports.io/football/teams/7561.png"
+      },
+      "score": "7 - 1",
+      "minute": "77'",
+      "status": "2H"
+    },
+    {
+      "id": "1594353",
+      "league": "NB III - Southeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1023.png",
+      "home": {
+        "name": "III. Kerületi TUE",
+        "short": "III",
+        "logo": "https://media.api-sports.io/football/teams/5102.png"
+      },
+      "away": {
+        "name": "Bekescsaba 1912",
+        "short": "BEK",
+        "logo": "https://media.api-sports.io/football/teams/2406.png"
+      },
+      "score": "2 - 0",
+      "minute": "75'",
+      "status": "2H"
+    },
+    {
+      "id": "1594354",
+      "league": "NB III - Southeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1023.png",
+      "home": {
+        "name": "Monori Se",
+        "short": "MON",
+        "logo": "https://media.api-sports.io/football/teams/2411.png"
+      },
+      "away": {
+        "name": "Hódmezővásárhely",
+        "short": "HÓD",
+        "logo": "https://media.api-sports.io/football/teams/5101.png"
+      },
+      "score": "4 - 1",
+      "minute": "74'",
+      "status": "2H"
+    },
+    {
+      "id": "1594355",
+      "league": "NB III - Southeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1023.png",
+      "home": {
+        "name": "Szolnoki MAV FC",
+        "short": "SZO",
+        "logo": "https://media.api-sports.io/football/teams/2416.png"
+      },
+      "away": {
+        "name": "Dabas",
+        "short": "DAB",
+        "logo": "https://media.api-sports.io/football/teams/5083.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1594588",
+      "league": "NB III - Southwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/634.png",
+      "home": {
+        "name": "Érdi VSE",
+        "short": "ÉRD",
+        "logo": "https://media.api-sports.io/football/teams/5153.png"
+      },
+      "away": {
+        "name": "Pécsi MFC",
+        "short": "PÉC",
+        "logo": "https://media.api-sports.io/football/teams/5130.png"
+      },
+      "score": "1 - 1",
+      "minute": "78'",
+      "status": "2H"
+    },
+    {
+      "id": "1594589",
+      "league": "NB III - Southwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/634.png",
+      "home": {
+        "name": "Ferencváros II",
+        "short": "FER",
+        "logo": "https://media.api-sports.io/football/teams/11861.png"
+      },
+      "away": {
+        "name": "Majosi",
+        "short": "MAJ",
+        "logo": "https://media.api-sports.io/football/teams/11784.png"
+      },
+      "score": "3 - 0",
+      "minute": "68'",
+      "status": "2H"
+    },
+    {
+      "id": "1594590",
+      "league": "NB III - Southwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/634.png",
+      "home": {
+        "name": "PTE-PEAC",
+        "short": "PTE",
+        "logo": "https://media.api-sports.io/football/teams/5127.png"
+      },
+      "away": {
+        "name": "Budaörs",
+        "short": "BUD",
+        "logo": "https://media.api-sports.io/football/teams/10162.png"
+      },
+      "score": "5 - 1",
+      "minute": "74'",
+      "status": "2H"
+    },
+    {
+      "id": "1594591",
+      "league": "NB III - Southwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/634.png",
+      "home": {
+        "name": "Budafoki LC",
+        "short": "BUD",
+        "logo": "https://media.api-sports.io/football/teams/2399.png"
+      },
+      "away": {
+        "name": "Szekszárd",
+        "short": "SZE",
+        "logo": "https://media.api-sports.io/football/teams/5138.png"
+      },
+      "score": "3 - 0",
+      "minute": "77'",
+      "status": "2H"
+    },
+    {
+      "id": "1594592",
+      "league": "NB III - Southwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/634.png",
+      "home": {
+        "name": "Iváncsa",
+        "short": "IVÁ",
+        "logo": "https://media.api-sports.io/football/teams/5104.png"
+      },
+      "away": {
+        "name": "Dunaharaszti MTK",
+        "short": "DUN",
+        "logo": "https://media.api-sports.io/football/teams/5085.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1594593",
+      "league": "NB III - Southwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/634.png",
+      "home": {
+        "name": "Kaposvar",
+        "short": "KAP",
+        "logo": "https://media.api-sports.io/football/teams/2407.png"
+      },
+      "away": {
+        "name": "Paksi SE II",
+        "short": "PAK",
+        "logo": "https://media.api-sports.io/football/teams/11856.png"
+      },
+      "score": "1 - 1",
+      "minute": "74'",
+      "status": "2H"
+    },
+    {
+      "id": "1594594",
+      "league": "NB III - Southwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/634.png",
+      "home": {
+        "name": "MTK Budapest II",
+        "short": "MTK",
+        "logo": "https://media.api-sports.io/football/teams/17064.png"
+      },
+      "away": {
+        "name": "Dunaujvaros FC",
+        "short": "DUN",
+        "logo": "https://media.api-sports.io/football/teams/20889.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1594595",
+      "league": "NB III - Southwest",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/634.png",
+      "home": {
+        "name": "Sárbogárd",
+        "short": "SÁR",
+        "logo": "https://media.api-sports.io/football/teams/7562.png"
+      },
+      "away": {
+        "name": "Siofok",
+        "short": "SIO",
+        "logo": "https://media.api-sports.io/football/teams/2413.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1602069",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/212.png",
+      "home": {
+        "name": "Orijent 1919",
+        "short": "ORI",
+        "logo": "https://media.api-sports.io/football/teams/6256.png"
+      },
+      "away": {
+        "name": "Križevci",
+        "short": "KRI",
+        "logo": "https://media.api-sports.io/football/teams/5711.png"
+      },
+      "score": "3 - 1",
+      "minute": "77'",
+      "status": "2H"
+    },
+    {
+      "id": "1602073",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/212.png",
+      "home": {
+        "name": "Tigar Sveta Nedelja",
+        "short": "TIG",
+        "logo": "https://media.api-sports.io/football/teams/21972.png"
+      },
+      "away": {
+        "name": "Karlovac 1919",
+        "short": "KAR",
+        "logo": "https://media.api-sports.io/football/teams/15295.png"
+      },
+      "score": "1 - 3",
+      "minute": "76'",
+      "status": "2H"
+    },
+    {
+      "id": "1619032",
+      "league": "DBU Pokalen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/121.png",
+      "home": {
+        "name": "Brønderslev",
+        "short": "BRØ",
+        "logo": "https://media.api-sports.io/football/teams/14444.png"
+      },
+      "away": {
+        "name": "Kolding IF",
+        "short": "KOL",
+        "logo": "https://media.api-sports.io/football/teams/4676.png"
+      },
+      "score": "1 - 4",
+      "minute": "75'",
+      "status": "2H"
+    },
+    {
+      "id": "1619038",
+      "league": "DBU Pokalen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/121.png",
+      "home": {
+        "name": "KRFK",
+        "short": "KRF",
+        "logo": "https://media.api-sports.io/football/teams/11528.png"
+      },
+      "away": {
+        "name": "Brabrand",
+        "short": "BRA",
+        "logo": "https://media.api-sports.io/football/teams/2071.png"
+      },
+      "score": "1 - 4",
+      "minute": "80'",
+      "status": "2H"
+    },
+    {
+      "id": "1619040",
+      "league": "DBU Pokalen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/121.png",
+      "home": {
+        "name": "Marienlyst",
+        "short": "MAR",
+        "logo": "https://media.api-sports.io/football/teams/6040.png"
+      },
+      "away": {
+        "name": "VSK Århus",
+        "short": "VSK",
+        "logo": "https://media.api-sports.io/football/teams/6064.png"
+      },
+      "score": "0 - 1",
+      "minute": "74'",
+      "status": "2H"
+    },
+    {
+      "id": "1626823",
+      "league": "Third League - Northeast",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/175.png",
+      "home": {
+        "name": "Botev Novi Pazar",
+        "short": "BOT",
+        "logo": "https://media.api-sports.io/football/teams/8509.png"
+      },
+      "away": {
+        "name": "Ustrem Donchevo",
+        "short": "UST",
+        "logo": "https://media.api-sports.io/football/teams/8517.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1626951",
+      "league": "UEFA Europa Cup - Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1191.png",
+      "home": {
+        "name": "Hajduk Split W",
+        "short": "HAJ",
+        "logo": "https://media.api-sports.io/football/teams/27869.png"
+      },
+      "away": {
+        "name": "Fortuna Hjørring W",
+        "short": "FOR",
+        "logo": "https://media.api-sports.io/football/teams/10890.png"
+      },
+      "score": "0 - 2",
+      "minute": "70'",
+      "status": "2H"
+    },
+    {
+      "id": "1627562",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Admira Praha",
+        "short": "ADM",
+        "logo": "https://media.api-sports.io/football/teams/7268.png"
+      },
+      "away": {
+        "name": "Táborsko",
+        "short": "TÁB",
+        "logo": "https://media.api-sports.io/football/teams/3726.png"
+      },
+      "score": "0 - 2",
+      "minute": "76'",
+      "status": "2H"
+    },
+    {
+      "id": "1627563",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Baník Souš",
+        "short": "BAN",
+        "logo": "https://media.api-sports.io/football/teams/7271.png"
+      },
+      "away": {
+        "name": "Příbram",
+        "short": "PŘÍ",
+        "logo": "https://media.api-sports.io/football/teams/3718.png"
+      },
+      "score": "1 - 1",
+      "minute": "73'",
+      "status": "2H"
+    },
+    {
+      "id": "1627564",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Benátky nad Jizerou",
+        "short": "BEN",
+        "logo": "https://media.api-sports.io/football/teams/7274.png"
+      },
+      "away": {
+        "name": "Neratovice-Byškovice",
+        "short": "NER",
+        "logo": "https://media.api-sports.io/football/teams/7320.png"
+      },
+      "score": "1 - 0",
+      "minute": "72'",
+      "status": "2H"
+    },
+    {
+      "id": "1627565",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Bzenec",
+        "short": "BZE",
+        "logo": "https://media.api-sports.io/football/teams/7280.png"
+      },
+      "away": {
+        "name": "Třinec",
+        "short": "TŘI",
+        "logo": "https://media.api-sports.io/football/teams/3727.png"
+      },
+      "score": "1 - 4",
+      "minute": "75'",
+      "status": "2H"
+    },
+    {
+      "id": "1627566",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Jiskra Domažlice",
+        "short": "JIS",
+        "logo": "https://media.api-sports.io/football/teams/7304.png"
+      },
+      "away": {
+        "name": "Kladno",
+        "short": "KLA",
+        "logo": "https://media.api-sports.io/football/teams/7307.png"
+      },
+      "score": "2 - 2",
+      "minute": "70'",
+      "status": "2H"
+    },
+    {
+      "id": "1627567",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Frýdlant",
+        "short": "FRÝ",
+        "logo": "https://media.api-sports.io/football/teams/7289.png"
+      },
+      "away": {
+        "name": "Zbrojovka Brno",
+        "short": "ZBR",
+        "logo": "https://media.api-sports.io/football/teams/3733.png"
+      },
+      "score": "0 - 8",
+      "minute": "75'",
+      "status": "2H"
+    },
+    {
+      "id": "1627570",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Králův Dvůr",
+        "short": "KRÁ",
+        "logo": "https://media.api-sports.io/football/teams/7312.png"
+      },
+      "away": {
+        "name": "Loko Vltavín",
+        "short": "LOK",
+        "logo": "https://media.api-sports.io/football/teams/7315.png"
+      },
+      "score": "3 - 0",
+      "minute": "71'",
+      "status": "2H"
+    },
+    {
+      "id": "1627571",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Křimice",
+        "short": "KŘI",
+        "logo": "https://media.api-sports.io/football/teams/26228.png"
+      },
+      "away": {
+        "name": "Teplice",
+        "short": "TEP",
+        "logo": "https://media.api-sports.io/football/teams/3720.png"
+      },
+      "score": "1 - 2",
+      "minute": "76'",
+      "status": "2H"
+    },
+    {
+      "id": "1627572",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Meteor Praha",
+        "short": "MET",
+        "logo": "https://media.api-sports.io/football/teams/7318.png"
+      },
+      "away": {
+        "name": "Mlada Boleslav",
+        "short": "MLA",
+        "logo": "https://media.api-sports.io/football/teams/640.png"
+      },
+      "score": "0 - 3",
+      "minute": "74'",
+      "status": "2H"
+    },
+    {
+      "id": "1627574",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Písek",
+        "short": "PÍS",
+        "logo": "https://media.api-sports.io/football/teams/7334.png"
+      },
+      "away": {
+        "name": "Pardubice",
+        "short": "PAR",
+        "logo": "https://media.api-sports.io/football/teams/3724.png"
+      },
+      "score": "0 - 2",
+      "minute": "73'",
+      "status": "2H"
+    },
+    {
+      "id": "1627575",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Přepeře",
+        "short": "PŘE",
+        "logo": "https://media.api-sports.io/football/teams/7336.png"
+      },
+      "away": {
+        "name": "Slovan Liberec",
+        "short": "SLO",
+        "logo": "https://media.api-sports.io/football/teams/782.png"
+      },
+      "score": "0 - 1",
+      "minute": "76'",
+      "status": "2H"
+    },
+    {
+      "id": "1627576",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Baník Sokolov",
+        "short": "BAN",
+        "logo": "https://media.api-sports.io/football/teams/3721.png"
+      },
+      "away": {
+        "name": "Vlašim",
+        "short": "VLA",
+        "logo": "https://media.api-sports.io/football/teams/3730.png"
+      },
+      "score": "0 - 2",
+      "minute": "74'",
+      "status": "2H"
+    },
+    {
+      "id": "1627578",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Uherský Brod",
+        "short": "UHE",
+        "logo": "https://media.api-sports.io/football/teams/8624.png"
+      },
+      "away": {
+        "name": "Artis",
+        "short": "ART",
+        "logo": "https://media.api-sports.io/football/teams/4257.png"
+      },
+      "score": "0 - 2",
+      "minute": "75'",
+      "status": "2H"
+    },
+    {
+      "id": "1627581",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Velká Bíteš",
+        "short": "VEL",
+        "logo": "https://media.api-sports.io/football/teams/7371.png"
+      },
+      "away": {
+        "name": "Slovácko",
+        "short": "SLO",
+        "logo": "https://media.api-sports.io/football/teams/3719.png"
+      },
+      "score": "1 - 1",
+      "minute": "75'",
+      "status": "2H"
+    },
+    {
+      "id": "1627582",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Vítkovice",
+        "short": "VÍT",
+        "logo": "https://media.api-sports.io/football/teams/3732.png"
+      },
+      "away": {
+        "name": "Polanka nad Odrou",
+        "short": "POL",
+        "logo": "https://media.api-sports.io/football/teams/7332.png"
+      },
+      "score": "1 - 1",
+      "minute": "71'",
+      "status": "2H"
+    },
+    {
+      "id": "1627583",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Tatran Všechovice",
+        "short": "TAT",
+        "logo": "https://media.api-sports.io/football/teams/7366.png"
+      },
+      "away": {
+        "name": "Prostějov",
+        "short": "PRO",
+        "logo": "https://media.api-sports.io/football/teams/3725.png"
+      },
+      "score": "0 - 1",
+      "minute": "74'",
+      "status": "2H"
+    },
+    {
+      "id": "1627584",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Vsetín",
+        "short": "VSE",
+        "logo": "https://media.api-sports.io/football/teams/7377.png"
+      },
+      "away": {
+        "name": "Hanácká",
+        "short": "HAN",
+        "logo": "https://media.api-sports.io/football/teams/7291.png"
+      },
+      "score": "1 - 1",
+      "minute": "75'",
+      "status": "2H"
+    },
+    {
+      "id": "1627585",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/347.png",
+      "home": {
+        "name": "Zabreh",
+        "short": "ZAB",
+        "logo": "https://media.api-sports.io/football/teams/26129.png"
+      },
+      "away": {
+        "name": "Havířov",
+        "short": "HAV",
+        "logo": "https://media.api-sports.io/football/teams/7293.png"
+      },
+      "score": "0 - 1",
+      "minute": "73'",
+      "status": "2H"
+    },
+    {
+      "id": "1627934",
+      "league": "Iraqi League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/542.png",
+      "home": {
+        "name": "Naft",
+        "short": "NAF",
+        "logo": "https://media.api-sports.io/football/teams/11071.png"
+      },
+      "away": {
+        "name": "Duhok",
+        "short": "DUH",
+        "logo": "https://media.api-sports.io/football/teams/20463.png"
+      },
+      "score": "0 - 1",
+      "minute": "75'",
+      "status": "2H"
+    },
+    {
+      "id": "1628289",
+      "league": "Girabola",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/397.png",
+      "home": {
+        "name": "Petro de Luanda",
+        "short": "PET",
+        "logo": "https://media.api-sports.io/football/teams/4922.png"
+      },
+      "away": {
+        "name": "Recreativo do Libolo",
+        "short": "REC",
+        "logo": "https://media.api-sports.io/football/teams/4924.png"
+      },
+      "score": "1 - 0",
+      "minute": "72'",
+      "status": "2H"
+    },
+    {
+      "id": "1630059",
+      "league": "U19 league",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1241.png",
+      "home": {
+        "name": "Vojvodina U19",
+        "short": "VOJ",
+        "logo": "https://media.api-sports.io/football/teams/28270.png"
+      },
+      "away": {
+        "name": "Cukaricki U19",
+        "short": "CUK",
+        "logo": "https://media.api-sports.io/football/teams/28266.png"
+      },
+      "score": "2 - 1",
+      "minute": "68'",
+      "status": "2H"
+    },
+    {
+      "id": "1632330",
+      "league": "Friendlies Clubs",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/667.png",
+      "home": {
+        "name": "Sangiovannese",
+        "short": "SAN",
+        "logo": "https://media.api-sports.io/football/teams/9503.png"
+      },
+      "away": {
+        "name": "Scandicci",
+        "short": "SCA",
+        "logo": "https://media.api-sports.io/football/teams/9504.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1603973",
+      "league": "Division 1",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/308.png",
+      "home": {
+        "name": "Al-Adalah",
+        "short": "AL-",
+        "logo": "https://media.api-sports.io/football/teams/2950.png"
+      },
+      "away": {
+        "name": "Al Taee",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/2942.png"
+      },
+      "score": "0 - 2",
+      "minute": "58'",
+      "status": "2H"
+    },
+    {
+      "id": "1622637",
+      "league": "Premier League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/330.png",
+      "home": {
+        "name": "Al Shabab",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/3541.png"
+      },
+      "away": {
+        "name": "Al Jahra",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/3534.png"
+      },
+      "score": "1 - 0",
+      "minute": "52'",
+      "status": "2H"
+    },
+    {
+      "id": "1627930",
+      "league": "Iraqi League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/542.png",
+      "home": {
+        "name": "Al Kahrabaa",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/11064.png"
+      },
+      "away": {
+        "name": "Al-Karma",
+        "short": "AL-",
+        "logo": "https://media.api-sports.io/football/teams/25063.png"
+      },
+      "score": "0 - 0",
+      "minute": "57'",
+      "status": "2H"
+    },
+    {
+      "id": "1495925",
+      "league": "1. Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/104.png",
+      "home": {
+        "name": "Strommen",
+        "short": "STR",
+        "logo": "https://media.api-sports.io/football/teams/2147.png"
+      },
+      "away": {
+        "name": "Raufoss",
+        "short": "RAU",
+        "logo": "https://media.api-sports.io/football/teams/2153.png"
+      },
+      "score": "2 - 0",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1499597",
+      "league": "Primera B Metropolitana",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/131.png",
+      "home": {
+        "name": "Deportivo Camioneros",
+        "short": "DEP",
+        "logo": "https://media.api-sports.io/football/teams/3943.png"
+      },
+      "away": {
+        "name": "Comunicaciones",
+        "short": "COM",
+        "logo": "https://media.api-sports.io/football/teams/8008.png"
+      },
+      "score": "2 - 0",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1513554",
+      "league": "Meistriliiga",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/329.png",
+      "home": {
+        "name": "Tammeka",
+        "short": "TAM",
+        "logo": "https://media.api-sports.io/football/teams/3530.png"
+      },
+      "away": {
+        "name": "Flora Tallinn",
+        "short": "FLO",
+        "logo": "https://media.api-sports.io/football/teams/687.png"
+      },
+      "score": "1 - 1",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1579794",
+      "league": "First Amateur Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/487.png",
+      "home": {
+        "name": "Habay-la-Neuve",
+        "short": "HAB",
+        "logo": "https://media.api-sports.io/football/teams/5814.png"
+      },
+      "away": {
+        "name": "RWDM",
+        "short": "RWD",
+        "logo": "https://media.api-sports.io/football/teams/6224.png"
+      },
+      "score": "0 - 1",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1582826",
+      "league": "Second Amateur Division - ACFF",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/148.png",
+      "home": {
+        "name": "Stockay-Warfusée",
+        "short": "STO",
+        "logo": "https://media.api-sports.io/football/teams/5942.png"
+      },
+      "away": {
+        "name": "Huy",
+        "short": "HUY",
+        "logo": "https://media.api-sports.io/football/teams/5832.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1586841",
+      "league": "Regionalliga - Nordost",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/85.png",
+      "home": {
+        "name": "RSV Eintracht",
+        "short": "RSV",
+        "logo": "https://media.api-sports.io/football/teams/14754.png"
+      },
+      "away": {
+        "name": "FSV Zwickau",
+        "short": "FSV",
+        "logo": "https://media.api-sports.io/football/teams/1315.png"
+      },
+      "score": "0 - 0",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1602996",
+      "league": "Pro League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/307.png",
+      "home": {
+        "name": "Al-Faisaly FC",
+        "short": "AL-",
+        "logo": "https://media.api-sports.io/football/teams/2930.png"
+      },
+      "away": {
+        "name": "Al-Fateh",
+        "short": "AL-",
+        "logo": "https://media.api-sports.io/football/teams/2931.png"
+      },
+      "score": "1 - 1",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1611264",
+      "league": "David Kipiani Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/672.png",
+      "home": {
+        "name": "Gagra",
+        "short": "GAG",
+        "logo": "https://media.api-sports.io/football/teams/3505.png"
+      },
+      "away": {
+        "name": "Aragvi Dusheti",
+        "short": "ARA",
+        "logo": "https://media.api-sports.io/football/teams/10015.png"
+      },
+      "score": "0 - 0",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1619035",
+      "league": "DBU Pokalen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/121.png",
+      "home": {
+        "name": "FC Fredericia",
+        "short": "FC ",
+        "logo": "https://media.api-sports.io/football/teams/2061.png"
+      },
+      "away": {
+        "name": "Odense",
+        "short": "ODE",
+        "logo": "https://media.api-sports.io/football/teams/405.png"
+      },
+      "score": "1 - 2",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1623461",
+      "league": "UEFA Champions League Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/525.png",
+      "home": {
+        "name": "VfL Wolfsburg W",
+        "short": "VFL",
+        "logo": "https://media.api-sports.io/football/teams/1863.png"
+      },
+      "away": {
+        "name": "Inter Milano W",
+        "short": "INT",
+        "logo": "https://media.api-sports.io/football/teams/7533.png"
+      },
+      "score": "1 - 0",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1627499",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/237.png",
+      "home": {
+        "name": "Volgar Astrakhan",
+        "short": "VOL",
+        "logo": "https://media.api-sports.io/football/teams/2004.png"
+      },
+      "away": {
+        "name": "Spartak Nalchik",
+        "short": "SPA",
+        "logo": "https://media.api-sports.io/football/teams/2002.png"
+      },
+      "score": "0 - 0",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1629871",
+      "league": "NM Cupen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/105.png",
+      "home": {
+        "name": "Fauske Sprint",
+        "short": "FAU",
+        "logo": "https://media.api-sports.io/football/teams/27277.png"
+      },
+      "away": {
+        "name": "Bodo/Glimt",
+        "short": "BOD",
+        "logo": "https://media.api-sports.io/football/teams/327.png"
+      },
+      "score": "0 - 3",
+      "minute": "47'",
+      "status": "2H"
+    },
+    {
+      "id": "1629877",
+      "league": "NM Cupen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/105.png",
+      "home": {
+        "name": "Varhaug",
+        "short": "VAR",
+        "logo": "https://media.api-sports.io/football/teams/23424.png"
+      },
+      "away": {
+        "name": "Sandnes ULF",
+        "short": "SAN",
+        "logo": "https://media.api-sports.io/football/teams/2146.png"
+      },
+      "score": "2 - 1",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1629895",
+      "league": "NM Cupen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/105.png",
+      "home": {
+        "name": "Rosseland",
+        "short": "ROS",
+        "logo": "https://media.api-sports.io/football/teams/18929.png"
+      },
+      "away": {
+        "name": "Bryne",
+        "short": "BRY",
+        "logo": "https://media.api-sports.io/football/teams/2142.png"
+      },
+      "score": "0 - 0",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1603974",
+      "league": "Division 1",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/308.png",
+      "home": {
+        "name": "Al Zulfi",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/10524.png"
+      },
+      "away": {
+        "name": "Al Wehda Club",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/2937.png"
+      },
+      "score": "0 - 0",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1603975",
+      "league": "Division 1",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/308.png",
+      "home": {
+        "name": "Al Bukayriyah",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/2966.png"
+      },
+      "away": {
+        "name": "Al Okhdood",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/2977.png"
+      },
+      "score": "0 - 1",
+      "minute": "45'",
+      "status": "HT"
+    },
+    {
+      "id": "1548377",
+      "league": "Svenska Cupen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/115.png",
+      "home": {
+        "name": "Friska Viljor",
+        "short": "FRI",
+        "logo": "https://media.api-sports.io/football/teams/12586.png"
+      },
+      "away": {
+        "name": "Sirius",
+        "short": "SIR",
+        "logo": "https://media.api-sports.io/football/teams/370.png"
+      },
+      "score": "0 - 0",
+      "minute": "32'",
+      "status": "1H"
+    },
+    {
+      "id": "1549406",
+      "league": "Svenska Cupen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/115.png",
+      "home": {
+        "name": "Stockholm Internazionale",
+        "short": "STO",
+        "logo": "https://media.api-sports.io/football/teams/12585.png"
+      },
+      "away": {
+        "name": "Hammarby FF",
+        "short": "HAM",
+        "logo": "https://media.api-sports.io/football/teams/363.png"
+      },
+      "score": "0 - 2",
+      "minute": "31'",
+      "status": "1H"
+    },
+    {
+      "id": "1553091",
+      "league": "Svenska Cupen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/115.png",
+      "home": {
+        "name": "Skövde AIK",
+        "short": "SKÖ",
+        "logo": "https://media.api-sports.io/football/teams/6698.png"
+      },
+      "away": {
+        "name": "Halmstad",
+        "short": "HAL",
+        "logo": "https://media.api-sports.io/football/teams/766.png"
+      },
+      "score": "0 - 1",
+      "minute": "32'",
+      "status": "1H"
+    },
+    {
+      "id": "1559588",
+      "league": "Svenska Cupen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/115.png",
+      "home": {
+        "name": "Bollstanäs",
+        "short": "BOL",
+        "logo": "https://media.api-sports.io/football/teams/25574.png"
+      },
+      "away": {
+        "name": "United Nordic",
+        "short": "UNI",
+        "logo": "https://media.api-sports.io/football/teams/16601.png"
+      },
+      "score": "0 - 2",
+      "minute": "33'",
+      "status": "1H"
+    },
+    {
+      "id": "1560924",
+      "league": "Svenska Cupen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/115.png",
+      "home": {
+        "name": "Dalstorps",
+        "short": "DAL",
+        "logo": "https://media.api-sports.io/football/teams/12613.png"
+      },
+      "away": {
+        "name": "Norrby IF",
+        "short": "NOR",
+        "logo": "https://media.api-sports.io/football/teams/2173.png"
+      },
+      "score": "0 - 0",
+      "minute": "32'",
+      "status": "1H"
+    },
+    {
+      "id": "1586520",
+      "league": "Regionalliga - Nord",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/84.png",
+      "home": {
+        "name": "Eimsbütteler TV",
+        "short": "EIM",
+        "logo": "https://media.api-sports.io/football/teams/13947.png"
+      },
+      "away": {
+        "name": "Bremer SV",
+        "short": "BRE",
+        "logo": "https://media.api-sports.io/football/teams/1630.png"
+      },
+      "score": "0 - 0",
+      "minute": "25'",
+      "status": "1H"
+    },
+    {
+      "id": "1586525",
+      "league": "Regionalliga - Nord",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/84.png",
+      "home": {
+        "name": "Schöningen",
+        "short": "SCH",
+        "logo": "https://media.api-sports.io/football/teams/19475.png"
+      },
+      "away": {
+        "name": "St. Pauli II",
+        "short": "ST.",
+        "logo": "https://media.api-sports.io/football/teams/9346.png"
+      },
+      "score": "0 - 2",
+      "minute": "31'",
+      "status": "1H"
+    },
+    {
+      "id": "1586526",
+      "league": "Regionalliga - Nord",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/84.png",
+      "home": {
+        "name": "Todesfelde",
+        "short": "TOD",
+        "logo": "https://media.api-sports.io/football/teams/12880.png"
+      },
+      "away": {
+        "name": "VfB Oldenburg",
+        "short": "VFB",
+        "logo": "https://media.api-sports.io/football/teams/9347.png"
+      },
+      "score": "0 - 1",
+      "minute": "28'",
+      "status": "1H"
+    },
+    {
+      "id": "1623462",
+      "league": "UEFA Champions League Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/525.png",
+      "home": {
+        "name": "Sparta Praha W",
+        "short": "SPA",
+        "logo": "https://media.api-sports.io/football/teams/10925.png"
+      },
+      "away": {
+        "name": "Servette Chênois W",
+        "short": "SER",
+        "logo": "https://media.api-sports.io/football/teams/15548.png"
+      },
+      "score": "1 - 1",
+      "minute": "32'",
+      "status": "1H"
+    },
+    {
+      "id": "1623429",
+      "league": "UEFA Europa Conference League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/848.png",
+      "home": {
+        "name": "Rapid Vienna",
+        "short": "RAP",
+        "logo": "https://media.api-sports.io/football/teams/781.png"
+      },
+      "away": {
+        "name": "Heart Of Midlothian",
+        "short": "HEA",
+        "logo": "https://media.api-sports.io/football/teams/254.png"
+      },
+      "score": "0 - 0",
+      "minute": "16'",
+      "status": "1H"
+    },
+    {
+      "id": "1495919",
+      "league": "1. Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/104.png",
+      "home": {
+        "name": "Asane",
+        "short": "ASA",
+        "logo": "https://media.api-sports.io/football/teams/2148.png"
+      },
+      "away": {
+        "name": "Lyn",
+        "short": "LYN",
+        "logo": "https://media.api-sports.io/football/teams/7006.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1495920",
+      "league": "1. Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/104.png",
+      "home": {
+        "name": "Haugesund",
+        "short": "HAU",
+        "logo": "https://media.api-sports.io/football/teams/328.png"
+      },
+      "away": {
+        "name": "Egersund",
+        "short": "EGE",
+        "logo": "https://media.api-sports.io/football/teams/6976.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1495921",
+      "league": "1. Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/104.png",
+      "home": {
+        "name": "Moss",
+        "short": "MOS",
+        "logo": "https://media.api-sports.io/football/teams/7012.png"
+      },
+      "away": {
+        "name": "Sogndal",
+        "short": "SOG",
+        "logo": "https://media.api-sports.io/football/teams/758.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1495922",
+      "league": "1. Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/104.png",
+      "home": {
+        "name": "ODD Ballklubb",
+        "short": "ODD",
+        "logo": "https://media.api-sports.io/football/teams/330.png"
+      },
+      "away": {
+        "name": "Kongsvinger",
+        "short": "KON",
+        "logo": "https://media.api-sports.io/football/teams/2144.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1495924",
+      "league": "1. Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/104.png",
+      "home": {
+        "name": "Stabaek",
+        "short": "STA",
+        "logo": "https://media.api-sports.io/football/teams/323.png"
+      },
+      "away": {
+        "name": "Ranheim",
+        "short": "RAN",
+        "logo": "https://media.api-sports.io/football/teams/322.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1495926",
+      "league": "1. Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/104.png",
+      "home": {
+        "name": "Stromsgodset",
+        "short": "STR",
+        "logo": "https://media.api-sports.io/football/teams/324.png"
+      },
+      "away": {
+        "name": "hodd",
+        "short": "HOD",
+        "logo": "https://media.api-sports.io/football/teams/2150.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1586522",
+      "league": "Regionalliga - Nord",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/84.png",
+      "home": {
+        "name": "SSV Jeddeloh",
+        "short": "SSV",
+        "logo": "https://media.api-sports.io/football/teams/1655.png"
+      },
+      "away": {
+        "name": "Hannover 96 II",
+        "short": "HAN",
+        "logo": "https://media.api-sports.io/football/teams/9341.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1586523",
+      "league": "Regionalliga - Nord",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/84.png",
+      "home": {
+        "name": "VfB Lübeck",
+        "short": "VFB",
+        "logo": "https://media.api-sports.io/football/teams/1625.png"
+      },
+      "away": {
+        "name": "Hamburger SV II",
+        "short": "HAM",
+        "logo": "https://media.api-sports.io/football/teams/9340.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1586833",
+      "league": "Regionalliga - Nordost",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/85.png",
+      "home": {
+        "name": "Erzgebirge Aue",
+        "short": "ERZ",
+        "logo": "https://media.api-sports.io/football/teams/190.png"
+      },
+      "away": {
+        "name": "Hertha BSC II",
+        "short": "HER",
+        "logo": "https://media.api-sports.io/football/teams/9353.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1586835",
+      "league": "Regionalliga - Nordost",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/85.png",
+      "home": {
+        "name": "Greifswalder FC",
+        "short": "GRE",
+        "logo": "https://media.api-sports.io/football/teams/16118.png"
+      },
+      "away": {
+        "name": "SV Babelsberg 03",
+        "short": "SV ",
+        "logo": "https://media.api-sports.io/football/teams/1622.png"
+      },
+      "score": "0 - 0",
+      "minute": "1'",
+      "status": "1H"
+    },
+    {
+      "id": "1605330",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/657.png",
+      "home": {
+        "name": "FC Levadia Tallinn",
+        "short": "FC ",
+        "logo": "https://media.api-sports.io/football/teams/2273.png"
+      },
+      "away": {
+        "name": "Paide",
+        "short": "PAI",
+        "logo": "https://media.api-sports.io/football/teams/3528.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1611265",
+      "league": "David Kipiani Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/672.png",
+      "home": {
+        "name": "Torpedo Kutaisi",
+        "short": "TOR",
+        "logo": "https://media.api-sports.io/football/teams/685.png"
+      },
+      "away": {
+        "name": "Dinamo Batumi",
+        "short": "DIN",
+        "logo": "https://media.api-sports.io/football/teams/705.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1612210",
+      "league": "Premier League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/233.png",
+      "home": {
+        "name": "National Bank of Egypt",
+        "short": "NAT",
+        "logo": "https://media.api-sports.io/football/teams/15570.png"
+      },
+      "away": {
+        "name": "Zamalek SC",
+        "short": "ZAM",
+        "logo": "https://media.api-sports.io/football/teams/1040.png"
+      },
+      "score": "0 - 0",
+      "minute": "1'",
+      "status": "1H"
+    },
+    {
+      "id": "1612211",
+      "league": "Premier League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/233.png",
+      "home": {
+        "name": "Petrojet",
+        "short": "PET",
+        "logo": "https://media.api-sports.io/football/teams/1041.png"
+      },
+      "away": {
+        "name": "El Geish",
+        "short": "EL ",
+        "logo": "https://media.api-sports.io/football/teams/1039.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1618961",
+      "league": "Friendlies Clubs",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/667.png",
+      "home": {
+        "name": "Barcelona B",
+        "short": "BAR",
+        "logo": "https://media.api-sports.io/football/teams/712.png"
+      },
+      "away": {
+        "name": "Reddis",
+        "short": "RED",
+        "logo": "https://media.api-sports.io/football/teams/22136.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1618962",
+      "league": "Friendlies Clubs",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/667.png",
+      "home": {
+        "name": "Gimnástica Segoviana",
+        "short": "GIM",
+        "logo": "https://media.api-sports.io/football/teams/9387.png"
+      },
+      "away": {
+        "name": "Leganés II",
+        "short": "LEG",
+        "logo": "https://media.api-sports.io/football/teams/9710.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1618963",
+      "league": "Friendlies Clubs",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/667.png",
+      "home": {
+        "name": "Sabiñánigo",
+        "short": "SAB",
+        "logo": "https://media.api-sports.io/football/teams/15328.png"
+      },
+      "away": {
+        "name": "Huesca II",
+        "short": "HUE",
+        "logo": "https://media.api-sports.io/football/teams/15327.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1619034",
+      "league": "DBU Pokalen",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/121.png",
+      "home": {
+        "name": "FA 2000",
+        "short": "FA ",
+        "logo": "https://media.api-sports.io/football/teams/8634.png"
+      },
+      "away": {
+        "name": "Lyngby",
+        "short": "LYN",
+        "logo": "https://media.api-sports.io/football/teams/625.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1623463",
+      "league": "UEFA Champions League Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/525.png",
+      "home": {
+        "name": "Czarni Sosnowiec W",
+        "short": "CZA",
+        "logo": "https://media.api-sports.io/football/teams/16838.png"
+      },
+      "away": {
+        "name": "OH Leuven W",
+        "short": "OH ",
+        "logo": "https://media.api-sports.io/football/teams/1790.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1623464",
+      "league": "UEFA Champions League Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/525.png",
+      "home": {
+        "name": "Eintracht Frankfurt W",
+        "short": "EIN",
+        "logo": "https://media.api-sports.io/football/teams/14014.png"
+      },
+      "away": {
+        "name": "Paris Saint Germain W",
+        "short": "PAR",
+        "logo": "https://media.api-sports.io/football/teams/1667.png"
+      },
+      "score": "0 - 0",
+      "minute": "3'",
+      "status": "1H"
+    },
+    {
+      "id": "1623465",
+      "league": "UEFA Champions League Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/525.png",
+      "home": {
+        "name": "PSV/Eindhoven W",
+        "short": "PSV",
+        "logo": "https://media.api-sports.io/football/teams/1895.png"
+      },
+      "away": {
+        "name": "Køge W",
+        "short": "KØG",
+        "logo": "https://media.api-sports.io/football/teams/13982.png"
+      },
+      "score": "0 - 0",
+      "minute": "3'",
+      "status": "1H"
+    },
+    {
+      "id": "1626955",
+      "league": "UEFA Europa Cup - Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1191.png",
+      "home": {
+        "name": "Anderlecht W",
+        "short": "AND",
+        "logo": "https://media.api-sports.io/football/teams/1792.png"
+      },
+      "away": {
+        "name": "Feyenoord W",
+        "short": "FEY",
+        "logo": "https://media.api-sports.io/football/teams/16853.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1626958",
+      "league": "UEFA Europa Cup - Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1191.png",
+      "home": {
+        "name": "Sturm Graz W",
+        "short": "STU",
+        "logo": "https://media.api-sports.io/football/teams/10232.png"
+      },
+      "away": {
+        "name": "Gintra-Universitetas W",
+        "short": "GIN",
+        "logo": "https://media.api-sports.io/football/teams/10891.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1630055",
+      "league": "U19 league",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1241.png",
+      "home": {
+        "name": "Jedinstvo U. U19",
+        "short": "JED",
+        "logo": "https://media.api-sports.io/football/teams/28267.png"
+      },
+      "away": {
+        "name": "Mladost Lucani U19",
+        "short": "MLA",
+        "logo": "https://media.api-sports.io/football/teams/28268.png"
+      },
+      "score": "0 - 0",
+      "minute": "2'",
+      "status": "1H"
+    },
+    {
+      "id": "1574303",
+      "league": "1. Liga Promotion",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/510.png",
+      "home": {
+        "name": "Bulle",
+        "short": "BUL",
+        "logo": "https://media.api-sports.io/football/teams/6618.png"
+      },
+      "away": {
+        "name": "Young Boys II",
+        "short": "YOU",
+        "logo": "https://media.api-sports.io/football/teams/12698.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1586518",
+      "league": "Regionalliga - Nord",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/84.png",
+      "home": {
+        "name": "Atlas Delmenhorst",
+        "short": "ATL",
+        "logo": "https://media.api-sports.io/football/teams/4260.png"
+      },
+      "away": {
+        "name": "Kickers Emden",
+        "short": "KIC",
+        "logo": "https://media.api-sports.io/football/teams/12804.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1586519",
+      "league": "Regionalliga - Nord",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/84.png",
+      "home": {
+        "name": "SV Drochtersen/Assel",
+        "short": "SV ",
+        "logo": "https://media.api-sports.io/football/teams/1623.png"
+      },
+      "away": {
+        "name": "Werder Bremen II",
+        "short": "WER",
+        "logo": "https://media.api-sports.io/football/teams/1330.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1600325",
+      "league": "Premier Soccer League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/288.png",
+      "home": {
+        "name": "Golden Arrows",
+        "short": "GOL",
+        "logo": "https://media.api-sports.io/football/teams/2690.png"
+      },
+      "away": {
+        "name": "Stellenbosch",
+        "short": "STE",
+        "logo": "https://media.api-sports.io/football/teams/4905.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1600326",
+      "league": "Premier Soccer League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/288.png",
+      "home": {
+        "name": "Mamelodi Sundowns",
+        "short": "MAM",
+        "logo": "https://media.api-sports.io/football/teams/2699.png"
+      },
+      "away": {
+        "name": "Amazulu",
+        "short": "AMA",
+        "logo": "https://media.api-sports.io/football/teams/2669.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1600327",
+      "league": "Premier Soccer League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/288.png",
+      "home": {
+        "name": "Polokwane City",
+        "short": "POL",
+        "logo": "https://media.api-sports.io/football/teams/2693.png"
+      },
+      "away": {
+        "name": "Milford FC",
+        "short": "MIL",
+        "logo": "https://media.api-sports.io/football/teams/22234.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1600328",
+      "league": "Premier Soccer League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/288.png",
+      "home": {
+        "name": "Richards Bay",
+        "short": "RIC",
+        "logo": "https://media.api-sports.io/football/teams/10567.png"
+      },
+      "away": {
+        "name": "Kaizer Chiefs",
+        "short": "KAI",
+        "logo": "https://media.api-sports.io/football/teams/2691.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1618964",
+      "league": "Friendlies Clubs",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/667.png",
+      "home": {
+        "name": "Atlético Astorga",
+        "short": "ATL",
+        "logo": "https://media.api-sports.io/football/teams/9723.png"
+      },
+      "away": {
+        "name": "Salamanca UDS",
+        "short": "SAL",
+        "logo": "https://media.api-sports.io/football/teams/9588.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1623466",
+      "league": "UEFA Champions League Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/525.png",
+      "home": {
+        "name": "Ajax W",
+        "short": "AJA",
+        "logo": "https://media.api-sports.io/football/teams/1898.png"
+      },
+      "away": {
+        "name": "Real Madrid W",
+        "short": "REA",
+        "logo": "https://media.api-sports.io/football/teams/15224.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1626952",
+      "league": "UEFA Europa Cup - Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1191.png",
+      "home": {
+        "name": "Breidablik W",
+        "short": "BRE",
+        "logo": "https://media.api-sports.io/football/teams/10914.png"
+      },
+      "away": {
+        "name": "Csikszereda MC W",
+        "short": "CSI",
+        "logo": "https://media.api-sports.io/football/teams/19903.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1623460",
+      "league": "UEFA Champions League Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/525.png",
+      "home": {
+        "name": "Chelsea W",
+        "short": "CHE",
+        "logo": "https://media.api-sports.io/football/teams/1853.png"
+      },
+      "away": {
+        "name": "Real Sociedad W",
+        "short": "REA",
+        "logo": "https://media.api-sports.io/football/teams/1912.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1623478",
+      "league": "Copa Rio",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1035.png",
+      "home": {
+        "name": "Nova Iguaçu",
+        "short": "NOV",
+        "logo": "https://media.api-sports.io/football/teams/7782.png"
+      },
+      "away": {
+        "name": "Sampaio Corrêa RJ",
+        "short": "SAM",
+        "logo": "https://media.api-sports.io/football/teams/13115.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1498649",
+      "league": "Primera Nacional",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/129.png",
+      "home": {
+        "name": "Acassuso",
+        "short": "ACA",
+        "logo": "https://media.api-sports.io/football/teams/2425.png"
+      },
+      "away": {
+        "name": "San Telmo",
+        "short": "SAN",
+        "logo": "https://media.api-sports.io/football/teams/1932.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1498655",
+      "league": "Primera Nacional",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/129.png",
+      "home": {
+        "name": "Chaco For Ever",
+        "short": "CHA",
+        "logo": "https://media.api-sports.io/football/teams/1946.png"
+      },
+      "away": {
+        "name": "San Miguel",
+        "short": "SAN",
+        "logo": "https://media.api-sports.io/football/teams/8379.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1499599",
+      "league": "Primera B Metropolitana",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/131.png",
+      "home": {
+        "name": "Liniers",
+        "short": "LIN",
+        "logo": "https://media.api-sports.io/football/teams/8395.png"
+      },
+      "away": {
+        "name": "Deportivo Armenio",
+        "short": "DEP",
+        "logo": "https://media.api-sports.io/football/teams/2427.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1500019",
+      "league": "Primera C",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/132.png",
+      "home": {
+        "name": "Central Ballester",
+        "short": "CEN",
+        "logo": "https://media.api-sports.io/football/teams/1967.png"
+      },
+      "away": {
+        "name": "Sportivo Barracas",
+        "short": "SPO",
+        "logo": "https://media.api-sports.io/football/teams/1931.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1543994",
+      "league": "Brasileiro U17",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1128.png",
+      "home": {
+        "name": "RB Bragantino U17",
+        "short": "RB ",
+        "logo": "https://media.api-sports.io/football/teams/24485.png"
+      },
+      "away": {
+        "name": "Athletico PR U17",
+        "short": "ATH",
+        "logo": "https://media.api-sports.io/football/teams/24469.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1579789",
+      "league": "First Amateur Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/487.png",
+      "home": {
+        "name": "Union Saint-Gilloise II",
+        "short": "UNI",
+        "logo": "https://media.api-sports.io/football/teams/19902.png"
+      },
+      "away": {
+        "name": "Rochefort",
+        "short": "ROC",
+        "logo": "https://media.api-sports.io/football/teams/5914.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1579790",
+      "league": "First Amateur Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/487.png",
+      "home": {
+        "name": "Olympic Charleroi",
+        "short": "OLY",
+        "logo": "https://media.api-sports.io/football/teams/6221.png"
+      },
+      "away": {
+        "name": "Standard Liège II",
+        "short": "STA",
+        "logo": "https://media.api-sports.io/football/teams/19047.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1579791",
+      "league": "First Amateur Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/487.png",
+      "home": {
+        "name": "Albert Quévy-Mons",
+        "short": "ALB",
+        "logo": "https://media.api-sports.io/football/teams/5740.png"
+      },
+      "away": {
+        "name": "Meux",
+        "short": "MEU",
+        "logo": "https://media.api-sports.io/football/teams/5872.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1579792",
+      "league": "First Amateur Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/487.png",
+      "home": {
+        "name": "Tubize",
+        "short": "TUB",
+        "logo": "https://media.api-sports.io/football/teams/262.png"
+      },
+      "away": {
+        "name": "Sporting Charleroi II",
+        "short": "SPO",
+        "logo": "https://media.api-sports.io/football/teams/19959.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1582821",
+      "league": "Second Amateur Division - ACFF",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/148.png",
+      "home": {
+        "name": "Acren-Lessines",
+        "short": "ACR",
+        "logo": "https://media.api-sports.io/football/teams/5737.png"
+      },
+      "away": {
+        "name": "Stade Verviers",
+        "short": "STA",
+        "logo": "https://media.api-sports.io/football/teams/22256.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1582824",
+      "league": "Second Amateur Division - ACFF",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/148.png",
+      "home": {
+        "name": "Crossing Schaerbeek",
+        "short": "CRO",
+        "logo": "https://media.api-sports.io/football/teams/5770.png"
+      },
+      "away": {
+        "name": "La Calamine",
+        "short": "LA ",
+        "logo": "https://media.api-sports.io/football/teams/8461.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1601002",
+      "league": "Division 2 - Norrland",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/594.png",
+      "home": {
+        "name": "IFK Umeå",
+        "short": "IFK",
+        "logo": "https://media.api-sports.io/football/teams/12587.png"
+      },
+      "away": {
+        "name": "Umeå FC Akademi",
+        "short": "UME",
+        "logo": "https://media.api-sports.io/football/teams/12593.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1602997",
+      "league": "Pro League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/307.png",
+      "home": {
+        "name": "Al Diriyah",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/26738.png"
+      },
+      "away": {
+        "name": "Al Kholood",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/10509.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1610068",
+      "league": "1. Liga Classic - Group 2",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/600.png",
+      "home": {
+        "name": "Langenthal",
+        "short": "LAN",
+        "logo": "https://media.api-sports.io/football/teams/12705.png"
+      },
+      "away": {
+        "name": "Schötz",
+        "short": "SCH",
+        "logo": "https://media.api-sports.io/football/teams/12708.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1611965",
+      "league": "Reserve League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/906.png",
+      "home": {
+        "name": "Banfield Res.",
+        "short": "BAN",
+        "logo": "https://media.api-sports.io/football/teams/18679.png"
+      },
+      "away": {
+        "name": "Talleres Córdoba Res.",
+        "short": "TAL",
+        "logo": "https://media.api-sports.io/football/teams/18699.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1611971",
+      "league": "Reserve League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/906.png",
+      "home": {
+        "name": "Colón Res.",
+        "short": "COL",
+        "logo": "https://media.api-sports.io/football/teams/18683.png"
+      },
+      "away": {
+        "name": "Lanús Res.",
+        "short": "LAN",
+        "logo": "https://media.api-sports.io/football/teams/18690.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1611972",
+      "league": "Reserve League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/906.png",
+      "home": {
+        "name": "Estudiantes La Plata Res",
+        "short": "EST",
+        "logo": "https://media.api-sports.io/football/teams/18685.png"
+      },
+      "away": {
+        "name": "Boca Juniors Res.",
+        "short": "BOC",
+        "logo": "https://media.api-sports.io/football/teams/18681.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1611973",
+      "league": "Reserve League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/906.png",
+      "home": {
+        "name": "Platense Res.",
+        "short": "PLA",
+        "logo": "https://media.api-sports.io/football/teams/18693.png"
+      },
+      "away": {
+        "name": "Atl. Rafaela 2",
+        "short": "ATL",
+        "logo": "https://media.api-sports.io/football/teams/27412.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1611974",
+      "league": "Reserve League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/906.png",
+      "home": {
+        "name": "Quilmes 2",
+        "short": "QUI",
+        "logo": "https://media.api-sports.io/football/teams/27413.png"
+      },
+      "away": {
+        "name": "Independiente Res.",
+        "short": "IND",
+        "logo": "https://media.api-sports.io/football/teams/18689.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1611975",
+      "league": "Reserve League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/906.png",
+      "home": {
+        "name": "San Lorenzo Res.",
+        "short": "SAN",
+        "logo": "https://media.api-sports.io/football/teams/18697.png"
+      },
+      "away": {
+        "name": "Godoy Cruz Res.",
+        "short": "GOD",
+        "logo": "https://media.api-sports.io/football/teams/18687.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1622636",
+      "league": "Premier League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/330.png",
+      "home": {
+        "name": "Al Salmiyah",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/3538.png"
+      },
+      "away": {
+        "name": "Al Nasar",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/3536.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1623261",
+      "league": "Premier League International Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1039.png",
+      "home": {
+        "name": "Fulham U21",
+        "short": "FUL",
+        "logo": "https://media.api-sports.io/football/teams/7194.png"
+      },
+      "away": {
+        "name": "Borussia Dortmund II",
+        "short": "BOR",
+        "logo": "https://media.api-sports.io/football/teams/9367.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1626959",
+      "league": "UEFA Europa Cup - Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1191.png",
+      "home": {
+        "name": "Spartak Subotica W",
+        "short": "SPA",
+        "logo": "https://media.api-sports.io/football/teams/10903.png"
+      },
+      "away": {
+        "name": "Brøndby W",
+        "short": "BRØ",
+        "logo": "https://media.api-sports.io/football/teams/10883.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1627067",
+      "league": "Premier League Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/871.png",
+      "home": {
+        "name": "Bromley U21",
+        "short": "BRO",
+        "logo": "https://media.api-sports.io/football/teams/24846.png"
+      },
+      "away": {
+        "name": "West Bromwich Albion U21",
+        "short": "WES",
+        "logo": "https://media.api-sports.io/football/teams/11913.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1627068",
+      "league": "Premier League Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/871.png",
+      "home": {
+        "name": "Stockport County U21",
+        "short": "STO",
+        "logo": "https://media.api-sports.io/football/teams/24849.png"
+      },
+      "away": {
+        "name": "Charlton Athletic U21",
+        "short": "CHA",
+        "logo": "https://media.api-sports.io/football/teams/20082.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1627173",
+      "league": "Pernambucano - U20",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1088.png",
+      "home": {
+        "name": "Serrano PE U20",
+        "short": "SER",
+        "logo": "https://media.api-sports.io/football/teams/23498.png"
+      },
+      "away": {
+        "name": "Guarany U20",
+        "short": "GUA",
+        "logo": "https://media.api-sports.io/football/teams/26779.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1627187",
+      "league": "Pernambucano - U20",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1088.png",
+      "home": {
+        "name": "Santa Cruz U20",
+        "short": "SAN",
+        "logo": "https://media.api-sports.io/football/teams/13053.png"
+      },
+      "away": {
+        "name": "Ipojuca U20",
+        "short": "IPO",
+        "logo": "https://media.api-sports.io/football/teams/23495.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1627932",
+      "league": "Iraqi League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/542.png",
+      "home": {
+        "name": "Al Minaa Basra",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/11065.png"
+      },
+      "away": {
+        "name": "Gharraf",
+        "short": "GHA",
+        "logo": "https://media.api-sports.io/football/teams/26600.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1627933",
+      "league": "Iraqi League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/542.png",
+      "home": {
+        "name": "Mosul",
+        "short": "MOS",
+        "logo": "https://media.api-sports.io/football/teams/26598.png"
+      },
+      "away": {
+        "name": "Karbala",
+        "short": "KAR",
+        "logo": "https://media.api-sports.io/football/teams/20464.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1628892",
+      "league": "FIFA Intercontinental Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1168.png",
+      "home": {
+        "name": "Al-Ahli Jeddah",
+        "short": "AL-",
+        "logo": "https://media.api-sports.io/football/teams/2929.png"
+      },
+      "away": {
+        "name": "Auckland",
+        "short": "AUC",
+        "logo": "https://media.api-sports.io/football/teams/24608.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1632403",
+      "league": "Copa Uruguay",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/930.png",
+      "home": {
+        "name": "Danubio",
+        "short": "DAN",
+        "logo": "https://media.api-sports.io/football/teams/2352.png"
+      },
+      "away": {
+        "name": "Atenas",
+        "short": "ATE",
+        "logo": "https://media.api-sports.io/football/teams/2364.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1632404",
+      "league": "Copa Uruguay",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/930.png",
+      "home": {
+        "name": "Juventud",
+        "short": "JUV",
+        "logo": "https://media.api-sports.io/football/teams/2353.png"
+      },
+      "away": {
+        "name": "Oriental",
+        "short": "ORI",
+        "logo": "https://media.api-sports.io/football/teams/2376.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1632405",
+      "league": "Copa Uruguay",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/930.png",
+      "home": {
+        "name": "Progreso",
+        "short": "PRO",
+        "logo": "https://media.api-sports.io/football/teams/2363.png"
+      },
+      "away": {
+        "name": "CA River Plate",
+        "short": "CA ",
+        "logo": "https://media.api-sports.io/football/teams/2351.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1602643",
+      "league": "Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/761.png",
+      "home": {
+        "name": "Triesen",
+        "short": "TRI",
+        "logo": "https://media.api-sports.io/football/teams/16159.png"
+      },
+      "away": {
+        "name": "Vaduz II",
+        "short": "VAD",
+        "logo": "https://media.api-sports.io/football/teams/18002.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1610069",
+      "league": "1. Liga Classic - Group 2",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/600.png",
+      "home": {
+        "name": "Courtételle",
+        "short": "COU",
+        "logo": "https://media.api-sports.io/football/teams/17480.png"
+      },
+      "away": {
+        "name": "Münsingen",
+        "short": "MÜN",
+        "logo": "https://media.api-sports.io/football/teams/10589.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1498663",
+      "league": "Primera Nacional",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/129.png",
+      "home": {
+        "name": "Patronato",
+        "short": "PAT",
+        "logo": "https://media.api-sports.io/football/teams/444.png"
+      },
+      "away": {
+        "name": "Atlanta",
+        "short": "ATL",
+        "logo": "https://media.api-sports.io/football/teams/1948.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1604827",
+      "league": "1. Liga Classic - Group 1",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/599.png",
+      "home": {
+        "name": "Meyrin",
+        "short": "MEY",
+        "logo": "https://media.api-sports.io/football/teams/6630.png"
+      },
+      "away": {
+        "name": "Servette II",
+        "short": "SER",
+        "logo": "https://media.api-sports.io/football/teams/16323.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1596407",
+      "league": "Non League Premier - Northern",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/59.png",
+      "home": {
+        "name": "Avro",
+        "short": "AVR",
+        "logo": "https://media.api-sports.io/football/teams/8690.png"
+      },
+      "away": {
+        "name": "Leek Town",
+        "short": "LEE",
+        "logo": "https://media.api-sports.io/football/teams/7239.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1623084",
+      "league": "League Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/48.png",
+      "home": {
+        "name": "Bradford",
+        "short": "BRA",
+        "logo": "https://media.api-sports.io/football/teams/1343.png"
+      },
+      "away": {
+        "name": "Burnley",
+        "short": "BUR",
+        "logo": "https://media.api-sports.io/football/teams/44.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1623089",
+      "league": "League Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/48.png",
+      "home": {
+        "name": "Newcastle",
+        "short": "NEW",
+        "logo": "https://media.api-sports.io/football/teams/34.png"
+      },
+      "away": {
+        "name": "West Brom",
+        "short": "WES",
+        "logo": "https://media.api-sports.io/football/teams/60.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1623092",
+      "league": "League Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/48.png",
+      "home": {
+        "name": "Tottenham",
+        "short": "TOT",
+        "logo": "https://media.api-sports.io/football/teams/47.png"
+      },
+      "away": {
+        "name": "Charlton",
+        "short": "CHA",
+        "logo": "https://media.api-sports.io/football/teams/1335.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1623467",
+      "league": "UEFA Champions League Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/525.png",
+      "home": {
+        "name": "St. Pölten W",
+        "short": "ST.",
+        "logo": "https://media.api-sports.io/football/teams/10227.png"
+      },
+      "away": {
+        "name": "Juventus W",
+        "short": "JUV",
+        "logo": "https://media.api-sports.io/football/teams/1886.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1627936",
+      "league": "Iraqi League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/542.png",
+      "home": {
+        "name": "Al Talaba",
+        "short": "AL ",
+        "logo": "https://media.api-sports.io/football/teams/11067.png"
+      },
+      "away": {
+        "name": "Newroz",
+        "short": "NEW",
+        "logo": "https://media.api-sports.io/football/teams/25062.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1535418",
+      "league": "Premiership Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1103.png",
+      "home": {
+        "name": "Derry City W",
+        "short": "DER",
+        "logo": "https://media.api-sports.io/football/teams/23632.png"
+      },
+      "away": {
+        "name": "Lisburn Ladies W",
+        "short": "LIS",
+        "logo": "https://media.api-sports.io/football/teams/23261.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1560816",
+      "league": "Copa Venezuela",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1113.png",
+      "home": {
+        "name": "Bolívar",
+        "short": "BOL",
+        "logo": "https://media.api-sports.io/football/teams/21231.png"
+      },
+      "away": {
+        "name": "Monagas SC",
+        "short": "MON",
+        "logo": "https://media.api-sports.io/football/teams/2811.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1570340",
+      "league": "La Liga",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/140.png",
+      "home": {
+        "name": "Real Madrid",
+        "short": "REA",
+        "logo": "https://media.api-sports.io/football/teams/541.png"
+      },
+      "away": {
+        "name": "Real Sociedad",
+        "short": "REA",
+        "logo": "https://media.api-sports.io/football/teams/548.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1612601",
+      "league": "Copa Paraguay",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/501.png",
+      "home": {
+        "name": "Deportivo Santani",
+        "short": "DEP",
+        "logo": "https://media.api-sports.io/football/teams/1189.png"
+      },
+      "away": {
+        "name": "Deportivo Recoleta",
+        "short": "DEP",
+        "logo": "https://media.api-sports.io/football/teams/10476.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1618990",
+      "league": "Primera División",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/344.png",
+      "home": {
+        "name": "San Antonio Bulo Bulo",
+        "short": "SAN",
+        "logo": "https://media.api-sports.io/football/teams/17760.png"
+      },
+      "away": {
+        "name": "The Strongest",
+        "short": "THE",
+        "logo": "https://media.api-sports.io/football/teams/3711.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1622628",
+      "league": "UEFA Champions League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/2.png",
+      "home": {
+        "name": "Celje",
+        "short": "CEL",
+        "logo": "https://media.api-sports.io/football/teams/4360.png"
+      },
+      "away": {
+        "name": "Slovan Bratislava",
+        "short": "SLO",
+        "logo": "https://media.api-sports.io/football/teams/656.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1622629",
+      "league": "UEFA Champions League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/2.png",
+      "home": {
+        "name": "AEK Athens FC",
+        "short": "AEK",
+        "logo": "https://media.api-sports.io/football/teams/575.png"
+      },
+      "away": {
+        "name": "Levski Sofia",
+        "short": "LEV",
+        "logo": "https://media.api-sports.io/football/teams/646.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1622630",
+      "league": "UEFA Champions League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/2.png",
+      "home": {
+        "name": "Lyon",
+        "short": "LYO",
+        "logo": "https://media.api-sports.io/football/teams/80.png"
+      },
+      "away": {
+        "name": "Fenerbahçe",
+        "short": "FEN",
+        "logo": "https://media.api-sports.io/football/teams/611.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1622631",
+      "league": "UEFA Champions League",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/2.png",
+      "home": {
+        "name": "Viking",
+        "short": "VIK",
+        "logo": "https://media.api-sports.io/football/teams/759.png"
+      },
+      "away": {
+        "name": "Dinamo Zagreb",
+        "short": "DIN",
+        "logo": "https://media.api-sports.io/football/teams/620.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1623101",
+      "league": "League Cup",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/48.png",
+      "home": {
+        "name": "Preston",
+        "short": "PRE",
+        "logo": "https://media.api-sports.io/football/teams/59.png"
+      },
+      "away": {
+        "name": "Everton",
+        "short": "EVE",
+        "logo": "https://media.api-sports.io/football/teams/45.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1623477",
+      "league": "Copa Rio",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1035.png",
+      "home": {
+        "name": "Boavista SC",
+        "short": "BOA",
+        "logo": "https://media.api-sports.io/football/teams/2206.png"
+      },
+      "away": {
+        "name": "Madureira",
+        "short": "MAD",
+        "logo": "https://media.api-sports.io/football/teams/7780.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1626957",
+      "league": "UEFA Europa Cup - Women",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1191.png",
+      "home": {
+        "name": "Torreense W",
+        "short": "TOR",
+        "logo": "https://media.api-sports.io/football/teams/20512.png"
+      },
+      "away": {
+        "name": "Kolos Kovalivka W",
+        "short": "KOL",
+        "logo": "https://media.api-sports.io/football/teams/24210.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1633888",
+      "league": "Mediterranean Games",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/919.png",
+      "home": {
+        "name": "Algeria U21",
+        "short": "ALG",
+        "logo": "https://media.api-sports.io/football/teams/28332.png"
+      },
+      "away": {
+        "name": "Albania U21",
+        "short": "ALB",
+        "logo": "https://media.api-sports.io/football/teams/8177.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1633889",
+      "league": "Mediterranean Games",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/919.png",
+      "home": {
+        "name": "Kosovo U21",
+        "short": "KOS",
+        "logo": "https://media.api-sports.io/football/teams/8203.png"
+      },
+      "away": {
+        "name": "Italy U18",
+        "short": "ITA",
+        "logo": "https://media.api-sports.io/football/teams/19071.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1560818",
+      "league": "Copa Venezuela",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1113.png",
+      "home": {
+        "name": "Atletico el Vigia FC",
+        "short": "ATL",
+        "logo": "https://media.api-sports.io/football/teams/2832.png"
+      },
+      "away": {
+        "name": "Club Atletico Barinas",
+        "short": "CLU",
+        "logo": "https://media.api-sports.io/football/teams/27528.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1560820",
+      "league": "Copa Venezuela",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1113.png",
+      "home": {
+        "name": "Mineros de Guyana",
+        "short": "MIN",
+        "logo": "https://media.api-sports.io/football/teams/2824.png"
+      },
+      "away": {
+        "name": "Dinamo de Puerto La Cruz",
+        "short": "DIN",
+        "logo": "https://media.api-sports.io/football/teams/2858.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1560822",
+      "league": "Copa Venezuela",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1113.png",
+      "home": {
+        "name": "Rayo Zuliano",
+        "short": "RAY",
+        "logo": "https://media.api-sports.io/football/teams/16847.png"
+      },
+      "away": {
+        "name": "Urena SC",
+        "short": "URE",
+        "logo": "https://media.api-sports.io/football/teams/2816.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1632396",
+      "league": "Amazonense - 2",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1134.png",
+      "home": {
+        "name": "Manicoré",
+        "short": "MAN",
+        "logo": "https://media.api-sports.io/football/teams/10868.png"
+      },
+      "away": {
+        "name": "RB do Norte",
+        "short": "RB ",
+        "logo": "https://media.api-sports.io/football/teams/24793.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1632397",
+      "league": "Amazonense - 2",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1134.png",
+      "home": {
+        "name": "Peñarol",
+        "short": "PEÑ",
+        "logo": "https://media.api-sports.io/football/teams/10865.png"
+      },
+      "away": {
+        "name": "Fast Clube-Am",
+        "short": "FAS",
+        "logo": "https://media.api-sports.io/football/teams/2211.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1560815",
+      "league": "Copa Venezuela",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1113.png",
+      "home": {
+        "name": "Aragua FC",
+        "short": "ARA",
+        "logo": "https://media.api-sports.io/football/teams/2817.png"
+      },
+      "away": {
+        "name": "Yaracuyanos FC",
+        "short": "YAR",
+        "logo": "https://media.api-sports.io/football/teams/2829.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1560823",
+      "league": "Copa Venezuela",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1113.png",
+      "home": {
+        "name": "Trujillanos FC",
+        "short": "TRU",
+        "logo": "https://media.api-sports.io/football/teams/2815.png"
+      },
+      "away": {
+        "name": "Deportivo Lara",
+        "short": "DEP",
+        "logo": "https://media.api-sports.io/football/teams/2812.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1560824",
+      "league": "Copa Venezuela",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1113.png",
+      "home": {
+        "name": "Zamora FC",
+        "short": "ZAM",
+        "logo": "https://media.api-sports.io/football/teams/2806.png"
+      },
+      "away": {
+        "name": "Real Frontera",
+        "short": "REA",
+        "logo": "https://media.api-sports.io/football/teams/2847.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1589395",
+      "league": "Copa De La Liga",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1232.png",
+      "home": {
+        "name": "Atletico Grau",
+        "short": "ATL",
+        "logo": "https://media.api-sports.io/football/teams/2564.png"
+      },
+      "away": {
+        "name": "Sport Boys",
+        "short": "SPO",
+        "logo": "https://media.api-sports.io/football/teams/2544.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1589396",
+      "league": "Copa De La Liga",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1232.png",
+      "home": {
+        "name": "Sporting Cristal",
+        "short": "SPO",
+        "logo": "https://media.api-sports.io/football/teams/2546.png"
+      },
+      "away": {
+        "name": "Sport Huancayo",
+        "short": "SPO",
+        "logo": "https://media.api-sports.io/football/teams/2555.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1627179",
+      "league": "Pernambucano - U20",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1088.png",
+      "home": {
+        "name": "Atletico Torres U20",
+        "short": "ATL",
+        "logo": "https://media.api-sports.io/football/teams/23489.png"
+      },
+      "away": {
+        "name": "Central SC U20",
+        "short": "CEN",
+        "logo": "https://media.api-sports.io/football/teams/23492.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1631505",
+      "league": "Copa Ecuador",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/917.png",
+      "home": {
+        "name": "Barcelona SC",
+        "short": "BAR",
+        "logo": "https://media.api-sports.io/football/teams/1152.png"
+      },
+      "away": {
+        "name": "Delfin SC",
+        "short": "DEL",
+        "logo": "https://media.api-sports.io/football/teams/1149.png"
+      },
+      "score": "0 - 0",
+      "minute": "CANC",
+      "status": "CANC"
+    },
+    {
+      "id": "1632406",
+      "league": "Copa Uruguay",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/930.png",
+      "home": {
+        "name": "Plaza Colonia",
+        "short": "PLA",
+        "logo": "https://media.api-sports.io/football/teams/2355.png"
+      },
+      "away": {
+        "name": "Cerro Largo",
+        "short": "CER",
+        "logo": "https://media.api-sports.io/football/teams/2369.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1632414",
+      "league": "Liga Pro Serie B",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/243.png",
+      "home": {
+        "name": "Cumbayá",
+        "short": "CUM",
+        "logo": "https://media.api-sports.io/football/teams/16476.png"
+      },
+      "away": {
+        "name": "LDU Portoviejo",
+        "short": "LDU",
+        "logo": "https://media.api-sports.io/football/teams/1988.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1634822",
+      "league": "Liga Femenina",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/712.png",
+      "home": {
+        "name": "América de Cali W",
+        "short": "AMÉ",
+        "logo": "https://media.api-sports.io/football/teams/15721.png"
+      },
+      "away": {
+        "name": "Deportivo Cali W",
+        "short": "DEP",
+        "logo": "https://media.api-sports.io/football/teams/15723.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1549746",
+      "league": "Primera A",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/239.png",
+      "home": {
+        "name": "Chico",
+        "short": "CHI",
+        "logo": "https://media.api-sports.io/football/teams/1132.png"
+      },
+      "away": {
+        "name": "Fortaleza FC",
+        "short": "FOR",
+        "logo": "https://media.api-sports.io/football/teams/1147.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1600551",
+      "league": "Primera Division",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/370.png",
+      "home": {
+        "name": "Platense",
+        "short": "PLA",
+        "logo": "https://media.api-sports.io/football/teams/19763.png"
+      },
+      "away": {
+        "name": "Alianza",
+        "short": "ALI",
+        "logo": "https://media.api-sports.io/football/teams/4299.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1605343",
+      "league": "Liga Mayor",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/759.png",
+      "home": {
+        "name": "Vega Real",
+        "short": "VEG",
+        "logo": "https://media.api-sports.io/football/teams/16142.png"
+      },
+      "away": {
+        "name": "Universidad O&M",
+        "short": "UNI",
+        "logo": "https://media.api-sports.io/football/teams/16141.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1612602",
+      "league": "Copa Paraguay",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/501.png",
+      "home": {
+        "name": "Cristóbal Colón JAS",
+        "short": "CRI",
+        "logo": "https://media.api-sports.io/football/teams/10475.png"
+      },
+      "away": {
+        "name": "Olimpia",
+        "short": "OLI",
+        "logo": "https://media.api-sports.io/football/teams/1182.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1499596",
+      "league": "Primera B Metropolitana",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/131.png",
+      "home": {
+        "name": "Deportivo Merlo",
+        "short": "DEP",
+        "logo": "https://media.api-sports.io/football/teams/8383.png"
+      },
+      "away": {
+        "name": "Dock Sud",
+        "short": "DOC",
+        "logo": "https://media.api-sports.io/football/teams/2429.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1505493",
+      "league": "Primera División",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/265.png",
+      "home": {
+        "name": "Coquimbo Unido",
+        "short": "COQ",
+        "logo": "https://media.api-sports.io/football/teams/2330.png"
+      },
+      "away": {
+        "name": "U. Catolica",
+        "short": "U. ",
+        "logo": "https://media.api-sports.io/football/teams/2994.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1560817",
+      "league": "Copa Venezuela",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1113.png",
+      "home": {
+        "name": "Caracas FC",
+        "short": "CAR",
+        "logo": "https://media.api-sports.io/football/teams/2808.png"
+      },
+      "away": {
+        "name": "Fundación Lara Deportiva",
+        "short": "FUN",
+        "logo": "https://media.api-sports.io/football/teams/10091.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1606286",
+      "league": "Goiano - 2",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1030.png",
+      "home": {
+        "name": "Grêmio Anápolis",
+        "short": "GRÊ",
+        "logo": "https://media.api-sports.io/football/teams/13127.png"
+      },
+      "away": {
+        "name": "Goianésia",
+        "short": "GOI",
+        "logo": "https://media.api-sports.io/football/teams/7873.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1628954",
+      "league": "Copa Ecuador",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/917.png",
+      "home": {
+        "name": "LDU de Quito",
+        "short": "LDU",
+        "logo": "https://media.api-sports.io/football/teams/1158.png"
+      },
+      "away": {
+        "name": "Aucas",
+        "short": "AUC",
+        "logo": "https://media.api-sports.io/football/teams/1156.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1629821",
+      "league": "Serie D",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/76.png",
+      "home": {
+        "name": "Sao Jose",
+        "short": "SAO",
+        "logo": "https://media.api-sports.io/football/teams/2232.png"
+      },
+      "away": {
+        "name": "Goiatuba EC",
+        "short": "GOI",
+        "logo": "https://media.api-sports.io/football/teams/18296.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1598010",
+      "league": "Copa Argentina",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/130.png",
+      "home": {
+        "name": "Aldosivi",
+        "short": "ALD",
+        "logo": "https://media.api-sports.io/football/teams/463.png"
+      },
+      "away": {
+        "name": "Independ. Rivadavia",
+        "short": "IND",
+        "logo": "https://media.api-sports.io/football/teams/473.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1548277",
+      "league": "Capixaba B",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1147.png",
+      "home": {
+        "name": "Linhares",
+        "short": "LIN",
+        "logo": "https://media.api-sports.io/football/teams/12928.png"
+      },
+      "away": {
+        "name": "GEL",
+        "short": "GEL",
+        "logo": "https://media.api-sports.io/football/teams/25010.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1606285",
+      "league": "Goiano - 2",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1030.png",
+      "home": {
+        "name": "Tupy FC",
+        "short": "TUP",
+        "logo": "https://media.api-sports.io/football/teams/24773.png"
+      },
+      "away": {
+        "name": "Bom Jesus EC",
+        "short": "BOM",
+        "logo": "https://media.api-sports.io/football/teams/26499.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1606287",
+      "league": "Goiano - 2",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1030.png",
+      "home": {
+        "name": "Goiânia",
+        "short": "GOI",
+        "logo": "https://media.api-sports.io/football/teams/10674.png"
+      },
+      "away": {
+        "name": "Rio Verde",
+        "short": "RIO",
+        "logo": "https://media.api-sports.io/football/teams/24771.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1606288",
+      "league": "Goiano - 2",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1030.png",
+      "home": {
+        "name": "Mineiros",
+        "short": "MIN",
+        "logo": "https://media.api-sports.io/football/teams/24769.png"
+      },
+      "away": {
+        "name": "Crixás EC",
+        "short": "CRI",
+        "logo": "https://media.api-sports.io/football/teams/26500.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1606289",
+      "league": "Goiano - 2",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1030.png",
+      "home": {
+        "name": "Trindade",
+        "short": "TRI",
+        "logo": "https://media.api-sports.io/football/teams/23307.png"
+      },
+      "away": {
+        "name": "Morrinhos",
+        "short": "MOR",
+        "logo": "https://media.api-sports.io/football/teams/18297.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1618991",
+      "league": "Primera División",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/344.png",
+      "home": {
+        "name": "Real Potosí",
+        "short": "REA",
+        "logo": "https://media.api-sports.io/football/teams/3708.png"
+      },
+      "away": {
+        "name": "Real Tomayapo",
+        "short": "REA",
+        "logo": "https://media.api-sports.io/football/teams/15708.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1560821",
+      "league": "Copa Venezuela",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/1113.png",
+      "home": {
+        "name": "Petare FC",
+        "short": "PET",
+        "logo": "https://media.api-sports.io/football/teams/2853.png"
+      },
+      "away": {
+        "name": "Anzoátegui FC",
+        "short": "ANZ",
+        "logo": "https://media.api-sports.io/football/teams/18806.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1605344",
+      "league": "Liga Mayor",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/759.png",
+      "home": {
+        "name": "Moca",
+        "short": "MOC",
+        "logo": "https://media.api-sports.io/football/teams/16617.png"
+      },
+      "away": {
+        "name": "Salcedo",
+        "short": "SAL",
+        "logo": "https://media.api-sports.io/football/teams/25556.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1632407",
+      "league": "Copa Uruguay",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/930.png",
+      "home": {
+        "name": "Penarol",
+        "short": "PEN",
+        "logo": "https://media.api-sports.io/football/teams/2348.png"
+      },
+      "away": {
+        "name": "Atletico Torque",
+        "short": "ATL",
+        "logo": "https://media.api-sports.io/football/teams/2365.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1549743",
+      "league": "Primera A",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/239.png",
+      "home": {
+        "name": "America de Cali",
+        "short": "AME",
+        "logo": "https://media.api-sports.io/football/teams/1138.png"
+      },
+      "away": {
+        "name": "Junior",
+        "short": "JUN",
+        "logo": "https://media.api-sports.io/football/teams/1135.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    },
+    {
+      "id": "1493962",
+      "league": "USL League One",
+      "leagueLogo": "https://media.api-sports.io/football/leagues/489.png",
+      "home": {
+        "name": "Naples",
+        "short": "NAP",
+        "logo": "https://media.api-sports.io/football/teams/25485.png"
+      },
+      "away": {
+        "name": "Union Omaha",
+        "short": "UNI",
+        "logo": "https://media.api-sports.io/football/teams/10283.png"
+      },
+      "score": "0 - 0",
+      "minute": "NS",
+      "status": "NS"
+    }
+  ]
+}

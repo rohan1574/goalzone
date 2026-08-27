@@ -1,0 +1,12 @@
+{
+  "expireAt": 1787877290132,
+  "data": {
+    "advice": "Double chance : draw or Union Omaha",
+    "percent": {
+      "home": "10%",
+      "draw": "45%",
+      "away": "45%"
+    },
+    "winner": "Union Omaha"
+  }
+}
