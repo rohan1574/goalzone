@@ -1,8 +1,8 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Hardcoded to match the physical device's LAN network connection
-const BACKEND_URL = "http://192.168.0.104:3000";
+// Render hosted live backend URL
+const BACKEND_URL = "https://goalzone-1-k075.onrender.com";
 
 export const api = axios.create({
   baseURL: BACKEND_URL,

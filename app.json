@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "GoalZone",
-    "slug": "GoalZone",
+    "name": "Neymar10",
+    "slug": "Neymar10",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "goalzone",
+    "scheme": "neymar10",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.GoalZone"
+      "package": "com.anonymous.Neymar10"
     },
     "web": {
       "output": "static",

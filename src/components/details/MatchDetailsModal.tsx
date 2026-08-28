@@ -163,7 +163,7 @@ export default function MatchDetailsModal({
           setStandings([]);
         }
       } catch (err) {
-        console.error("Failed to load standings:", err);
+        console.error("Failed to load standing:", err);
         setStandings([]);
       } finally {
         setLoadingStandings(false);

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, TextInput } from "react-native";
+import { router } from "expo-router";
 import {
   Menu,
   Search,
@@ -98,7 +99,7 @@ export default function Header({
         ) : (
           <>
             {/* Menu drawer button */}
-            <TouchableOpacity className="p-1">
+            <TouchableOpacity onPress={() => router.push("/settings")} className="p-1">
               <Menu size={24} color="#ECEDEE" />
             </TouchableOpacity>
 

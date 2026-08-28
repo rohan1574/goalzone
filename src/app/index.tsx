@@ -29,6 +29,9 @@ import PredictionView from "../components/prediction/PredictionView";
 import Header from "../components/explore/Header";
 import MatchDetailsModal from "../components/details/MatchDetailsModal";
 import BottomNavBar, { TabType } from "../components/bottom/BottomNavBar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import SplashScreen from "../components/SplashScreen/SplashScreen";
+import LoadingModal from "../components/loading/LoadingModal";
 
 const { width } = Dimensions.get("window");
 
@@ -124,6 +127,20 @@ export default function ExploreScreen() {
   const [dateFixtures, setDateFixtures] = useState<any[]>([]);
   const [loadingFixtures, setLoadingFixtures] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean | null>(null);
+
+  // Check if user has completed onboarding previously
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const val = await AsyncStorage.getItem("onboarding_completed");
+        setIsOnboardingCompleted(val === "true");
+      } catch (err) {
+        setIsOnboardingCompleted(false);
+      }
+    };
+    checkOnboarding();
+  }, []);
 
   const getYYYYMMDD = (date: Date) => {
     const year = date.getFullYear();
@@ -362,6 +379,28 @@ export default function ExploreScreen() {
         );
     }
   };
+  if (isOnboardingCompleted === null) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#0D0E0F", justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#02DB54" />
+      </View>
+    );
+  }
+
+  if (!isOnboardingCompleted) {
+    return (
+      <SplashScreen
+        onComplete={async () => {
+          try {
+            await AsyncStorage.setItem("onboarding_completed", "true");
+          } catch (err) {
+            console.error("Failed to save onboarding completed state", err);
+          }
+          setIsOnboardingCompleted(true);
+        }}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0E0F" }}>
@@ -381,13 +420,10 @@ export default function ExploreScreen() {
       )}
 
       {/* Dynamic Main Body Content */}
-      {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#02DB54" />
-        </View>
-      ) : (
-        renderTabContent()
-      )}
+      {renderTabContent()}
+
+      {/* Full-Screen Bouncing Football Loading Overlay */}
+      <LoadingModal visible={loading} />
 
       {/* Match Details Modal */}
       <MatchDetailsModal
