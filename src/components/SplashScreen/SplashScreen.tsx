@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from "react-native";
+import BannerAdComponent from "../ads/BannerAdComponent";
 
 const { width, height } = Dimensions.get("window");
 
@@ -21,11 +22,10 @@ interface OnboardingStep {
   isSplash?: boolean;
 }
 
-// Configurable onboarding and splash steps
 const ONBOARDING_DATA: OnboardingStep[] = [
   {
     id: 1,
-    image: require("../../../assets/images/splash_bg.jpg"),
+    image: require("../../../assets/images/neymar.png"),
     isSplash: true,
   },
   {
@@ -47,10 +47,9 @@ interface SplashScreenProps {
 }
 
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
-  const [currentStep, setCurrentStep] = useState(0); // 0 = Splash, 1 = Onboarding 1, 2 = Onboarding 2
+  const [currentStep, setCurrentStep] = useState(0);
   const rotateValue = useRef(new Animated.Value(0)).current;
 
-  // Spinning soccer ball animation for Splash Screen (Step 0)
   useEffect(() => {
     if (currentStep === 0) {
       const startSpinning = () => {
@@ -66,7 +65,6 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       };
       startSpinning();
 
-      // Automatically transition to step 1 after 3 seconds
       const timer = setTimeout(() => {
         setCurrentStep(1);
       }, 3000);
@@ -89,7 +87,6 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     onComplete();
   };
 
-  // Interpolation for spinning soccer ball rotation
   const spinRotation = rotateValue.interpolate({
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
@@ -97,12 +94,12 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
   const stepData = ONBOARDING_DATA[currentStep];
 
-  // STEP 0: Splash Screen
+  // ─── STEP 0: Splash Screen ───────────────────────────────────────────────
   if (currentStep === 0) {
     return (
-      <View style={styles.container}>
+      <View className="flex-1 bg-black">
         <StatusBar barStyle="light-content" backgroundColor="#000000" />
-        
+
         {/* Background Image */}
         <Image
           source={stepData.image}
@@ -110,452 +107,140 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           resizeMode="cover"
         />
 
-        {/* Dark overlay with circular radial gradient feel */}
-        <View style={styles.darkOverlay} />
+        {/* Dark Overlay */}
+        <View
+          className="absolute inset-0"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        />
 
-        <View style={styles.splashContent}>
-          {/* App Icon in center */}
-          <View style={styles.appIconContainer}>
+        {/* Center Content */}
+        <View className="flex-1 items-center justify-center">
+          {/* App Icon */}
+          <View
+            className="rounded-3xl overflow-hidden mb-6"
+            style={{
+              width: width * 0.38,
+              height: width * 0.38,
+              shadowColor: "#02DB54",
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.4,
+              shadowRadius: 20,
+              elevation: 12,
+            }}
+          >
             <Image
-              source={require("../../../assets/images/icon.png")}
-              style={styles.appIcon}
-              resizeMode="contain"
+              source={require("../../../assets/images/neymar.png")}
+              className="w-full h-full"
+              resizeMode="cover"
             />
           </View>
 
-          {/* Title Text */}
-          <View style={styles.titleRow}>
-            <Text style={styles.greenText}>LIVE </Text>
-            <Text style={styles.whiteText}>SCORES</Text>
+          {/* LIVE SCORES title */}
+          <View className="flex-row items-center">
+            <Text
+              className="text-4xl font-black tracking-widest"
+              style={{ color: "#02DB54" }}
+            >
+              LIVE{" "}
+            </Text>
+            <Text className="text-4xl font-black tracking-widest text-white">
+              SCORES
+            </Text>
           </View>
+
+          <Text className="text-sm text-gray-400 mt-2 tracking-wider uppercase">
+            Football • Live • Free
+          </Text>
         </View>
 
-        {/* Footer Area for Loading */}
-        <View style={styles.splashFooter}>
-          {/* Animated Spinning Soccer Ball */}
+        {/* Footer */}
+        <View className="items-center pb-0">
           <Animated.View style={{ transform: [{ rotate: spinRotation }] }}>
-            <Text style={styles.spinningBall}>⚽</Text>
+            <Text style={{ fontSize: 36 }}>⚽</Text>
           </Animated.View>
 
-          <Text style={styles.adsDisclaimer}>This action may contain advertising</Text>
+          <Text className="text-xs text-gray-500 mt-3 mb-4 tracking-wide">
+            This action may contain advertising
+          </Text>
 
-          <View style={styles.loadingBarContainer}>
-            <Text style={styles.loadingBarText}>Loading...</Text>
+          <BannerAdComponent />
+
+          <View className="w-full bg-[#202124] py-4 items-center justify-center">
+            <Text className="text-white text-sm font-semibold">Loading...</Text>
           </View>
         </View>
       </View>
     );
   }
 
-  // STEP 1 & 2: Interactive Onboarding Screens
+  // ─── STEP 1 & 2: Onboarding Screens ──────────────────────────────────────
   return (
-    <SafeAreaView style={styles.onboardingContainer}>
+    <SafeAreaView className="flex-1 bg-[#0D0E0F]">
       <StatusBar barStyle="light-content" backgroundColor="#0D0E0F" />
-      
-      {/* Top Half Illustration */}
-      <View style={styles.imageWrapper}>
-        <Image source={stepData.image} style={styles.onboardingImage} resizeMode="cover" />
+
+      {/* Top Image */}
+      <View style={{ height: height * 0.5, width: "100%", overflow: "hidden" }}>
+        <Image
+          source={stepData.image}
+          className="w-full h-full"
+          resizeMode="cover"
+        />
+
       </View>
 
-      {/* Content Area */}
-      <View style={styles.onboardingContent}>
-        {/* Skip button at top right of content */}
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-          <Text style={styles.skipText}>Skip</Text>
+      {/* Content */}
+      <View className="flex-1 px-6 pt-6 relative">
+        {/* Skip */}
+        <TouchableOpacity
+          className="absolute top-0 right-6 z-10 py-2 px-3"
+          onPress={handleSkip}
+        >
+          <Text className="text-gray-400 text-sm font-semibold">Skip</Text>
         </TouchableOpacity>
 
-        {/* Main Title Text */}
-        <Text style={styles.onboardingTitle}>{stepData.title}</Text>
+        {/* Title */}
+        <Text className="text-white text-xl font-bold text-center leading-8 mt-3 px-3 mb-5">
+          {stepData.title}
+        </Text>
 
-        {/* Mock Advertisement Card (Match screenshots style exactly) */}
-        {currentStep === 1 ? (
-          /* Netcup Ad style */
-          <View style={styles.adCardNetcup}>
-            <View style={styles.adHeaderRow}>
-              <View style={styles.adBadgeContainer}>
-                <Text style={styles.adBadgeText}>Ad</Text>
-              </View>
-              <Text style={styles.adBrandName}>netcup</Text>
-            </View>
-            <View style={styles.adMainRow}>
-              <View style={styles.adTextInfo}>
-                <Text style={styles.adTitleNetcup}>Award-winning</Text>
-                <Text style={styles.adSubNetcup}>multiple times</Text>
-                <View style={styles.netcupBadgesRow}>
-                  <Text style={styles.netcupBadgeIcon}>🏅</Text>
-                  <Text style={styles.netcupBadgeIcon}>🏅</Text>
-                  <Text style={styles.netcupBadgeIcon}>🏅</Text>
-                </View>
-                <Text style={styles.adDescriptionText}>Your idea deserves the best spot on the web.</Text>
-              </View>
-              <TouchableOpacity style={styles.adInstallBtnGreen} activeOpacity={0.8}>
-                <Text style={styles.adInstallBtnText}>INSTALL</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          /* Google Play Style Ad */
-          <View style={styles.adCardPlay}>
-            <View style={styles.adHeaderRow}>
-              <View style={styles.adBadgeContainer}>
-                <Text style={styles.adBadgeText}>Ad</Text>
-              </View>
-              <Text style={styles.adBrandNamePlay}>Google Play ad</Text>
-            </View>
-            <View style={styles.adMainRow}>
-              <View style={styles.adPlayIconContainer}>
-                <View style={styles.blueFolderIcon}>
-                  <Text style={styles.folderEmoji}>📁</Text>
-                  <View style={styles.downloadIndicatorBadge}>
-                    <Text style={styles.arrowDownEmoji}>⬇️</Text>
-                  </View>
-                </View>
-              </View>
-              <View style={styles.adPlayTextInfo}>
-                <Text style={styles.adPlayTitle}>আপনার কনটেন্ট পেতে</Text>
-                <Text style={styles.adPlaySubTitle}>চালিয়ে যান</Text>
-              </View>
-              <TouchableOpacity style={styles.adInstallBtnGreen} activeOpacity={0.8}>
-                <Text style={styles.adInstallBtnText}>INSTALL</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        {/* AdMob Banner */}
+        <View className="w-full items-center my-2">
+          <BannerAdComponent />
+        </View>
       </View>
 
-      {/* Onboarding Bottom Action Bar */}
-      <View style={styles.footerActionBar}>
-        {/* Pagination Dots (green pill and small circles) */}
-        <View style={styles.dotsContainer}>
+      {/* Footer Action Bar */}
+      <View className="flex-row items-center justify-between px-6 pb-6 bg-[#0D0E0F]">
+        {/* Pagination Dots */}
+        <View className="flex-row items-center gap-1.5">
           {[1, 2, 3].map((stepNum) => {
             const isActive = currentStep === stepNum - 1;
             return (
               <View
                 key={stepNum}
-                style={[
-                  styles.dot,
-                  isActive ? styles.activeDot : styles.inactiveDot,
-                ]}
+                style={{
+                  height: 8,
+                  width: isActive ? 24 : 8,
+                  borderRadius: 4,
+                  backgroundColor: isActive ? "#02DB54" : "#333537",
+                  marginRight: 4,
+                }}
               />
             );
           })}
         </View>
 
-        {/* Next Button with green border */}
+        {/* Next Button */}
         <TouchableOpacity
-          style={styles.nextButton}
+          className="border border-[#02DB54] rounded-full px-6 py-2"
           onPress={handleNext}
           activeOpacity={0.7}
         >
-          <Text style={styles.nextButtonText}>Next</Text>
+          <Text className="text-white text-sm font-bold">
+            {currentStep === 2 ? "Get Started" : "Next"}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000000",
-  },
-  darkOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-  },
-  splashContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingTop: height * 0.1,
-  },
-  appIconContainer: {
-    width: width * 0.4,
-    height: width * 0.4,
-    borderRadius: 24,
-    backgroundColor: "transparent",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#02DB54",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 10,
-    marginBottom: 24,
-  },
-  appIcon: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 36,
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  greenText: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: "#02DB54",
-    letterSpacing: 1,
-  },
-  whiteText: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: "#FFFFFF",
-    letterSpacing: 1,
-  },
-  splashFooter: {
-    alignItems: "center",
-    justifyContent: "flex-end",
-    paddingBottom: 0,
-  },
-  spinningBall: {
-    fontSize: 36,
-    marginBottom: 24,
-  },
-  adsDisclaimer: {
-    color: "#9BA1A6",
-    fontSize: 12,
-    marginBottom: 20,
-    fontWeight: "500",
-    letterSpacing: 0.5,
-  },
-  loadingBarContainer: {
-    width: "100%",
-    backgroundColor: "#202124",
-    paddingVertical: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loadingBarText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "600",
-  },
-
-  // Onboarding styles
-  onboardingContainer: {
-    flex: 1,
-    backgroundColor: "#0D0E0F",
-  },
-  imageWrapper: {
-    height: height * 0.5,
-    width: "100%",
-    overflow: "hidden",
-  },
-  onboardingImage: {
-    width: "100%",
-    height: "100%",
-  },
-  onboardingContent: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    position: "relative",
-  },
-  skipButton: {
-    position: "absolute",
-    top: 0,
-    right: 24,
-    padding: 8,
-    zIndex: 10,
-  },
-  skipText: {
-    color: "#9BA1A6",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  onboardingTitle: {
-    color: "#FFFFFF",
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "center",
-    lineHeight: 30,
-    marginBottom: 28,
-    marginTop: 10,
-    paddingHorizontal: 12,
-  },
-  
-  // Netcup Ad styling
-  adCardNetcup: {
-    backgroundColor: "#003A40",
-    borderRadius: 8,
-    padding: 12,
-    width: "100%",
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    borderWidth: 1,
-  },
-  adHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  adBadgeContainer: {
-    backgroundColor: "#02DB54",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 3,
-    marginRight: 8,
-  },
-  adBadgeText: {
-    color: "#000000",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  adBrandName: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  adBrandNamePlay: {
-    color: "#A0A0A0",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  adMainRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  adTextInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
-  adTitleNetcup: {
-    color: "#02DB54",
-    fontSize: 15,
-    fontWeight: "bold",
-  },
-  adSubNetcup: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  netcupBadgesRow: {
-    flexDirection: "row",
-    marginVertical: 4,
-  },
-  netcupBadgeIcon: {
-    marginRight: 6,
-    fontSize: 14,
-  },
-  adDescriptionText: {
-    color: "#A9AEB1",
-    fontSize: 10,
-    marginTop: 4,
-  },
-  adInstallBtnGreen: {
-    backgroundColor: "#7BEA54",
-    borderRadius: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    minWidth: 100,
-  },
-  adInstallBtnText: {
-    color: "#000000",
-    fontSize: 13,
-    fontWeight: "bold",
-    letterSpacing: 0.5,
-  },
-
-  // Play Store Ad styling
-  adCardPlay: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 8,
-    padding: 12,
-    width: "100%",
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    borderWidth: 1,
-  },
-  adPlayIconContainer: {
-    width: 48,
-    height: 48,
-    marginRight: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  blueFolderIcon: {
-    width: 40,
-    height: 40,
-    backgroundColor: "#1e88e5",
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-  },
-  folderEmoji: {
-    fontSize: 20,
-  },
-  downloadIndicatorBadge: {
-    position: "absolute",
-    bottom: -2,
-    right: -2,
-    backgroundColor: "#02DB54",
-    borderRadius: 8,
-    width: 16,
-    height: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  arrowDownEmoji: {
-    fontSize: 9,
-  },
-  adPlayTextInfo: {
-    flex: 1,
-    justifyContent: "center",
-    marginRight: 10,
-  },
-  adPlayTitle: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  adPlaySubTitle: {
-    color: "#A0A0A0",
-    fontSize: 12,
-  },
-
-  // Onboarding Footer Action Bar style
-  footerActionBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-    backgroundColor: "#0D0E0F",
-  },
-  dotsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  dot: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#333537",
-    marginRight: 6,
-  },
-  activeDot: {
-    width: 24,
-    backgroundColor: "#02DB54",
-  },
-  inactiveDot: {
-    width: 8,
-    backgroundColor: "#333537",
-  },
-  nextButton: {
-    borderColor: "#02DB54",
-    borderWidth: 1.5,
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 22,
-    backgroundColor: "transparent",
-  },
-  nextButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-});

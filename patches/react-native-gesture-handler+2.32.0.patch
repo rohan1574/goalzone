@@ -1,0 +1,79 @@
+diff --git a/node_modules/react-native-gesture-handler/android/build.gradle b/node_modules/react-native-gesture-handler/android/build.gradle
+index 6348d17..2e7e7f0 100644
+--- a/node_modules/react-native-gesture-handler/android/build.gradle
++++ b/node_modules/react-native-gesture-handler/android/build.gradle
+@@ -94,19 +94,7 @@ def shouldUseCommonInterfaceFromReanimated() {
+ }
+ 
+ def shouldUseCommonInterfaceFromRNSVG() {
+-    // common interface compatible with react-native-svg >= 15.11.2
+-    def rnsvg = rootProject.subprojects.find { it.name == 'react-native-svg' }
+-
+-    if (rnsvg == null) {
+-        return false
+-    }
+-
+-    def (major, minor, patch) = getExternalLibVersion(rnsvg)
+-
+-
+-    return (major == 15 && minor == 11 && patch >= 2) ||
+-            (major == 15 && minor > 11) ||
+-            major > 15
++    return false
+ }
+ 
+ def reactNativeArchitectures() {
+@@ -243,7 +231,9 @@ dependencies {
+     }
+ 
+     if (shouldUseCommonInterfaceFromRNSVG()) {
+-        implementation rootProject.subprojects.find { it.name == 'react-native-svg' }
++        def rnsvg = rootProject.subprojects.find { it.name == 'react-native-svg' }
++        println "RNGH: Found rnsvg project = ${rnsvg}"
++        implementation project(':react-native-svg')
+     }
+ 
+     implementation 'androidx.appcompat:appcompat:1.7.0'
+diff --git a/node_modules/react-native-gesture-handler/android/svg/src/main/java/com/swmansion/gesturehandler/RNSVGHitTester.kt b/node_modules/react-native-gesture-handler/android/svg/src/main/java/com/swmansion/gesturehandler/RNSVGHitTester.kt
+index 2a4f600..b4a8f10 100644
+--- a/node_modules/react-native-gesture-handler/android/svg/src/main/java/com/swmansion/gesturehandler/RNSVGHitTester.kt
++++ b/node_modules/react-native-gesture-handler/android/svg/src/main/java/com/swmansion/gesturehandler/RNSVGHitTester.kt
+@@ -1,6 +1,7 @@
+ package com.swmansion.gesturehandler
+ 
+ import android.view.View
++import android.view.ViewGroup
+ import androidx.core.view.children
+ import com.horcrux.svg.SvgView
+ import com.horcrux.svg.VirtualView
+@@ -11,16 +12,17 @@ class RNSVGHitTester {
+       var rootSvgView: SvgView
+ 
+       rootSvgView = if (view is VirtualView) {
+-        view.svgView!!
++        view.getSvgView()!!
+       } else {
+         view as SvgView
+       }
+ 
+       while (isSvgElement(rootSvgView.parent)) {
+-        rootSvgView = if (rootSvgView.parent is VirtualView) {
+-          (rootSvgView.parent as VirtualView).svgView!!
++        val p = rootSvgView.parent
++        rootSvgView = if (p is VirtualView) {
++          p.getSvgView()!!
+         } else {
+-          rootSvgView.parent as SvgView
++          p as SvgView
+         }
+       }
+ 
+@@ -52,7 +54,7 @@ class RNSVGHitTester {
+           posY in 0.0..view.height.toDouble()
+ 
+       if (view is SvgView) {
+-        val childrenIds = view.children.map { it.id }
++        val childrenIds = (view as ViewGroup).children.map { it.id }
+ 
+         val hasChildBeenPressed = pressedId in childrenIds
+ 

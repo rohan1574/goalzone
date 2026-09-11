@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, RotateCw, MapPin, Sparkles } from "lucide-react-native";
 import Svg, { Polygon, Path, Circle } from "react-native-svg";
 import { fetchHomeTeamLineup, fetchAwayTeamLineup, fetchLeagueStandings, fetchFixtureStatistics, fetchFixturePredictions } from "../../services/footballApi";
+import BannerAdComponent from "../ads/BannerAdComponent";
 
 interface Team {
   id?: string | number;
@@ -831,6 +832,8 @@ export default function MatchDetailsModal({
             </View>
           )}
         </ScrollView>
+        {/* Banner Ad inside Match Details Modal */}
+        <BannerAdComponent />
       </SafeAreaView>
     </Modal>
   );

@@ -3,7 +3,6 @@ import {
   View,
   TouchableOpacity,
   StatusBar,
-  ActivityIndicator,
   Dimensions,
   Text,
 } from "react-native";
@@ -29,11 +28,25 @@ import PredictionView from "../components/prediction/PredictionView";
 import Header from "../components/explore/Header";
 import MatchDetailsModal from "../components/details/MatchDetailsModal";
 import BottomNavBar, { TabType } from "../components/bottom/BottomNavBar";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import SplashScreen from "../components/SplashScreen/SplashScreen";
 import LoadingModal from "../components/loading/LoadingModal";
+import BannerAdComponent from "../components/ads/BannerAdComponent";
+import {
+  InterstitialAd,
+  AdEventType,
+  TestIds,
+} from "react-native-google-mobile-ads";
 
 const { width } = Dimensions.get("window");
+
+// Interstitial Ad Unit ID (TestIds.INTERSTITIAL for dev, real ID for production)
+const interstitialAdUnitId = __DEV__
+  ? TestIds.INTERSTITIAL
+  : "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"; // <-- Replace with your real Ad Unit ID
+
+const interstitialAd = InterstitialAd.createForAdRequest(interstitialAdUnitId, {
+  requestNonPersonalizedAdsOnly: true,
+});
 
 // Mock Data matching screenshot exactly as fallbacks
 const MOCK_LIVE_MATCHES = [
@@ -127,20 +140,101 @@ export default function ExploreScreen() {
   const [dateFixtures, setDateFixtures] = useState<any[]>([]);
   const [loadingFixtures, setLoadingFixtures] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean | null>(null);
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean>(false);
+  const [interstitialLoaded, setInterstitialLoaded] = useState(false);
+  const pendingMatchRef = React.useRef<any>(null);
+  const pendingTabRef = React.useRef<TabType | null>(null);
+  const pendingShowMainRef = React.useRef<boolean>(false);
 
-  // Check if user has completed onboarding previously
+  // SplashScreen shown every time the app starts (no AsyncStorage check needed)
+
+  // Load interstitial ad and set up event listeners
   useEffect(() => {
-    const checkOnboarding = async () => {
-      try {
-        const val = await AsyncStorage.getItem("onboarding_completed");
-        setIsOnboardingCompleted(val === "true");
-      } catch (err) {
-        setIsOnboardingCompleted(false);
+    const unsubscribeLoaded = interstitialAd.addAdEventListener(
+      AdEventType.LOADED,
+      () => {
+        console.log("Interstitial ad loaded");
+        setInterstitialLoaded(true);
       }
+    );
+
+    const unsubscribeClosed = interstitialAd.addAdEventListener(
+      AdEventType.CLOSED,
+      () => {
+        console.log("Interstitial ad closed");
+        setInterstitialLoaded(false);
+        // Transition from SplashScreen to main app after ad
+        if (pendingShowMainRef.current) {
+          pendingShowMainRef.current = false;
+          setIsOnboardingCompleted(true);
+        }
+        // Open match details after the ad is dismissed
+        if (pendingMatchRef.current) {
+          setSelectedMatch(pendingMatchRef.current);
+          setDetailsVisible(true);
+          pendingMatchRef.current = null;
+        }
+        // Switch to the pending tab after the ad is dismissed
+        if (pendingTabRef.current) {
+          setActiveTab(pendingTabRef.current);
+          pendingTabRef.current = null;
+        }
+        // Pre-load the next interstitial ad
+        interstitialAd.load();
+      }
+    );
+
+    const unsubscribeError = interstitialAd.addAdEventListener(
+      AdEventType.ERROR,
+      (error) => {
+        console.warn("Interstitial ad failed to load:", error);
+        setInterstitialLoaded(false);
+        // If ad fails, still go to main app
+        if (pendingShowMainRef.current) {
+          pendingShowMainRef.current = false;
+          setIsOnboardingCompleted(true);
+        }
+        // If ad fails, open the match details directly
+        if (pendingMatchRef.current) {
+          setSelectedMatch(pendingMatchRef.current);
+          setDetailsVisible(true);
+          pendingMatchRef.current = null;
+        }
+        // If ad fails, still switch to the pending tab
+        if (pendingTabRef.current) {
+          setActiveTab(pendingTabRef.current);
+          pendingTabRef.current = null;
+        }
+      }
+    );
+
+    // Start loading the first ad
+    interstitialAd.load();
+
+    return () => {
+      unsubscribeLoaded();
+      unsubscribeClosed();
+      unsubscribeError();
     };
-    checkOnboarding();
   }, []);
+
+  // Handle navbar tab press: show interstitial ad for non-explore tabs
+  const handleTabPress = (tab: TabType) => {
+    if (tab === "explore") {
+      // Explore tab: no ad, switch directly
+      setActiveTab(tab);
+      return;
+    }
+    // Non-explore tabs: show interstitial ad first
+    pendingTabRef.current = tab;
+    if (interstitialLoaded) {
+      interstitialAd.show();
+    } else {
+      // Ad not ready, switch directly
+      setActiveTab(tab);
+      pendingTabRef.current = null;
+    }
+  };
 
   const getYYYYMMDD = (date: Date) => {
     const year = date.getFullYear();
@@ -372,31 +466,33 @@ export default function ExploreScreen() {
             onToggleNotification={toggleNotification}
             width={width}
             onPressDetails={(match: any) => {
-              setSelectedMatch(match);
-              setDetailsVisible(true);
+              pendingMatchRef.current = match;
+              if (interstitialLoaded) {
+                // Show interstitial ad; modal opens after ad is dismissed (via CLOSED event)
+                interstitialAd.show();
+              } else {
+                // Ad not ready yet, open modal directly
+                setSelectedMatch(match);
+                setDetailsVisible(true);
+                pendingMatchRef.current = null;
+              }
             }}
           />
         );
     }
   };
-  if (isOnboardingCompleted === null) {
-    return (
-      <View style={{ flex: 1, backgroundColor: "#0D0E0F", justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#02DB54" />
-      </View>
-    );
-  }
-
   if (!isOnboardingCompleted) {
     return (
       <SplashScreen
-        onComplete={async () => {
-          try {
-            await AsyncStorage.setItem("onboarding_completed", "true");
-          } catch (err) {
-            console.error("Failed to save onboarding completed state", err);
+        onComplete={() => {
+          // Show interstitial ad after SplashScreen, then go to main app
+          pendingShowMainRef.current = true;
+          if (interstitialLoaded) {
+            interstitialAd.show();
+          } else {
+            // Ad not ready, go directly to main app
+            setIsOnboardingCompleted(true);
           }
-          setIsOnboardingCompleted(true);
         }}
       />
     );
@@ -431,9 +527,10 @@ export default function ExploreScreen() {
         match={selectedMatch}
         onClose={() => setDetailsVisible(false)}
       />
-      {/* Bottom Navigation Tab Bar (Explore, Leagues, Highlight, Teams, Prediction) */}
-      <View style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}>
-        <BottomNavBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      {/* Bottom Navigation Tab Bar & Banner Ad */}
+      <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "#0D0E0F" }}>
+        <BannerAdComponent />
+        <BottomNavBar activeTab={activeTab} setActiveTab={handleTabPress} />
       </View>
     </SafeAreaView>
   );
