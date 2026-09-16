@@ -2,22 +2,22 @@
   "expo": {
     "name": "Neymar10",
     "slug": "Neymar10",
-    "version": "1.0.3",
+    "version": "1.0.9",
     "orientation": "portrait",
-    "icon": "./assets/images/neymarlogo.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "neymar10",
     "userInterfaceStyle": "automatic",
 
     "ios": {
-      "icon": "./assets/images/neymarlogo.png"
+      "icon": "./assets/images/icon.png"
     },
 
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#000000",
-        "foregroundImage": "./assets/images/neymarlogo.png",
-        "backgroundImage": "./assets/images/neymarlogo.png",
-        "monochromeImage": "./assets/images/neymarlogo.png"
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundImage": "./assets/images/icon.png",
+        "monochromeImage": "./assets/images/icon.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.Neymar10"
@@ -25,7 +25,7 @@
 
     "web": {
       "output": "static",
-      "favicon": "./assets/images/neymar.png"
+      "favicon": "./assets/images/icon.png"
     },
 
     "plugins": [
@@ -34,7 +34,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#000000",
-          "image": "./assets/images/neymar.png",
+          "image": "./assets/images/icon.png",
           "resizeMode": "cover"
         }
       ],

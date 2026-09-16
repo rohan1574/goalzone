@@ -5,15 +5,14 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
   Animated,
   Easing,
-  SafeAreaView,
   StatusBar,
+  useWindowDimensions,
+  ScrollView,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BannerAdComponent from "../ads/BannerAdComponent";
-
-const { width, height } = Dimensions.get("window");
 
 interface OnboardingStep {
   id: number;
@@ -25,7 +24,7 @@ interface OnboardingStep {
 const ONBOARDING_DATA: OnboardingStep[] = [
   {
     id: 1,
-    image: require("../../../assets/images/neymar.png"),
+    image: require("../../../assets/images/icon.png"),
     isSplash: true,
   },
   {
@@ -47,8 +46,16 @@ interface SplashScreenProps {
 }
 
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(0);
   const rotateValue = useRef(new Animated.Value(0)).current;
+
+  // Dynamic responsive calculations
+  const isSmallDevice = height < 700 || width < 360;
+  const iconSize = Math.min(Math.max(width * 0.35, 110), 160);
+  const titleFontSize = isSmallDevice ? 28 : Math.min(width * 0.09, 36);
+  const imageHeight = isSmallDevice ? height * 0.42 : height * 0.48;
 
   useEffect(() => {
     if (currentStep === 0) {
@@ -98,75 +105,81 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   if (currentStep === 0) {
     return (
       <View className="flex-1 bg-black">
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
+        <StatusBar barStyle="light-content" backgroundColor="#000000" translucent />
 
-        {/* Background Image */}
+        {/* Background Image with Blur */}
         <Image
           source={stepData.image}
           style={StyleSheet.absoluteFill}
           resizeMode="cover"
+          blurRadius={25}
         />
 
         {/* Dark Overlay */}
         <View
           className="absolute inset-0"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          style={{ backgroundColor: "rgba(0,0,0,0.65)" }}
         />
 
         {/* Center Content */}
-        <View className="flex-1 items-center justify-center">
+        <View className="flex-1 items-center justify-center px-4" style={{ paddingTop: insets.top }}>
           {/* App Icon */}
           <View
             className="rounded-3xl overflow-hidden mb-6"
             style={{
-              width: width * 0.38,
-              height: width * 0.38,
+              width: iconSize,
+              height: iconSize,
               shadowColor: "#02DB54",
               shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.4,
+              shadowOpacity: 0.5,
               shadowRadius: 20,
-              elevation: 12,
+              elevation: 14,
             }}
           >
             <Image
-              source={require("../../../assets/images/neymar.png")}
+              source={require("../../../assets/images/icon.png")}
               className="w-full h-full"
               resizeMode="cover"
             />
           </View>
 
           {/* LIVE SCORES title */}
-          <View className="flex-row items-center">
+          <View className="flex-row items-center flex-wrap justify-center">
             <Text
-              className="text-4xl font-black tracking-widest"
-              style={{ color: "#02DB54" }}
+              className="font-black tracking-widest"
+              style={{ color: "#02DB54", fontSize: titleFontSize }}
             >
               LIVE{" "}
             </Text>
-            <Text className="text-4xl font-black tracking-widest text-white">
+            <Text
+              className="font-black tracking-widest text-white"
+              style={{ fontSize: titleFontSize }}
+            >
               SCORES
             </Text>
           </View>
 
-          <Text className="text-sm text-gray-400 mt-2 tracking-wider uppercase">
+          <Text className="text-xs text-gray-400 mt-2 tracking-wider uppercase text-center">
             Football • Live • Free
           </Text>
         </View>
 
         {/* Footer */}
-        <View className="items-center pb-0">
+        <View className="items-center" style={{ paddingBottom: Math.max(insets.bottom, 4) }}>
           <Animated.View style={{ transform: [{ rotate: spinRotation }] }}>
-            <Text style={{ fontSize: 36 }}>⚽</Text>
+            <Text style={{ fontSize: isSmallDevice ? 28 : 34 }}>⚽</Text>
           </Animated.View>
 
-          <Text className="text-xs text-gray-500 mt-3 mb-4 tracking-wide">
+          <Text className="text-xs text-gray-400 mt-2 mb-3 tracking-wide text-center px-4">
             This action may contain advertising
           </Text>
 
-          <BannerAdComponent />
+          <View className="w-full items-center">
+            <BannerAdComponent />
+          </View>
 
-          <View className="w-full bg-[#202124] py-4 items-center justify-center">
-            <Text className="text-white text-sm font-semibold">Loading...</Text>
+          <View className="w-full bg-[#202124] py-3.5 items-center justify-center mt-1">
+            <Text className="text-white text-xs sm:text-sm font-semibold">Loading...</Text>
           </View>
         </View>
       </View>
@@ -175,72 +188,110 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
   // ─── STEP 1 & 2: Onboarding Screens ──────────────────────────────────────
   return (
-    <SafeAreaView className="flex-1 bg-[#0D0E0F]">
-      <StatusBar barStyle="light-content" backgroundColor="#0D0E0F" />
+    <View className="flex-1 bg-[#0D0E0F]">
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      {/* Top Image */}
-      <View style={{ height: height * 0.5, width: "100%", overflow: "hidden" }}>
+      {/* Top Image Container */}
+      <View style={{ height: imageHeight, width: "100%", overflow: "hidden", position: "relative" }}>
         <Image
           source={stepData.image}
           className="w-full h-full"
           resizeMode="cover"
         />
 
-      </View>
+        {/* Top Dark Overlay for Status bar & Skip button readability */}
+        <View
+          className="absolute top-0 left-0 right-0 h-24"
+          style={{ backgroundColor: "rgba(0,0,0,0.35)" }}
+        />
 
-      {/* Content */}
-      <View className="flex-1 px-6 pt-6 relative">
-        {/* Skip */}
+        {/* Floating Skip Button */}
         <TouchableOpacity
-          className="absolute top-0 right-6 z-10 py-2 px-3"
+          style={{
+            position: "absolute",
+            top: Math.max(insets.top + 8, 18),
+            right: 20,
+            zIndex: 20,
+            backgroundColor: "rgba(0,0,0,0.55)",
+            paddingHorizontal: 14,
+            paddingVertical: 6,
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: "rgba(255,255,255,0.15)",
+          }}
           onPress={handleSkip}
+          activeOpacity={0.8}
         >
-          <Text className="text-gray-400 text-sm font-semibold">Skip</Text>
+          <Text className="text-white text-xs font-bold">Skip</Text>
         </TouchableOpacity>
-
-        {/* Title */}
-        <Text className="text-white text-xl font-bold text-center leading-8 mt-3 px-3 mb-5">
-          {stepData.title}
-        </Text>
-
-        {/* AdMob Banner */}
-        <View className="w-full items-center my-2">
-          <BannerAdComponent />
-        </View>
       </View>
 
-      {/* Footer Action Bar */}
-      <View className="flex-row items-center justify-between px-6 pb-6 bg-[#0D0E0F]">
-        {/* Pagination Dots */}
-        <View className="flex-row items-center gap-1.5">
-          {[1, 2, 3].map((stepNum) => {
-            const isActive = currentStep === stepNum - 1;
-            return (
-              <View
-                key={stepNum}
-                style={{
-                  height: 8,
-                  width: isActive ? 24 : 8,
-                  borderRadius: 4,
-                  backgroundColor: isActive ? "#02DB54" : "#333537",
-                  marginRight: 4,
-                }}
-              />
-            );
-          })}
-        </View>
-
-        {/* Next Button */}
-        <TouchableOpacity
-          className="border border-[#02DB54] rounded-full px-6 py-2"
-          onPress={handleNext}
-          activeOpacity={0.7}
-        >
-          <Text className="text-white text-sm font-bold">
-            {currentStep === 2 ? "Get Started" : "Next"}
+      {/* Main Content Area */}
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 16 }}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        <View className="items-center">
+          {/* Onboarding Title */}
+          <Text
+            className="text-white font-bold text-center leading-7 px-2"
+            style={{ fontSize: isSmallDevice ? 17 : 20 }}
+          >
+            {stepData.title}
           </Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+
+          {/* AdMob Banner */}
+          <View className="w-full items-center my-3">
+            <BannerAdComponent />
+          </View>
+        </View>
+
+        {/* Footer Action Bar */}
+        <View
+          className="flex-row items-center justify-between py-4 bg-[#0D0E0F]"
+          style={{ paddingBottom: Math.max(insets.bottom + 8, 16) }}
+        >
+          {/* Pagination Dots */}
+          <View className="flex-row items-center">
+            {[1, 2, 3].map((stepNum) => {
+              const isActive = currentStep === stepNum - 1;
+              return (
+                <View
+                  key={stepNum}
+                  style={{
+                    height: 8,
+                    width: isActive ? 24 : 8,
+                    borderRadius: 4,
+                    backgroundColor: isActive ? "#02DB54" : "#333537",
+                    marginRight: 6,
+                  }}
+                />
+              );
+            })}
+          </View>
+
+          {/* Next / Get Started Button */}
+          <TouchableOpacity
+            className="rounded-full px-6 py-2.5"
+            style={{
+              backgroundColor: currentStep === 2 ? "#02DB54" : "transparent",
+              borderWidth: 1,
+              borderColor: "#02DB54",
+            }}
+            onPress={handleNext}
+            activeOpacity={0.7}
+          >
+            <Text
+              className="text-sm font-bold"
+              style={{ color: currentStep === 2 ? "#000000" : "#FFFFFF" }}
+            >
+              {currentStep === 2 ? "Get Started" : "Next"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
+

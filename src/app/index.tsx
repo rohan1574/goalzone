@@ -42,7 +42,7 @@ const { width } = Dimensions.get("window");
 // Interstitial Ad Unit ID (TestIds.INTERSTITIAL for dev, real ID for production)
 const interstitialAdUnitId = __DEV__
   ? TestIds.INTERSTITIAL
-  : "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"; // <-- Replace with your real Ad Unit ID
+  : "ca-app-pub-3940256099942544/1033173712"; // <-- Replace with your real AdMob Interstitial Ad Unit ID in production
 
 const interstitialAd = InterstitialAd.createForAdRequest(interstitialAdUnitId, {
   requestNonPersonalizedAdsOnly: true,
