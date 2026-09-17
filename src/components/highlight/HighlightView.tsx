@@ -216,7 +216,7 @@ export default function HighlightView() {
         </View>
       ) : subTab === "videos" ? (
         /* Video Highlights Screen */
-        <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+        <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
           {mockHighlights.map((item) => (
             <TouchableOpacity
               key={item.id}
@@ -282,7 +282,7 @@ export default function HighlightView() {
         </ScrollView>
       ) : (
         /* Latest News Screen (Original RSS View) */
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
           {/* HERO: Auto-scrolling Featured News Card */}
           <View className="mx-4 mt-4">
             <ScrollView

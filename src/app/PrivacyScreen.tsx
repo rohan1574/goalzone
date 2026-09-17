@@ -4,8 +4,8 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  StatusBar,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Info } from "lucide-react-native";
 import { router } from "expo-router";
@@ -13,7 +13,7 @@ import { router } from "expo-router";
 export default function PrivacyScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0E0F" }}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <StatusBar style="light" />
 
       {/* Header Bar */}
       <View className="flex-row items-center justify-between px-4 py-4 bg-black border-b border-white/5">

@@ -4,9 +4,9 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  StatusBar,
   ScrollView,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ArrowLeft,
@@ -21,7 +21,7 @@ import { router } from "expo-router";
 export default function SettingsScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0E0F" }}>
-      <StatusBar barStyle="light-content" backgroundColor="#0D0E0F" />
+      <StatusBar style="light" />
 
       {/* Subtle radial glow effect at the top */}
       <View className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-green-950/10 to-transparent pointer-events-none" />

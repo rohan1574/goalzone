@@ -3,7 +3,6 @@
     "name": "Neymar10",
     "slug": "Neymar10",
     "version": "1.0.9",
-    "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "neymar10",
     "userInterfaceStyle": "automatic",
@@ -20,7 +19,10 @@
         "monochromeImage": "./assets/images/icon.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.Neymar10"
+      "package": "com.anonymous.Neymar10",
+      "androidNavigationBar": {
+        "enforceContrast": false
+      }
     },
 
     "web": {

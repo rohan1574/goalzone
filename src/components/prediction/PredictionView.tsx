@@ -262,7 +262,7 @@ export default function PredictionView() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-[#0D0E0F] px-4 pt-4 mb-20" showsVerticalScrollIndicator={false}>
+    <ScrollView className="flex-1 bg-[#0D0E0F] px-4 pt-4" contentContainerStyle={{ paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
       
       {/* 1. GAMIFIED USER SCORE & RANK CARD */}
       <View className="bg-[#131415] border border-white/5 rounded-3xl p-5 mb-5 shadow-lg">

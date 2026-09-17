@@ -174,6 +174,7 @@ export default function TeamsView() {
 
       <ScrollView
         className="flex-1 px-4 pt-4"
+        contentContainerStyle={{ paddingBottom: 150 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Meta Sponsor Promo Banner */}

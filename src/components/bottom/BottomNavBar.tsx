@@ -1,5 +1,6 @@
 import React from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Compass,
   Trophy,
@@ -19,6 +20,8 @@ export default function BottomNavBar({
   activeTab,
   setActiveTab,
 }: BottomNavigationProps) {
+  const insets = useSafeAreaInsets();
+
   const tabs = [
     { id: "explore" as TabType, label: "Explore", Icon: Compass },
     { id: "leagues" as TabType, label: "Leagues", Icon: Trophy },
@@ -28,7 +31,7 @@ export default function BottomNavBar({
   ];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 8) }]}>
       {tabs.map(({ id, label, Icon }) => {
         const isActive = activeTab === id;
         return (

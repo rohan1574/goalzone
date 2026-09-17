@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
   Animated,
   Easing,
-  StatusBar,
   useWindowDimensions,
   ScrollView,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BannerAdComponent from "../ads/BannerAdComponent";
 
@@ -105,7 +105,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   if (currentStep === 0) {
     return (
       <View className="flex-1 bg-black">
-        <StatusBar barStyle="light-content" backgroundColor="#000000" translucent />
+        <StatusBar style="light" />
 
         {/* Background Image with Blur */}
         <Image
@@ -189,7 +189,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   // ─── STEP 1 & 2: Onboarding Screens ──────────────────────────────────────
   return (
     <View className="flex-1 bg-[#0D0E0F]">
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar style="light" />
 
       {/* Top Image Container */}
       <View style={{ height: imageHeight, width: "100%", overflow: "hidden", position: "relative" }}>

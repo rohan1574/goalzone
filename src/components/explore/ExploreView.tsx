@@ -61,6 +61,7 @@ export default function ExploreView({
   return (
     <ScrollView
       className="flex-1"
+      contentContainerStyle={{ paddingBottom: 140 }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}

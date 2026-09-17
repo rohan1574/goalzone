@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   TouchableOpacity,
-  StatusBar,
   Dimensions,
   Text,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   loadFootballDashboard,
@@ -500,7 +500,7 @@ export default function ExploreScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0E0F" }}>
-      <StatusBar barStyle="light-content" backgroundColor="#0D0E0F" />
+      <StatusBar style="light" />
 
       {/* Modular Header */}
       {activeTab === "explore" && (
