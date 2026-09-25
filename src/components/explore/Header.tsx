@@ -11,7 +11,6 @@ import {
   ChevronRight,
   X,
 } from "lucide-react-native";
-import Svg, { Polygon, Path } from "react-native-svg";
 
 interface HeaderProps {
   selectedDate: Date;
@@ -32,17 +31,6 @@ export default function Header({
   searchQuery,
   onSearchQueryChange,
 }: HeaderProps) {
-  // Premium Golden Hexagon Crown Badge
-  const PremiumHexagonBadge = () => (
-    <View className="items-center justify-center">
-      <Svg height="30" width="30" viewBox="0 0 100 100">
-        <Polygon points="50,0 93,25 93,75 50,100 7,75 7,25" fill="#FFC800" />
-        <Polygon points="50,6 88,28 88,72 50,94 12,72 12,28" fill="#0D0E0F" />
-        <Path d="M30,68 L70,68 L75,38 L60,48 L50,28 L40,48 L25,38 Z" fill="#FFC800" />
-      </Svg>
-    </View>
-  );
-
   const formatDateString = (date: Date) => {
     const day = date.getDate();
     const months = [
@@ -116,17 +104,9 @@ export default function Header({
               >
                 <Search size={18} color="#ECEDEE" />
               </TouchableOpacity>
-              <TouchableOpacity className="p-1 bg-white/5 rounded-full relative">
-                <Bell size={18} color="#ECEDEE" />
-                <View className="absolute top-1 right-1 w-2 h-2 bg-[#02DB54] rounded-full" />
-              </TouchableOpacity>
+             
               <TouchableOpacity onPress={onRefresh} className="p-1 bg-white/5 rounded-full">
                 <RotateCw size={18} color="#ECEDEE" />
-              </TouchableOpacity>
-
-              {/* Premium hexagon badge */}
-              <TouchableOpacity>
-                <PremiumHexagonBadge />
               </TouchableOpacity>
             </View>
           </>

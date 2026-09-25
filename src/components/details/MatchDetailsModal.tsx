@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, RotateCw, MapPin, Sparkles } from "lucide-react-native";
-import Svg, { Polygon, Path, Circle } from "react-native-svg";
+import Svg, { Path, Circle } from "react-native-svg";
 import { fetchHomeTeamLineup, fetchAwayTeamLineup, fetchLeagueStandings, fetchFixtureStatistics, fetchFixturePredictions } from "../../services/footballApi";
 import BannerAdComponent from "../ads/BannerAdComponent";
 
@@ -176,17 +176,6 @@ export default function MatchDetailsModal({
 
   if (!match) return null;
 
-  // Premium Hexagon Crown Badge
-  const PremiumHexagonBadge = () => (
-    <View className="items-center justify-center">
-      <Svg height="30" width="30" viewBox="0 0 100 100">
-        <Polygon points="50,0 93,25 93,75 50,100 7,75 7,25" fill="#FFC800" />
-        <Polygon points="50,6 88,28 88,72 50,94 12,72 12,28" fill="#0D0E0F" />
-        <Path d="M30,68 L70,68 L75,38 L60,48 L50,28 L40,48 L25,38 Z" fill="#FFC800" />
-      </Svg>
-    </View>
-  );
-
   // Stadium fallback solver
   const getStadium = (teamName: string) => {
     if (teamName.includes("Austin")) return "Q2 Stadium";
@@ -254,9 +243,6 @@ export default function MatchDetailsModal({
           <View className="flex-row items-center gap-3">
             <TouchableOpacity className="p-1 bg-white/5 rounded-full">
               <RotateCw size={18} color="#ECEDEE" />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <PremiumHexagonBadge />
             </TouchableOpacity>
           </View>
         </View>

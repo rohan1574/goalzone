@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
   ScrollView,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -44,40 +43,12 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView style={{ flex: 1 }} className="px-4 py-6">
-        {/* GO PRO VERSION CARD */}
-        <View className="bg-[#131415] border border-white/5 rounded-2xl p-5 flex-row items-center mb-6 shadow-2xl">
-          {/* Trophy Sticker image */}
-          <View className="w-20 h-20 items-center justify-center bg-black/40 rounded-xl overflow-hidden">
-            <Image
-              source={require("../../assets/images/settings_trophy.jpg")}
-              className="w-full h-full"
-              resizeMode="contain"
-            />
-          </View>
-
-          {/* Upgrade Content Info */}
-          <View className="flex-1 items-center ml-2">
-            <Text className="text-white font-black text-base tracking-widest text-center">
-              GO PRO VERSION
-            </Text>
-            <Text className="text-gray-400 text-[10px] font-black text-center mt-1 uppercase tracking-wide leading-4">
-              UPGRADE FOR UNLIMITED{"\n"}ACCESS & NO ADS
-            </Text>
-            
-            <TouchableOpacity 
-              className="bg-[#7BEA54] px-8 py-2 rounded-full mt-3 active:opacity-90 shadow-md"
-              activeOpacity={0.8}
-            >
-              <Text className="text-black font-extrabold text-xs">Upgrade</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
         {/* SETTINGS OPTION LIST CARD WITH GREEN GLOW LEFT BORDER */}
         <View className="bg-[#131415] border border-white/5 border-l-[3px] border-l-[#02DB54] rounded-2xl overflow-hidden shadow-xl">
           
           {/* 1. Language Row */}
-          <TouchableOpacity 
+          {/* <TouchableOpacity 
             className="flex-row items-center justify-between px-5 py-4 border-b border-white/5 active:bg-white/5"
             activeOpacity={0.7}
           >
@@ -93,10 +64,10 @@ export default function SettingsScreen() {
               </Text>
               <ChevronRight size={14} color="#9BA1A6" />
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* 2. Rate Row */}
-          <TouchableOpacity 
+          {/* <TouchableOpacity 
             className="flex-row items-center px-5 py-4 border-b border-white/5 active:bg-white/5"
             activeOpacity={0.7}
           >
@@ -104,10 +75,10 @@ export default function SettingsScreen() {
             <Text className="text-white font-bold text-sm ml-4">
               Rate
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* 3. Share Row */}
-          <TouchableOpacity 
+          {/* <TouchableOpacity 
             className="flex-row items-center px-5 py-4 border-b border-white/5 active:bg-white/5"
             activeOpacity={0.7}
           >
@@ -115,7 +86,7 @@ export default function SettingsScreen() {
             <Text className="text-white font-bold text-sm ml-4">
               Share
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* 4. Privacy Policy Row */}
           <TouchableOpacity 

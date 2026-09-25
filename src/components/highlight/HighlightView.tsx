@@ -171,10 +171,10 @@ export default function HighlightView() {
       {/* Header section matching screenshot */}
       <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-[#ffffff05]">
         <Text className="text-white text-22 font-black tracking-[1.5px] uppercase">HIGHLIGHTS & NEWS</Text>
-        <TouchableOpacity className="p-2 rounded-full bg-white/5 relative">
+        {/* <TouchableOpacity className="p-2 rounded-full bg-white/5 relative">
           <Bell size={18} color="#ECEDEE" />
           <View className="absolute top-2 right-2 w-2 h-2 bg-[#02DB54] rounded-full" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       {/* Sub-tab Selection */}

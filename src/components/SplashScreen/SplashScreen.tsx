@@ -8,7 +8,6 @@ import {
   Animated,
   Easing,
   useWindowDimensions,
-  ScrollView,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -55,7 +54,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const isSmallDevice = height < 700 || width < 360;
   const iconSize = Math.min(Math.max(width * 0.35, 110), 160);
   const titleFontSize = isSmallDevice ? 28 : Math.min(width * 0.09, 36);
-  const imageHeight = isSmallDevice ? height * 0.42 : height * 0.48;
+
 
   useEffect(() => {
     if (currentStep === 0) {
@@ -191,71 +190,88 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     <View className="flex-1 bg-[#0D0E0F]">
       <StatusBar style="light" />
 
-      {/* Top Image Container */}
-      <View style={{ height: imageHeight, width: "100%", overflow: "hidden", position: "relative" }}>
-        <Image
-          source={stepData.image}
-          className="w-full h-full"
-          resizeMode="cover"
-        />
+      {/* Full-screen Image */}
+      <Image
+        source={stepData.image}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" }}
+        resizeMode="cover"
+      />
 
-        {/* Top Dark Overlay for Status bar & Skip button readability */}
-        <View
-          className="absolute top-0 left-0 right-0 h-24"
-          style={{ backgroundColor: "rgba(0,0,0,0.35)" }}
-        />
+      {/* Top Dark Overlay for Status bar & Skip button readability */}
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 96,
+          backgroundColor: "rgba(0,0,0,0.35)",
+        }}
+      />
 
-        {/* Floating Skip Button */}
-        <TouchableOpacity
-          style={{
-            position: "absolute",
-            top: Math.max(insets.top + 8, 18),
-            right: 20,
-            zIndex: 20,
-            backgroundColor: "rgba(0,0,0,0.55)",
-            paddingHorizontal: 14,
-            paddingVertical: 6,
-            borderRadius: 20,
-            borderWidth: 1,
-            borderColor: "rgba(255,255,255,0.15)",
-          }}
-          onPress={handleSkip}
-          activeOpacity={0.8}
-        >
-          <Text className="text-white text-xs font-bold">Skip</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Bottom dark overlay so text is readable */}
+      <View
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: "45%",
+          backgroundColor: "rgba(13,14,15,0.72)",
+        }}
+      />
 
-      {/* Main Content Area */}
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 16 }}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
+      {/* Floating Skip Button */}
+      <TouchableOpacity
+        style={{
+          position: "absolute",
+          top: Math.max(insets.top + 8, 18),
+          right: 20,
+          zIndex: 20,
+          backgroundColor: "rgba(0,0,0,0.55)",
+          paddingHorizontal: 14,
+          paddingVertical: 6,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: "rgba(255,255,255,0.15)",
+        }}
+        onPress={handleSkip}
+        activeOpacity={0.8}
       >
-        <View className="items-center">
-          {/* Onboarding Title */}
-          <Text
-            className="text-white font-bold text-center leading-7 px-2"
-            style={{ fontSize: isSmallDevice ? 17 : 20 }}
-          >
-            {stepData.title}
-          </Text>
+        <Text className="text-white text-xs font-bold">Skip</Text>
+      </TouchableOpacity>
 
-          {/* AdMob Banner */}
-          <View className="w-full items-center my-3">
-            <BannerAdComponent />
-          </View>
+      {/* Bottom Content Overlay */}
+      <View
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          paddingHorizontal: 20,
+          paddingBottom: Math.max(insets.bottom + 8, 16),
+          paddingTop: 16,
+        }}
+      >
+        {/* Onboarding Title */}
+        <Text
+          className="text-white font-bold text-center leading-7 px-2"
+          style={{ fontSize: isSmallDevice ? 17 : 20, marginBottom: 8 }}
+        >
+          {stepData.title}
+        </Text>
+
+        {/* AdMob Banner */}
+        <View className="w-full items-center my-3">
+          <BannerAdComponent />
         </View>
 
         {/* Footer Action Bar */}
-        <View
-          className="flex-row items-center justify-between py-4 bg-[#0D0E0F]"
-          style={{ paddingBottom: Math.max(insets.bottom + 8, 16) }}
-        >
+        <View className="flex-row items-center justify-between py-4">
           {/* Pagination Dots */}
           <View className="flex-row items-center">
-            {[1, 2, 3].map((stepNum) => {
-              const isActive = currentStep === stepNum - 1;
+            {[1, 2].map((stepNum) => {
+              const isActive = currentStep === stepNum;
               return (
                 <View
                   key={stepNum}
@@ -290,8 +306,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             </Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </View>
   );
 }
-

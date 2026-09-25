@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Neymar10",
-    "slug": "Neymar10",
-    "version": "1.0.9",
+    "name": "NJR10 Live",
+    "slug": "NJR10Live",
+    "version": "1.0.17",
     "icon": "./assets/images/icon.png",
     "scheme": "neymar10",
     "userInterfaceStyle": "automatic",

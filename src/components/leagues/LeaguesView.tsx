@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Search, Star, ChevronDown, ChevronUp } from "lucide-react-native";
-import Svg, { Polygon, Path } from "react-native-svg";
+import Svg, { Path } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LeagueDetailsModal, { League } from "./LeagueDetailsModal";
 
@@ -110,17 +110,6 @@ export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
   const categories = Array.from(new Set(leaguesList.map((l) => l.category)));
   const favoriteLeaguesList = leaguesList.filter((l) => favorites.includes(l.id));
 
-  // Premium Golden Hexagon Crown Badge
-  const PremiumHexagonBadge = () => (
-    <View className="items-center justify-center">
-      <Svg height="30" width="30" viewBox="0 0 100 100">
-        <Polygon points="50,0 93,25 93,75 50,100 7,75 7,25" fill="#FFC800" />
-        <Polygon points="50,6 88,28 88,72 50,94 12,72 12,28" fill="#0D0E0F" />
-        <Path d="M30,68 L70,68 L75,38 L60,48 L50,28 L40,48 L25,38 Z" fill="#FFC800" />
-      </Svg>
-    </View>
-  );
-
   if (loading) {
     return (
       <View className="flex-1 bg-[#0D0E0F] items-center justify-center">
@@ -135,12 +124,9 @@ export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
       <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-[#ffffff05]">
         <Text className="text-white text-22 font-black tracking-[1.5px]">LEAGUES</Text>
         <View className="flex-row items-center gap-3">
-          <TouchableOpacity className="p-2 rounded-full bg-white/5">
+          {/* <TouchableOpacity className="p-2 rounded-full bg-white/5">
             <Search size={18} color="#ECEDEE" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <PremiumHexagonBadge />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
 
@@ -150,7 +136,7 @@ export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
         showsVerticalScrollIndicator={false}
       >
         {/* Meta Sponsor Promo Banner */}
-        <TouchableOpacity className="bg-[#131415] rounded-3xl p-3 border border-white/5 mb-6 relative overflow-hidden" activeOpacity={0.9}>
+        {/* <TouchableOpacity className="bg-[#131415] rounded-3xl p-3 border border-white/5 mb-6 relative overflow-hidden" activeOpacity={0.9}>
           <View className="absolute left-3 top-3 bg-[#02DB54] px-1.5 py-0.5 rounded z-10">
             <Text className="text-black text-[8px] font-black uppercase">Ad</Text>
           </View>
@@ -173,7 +159,7 @@ export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
             </View>
           </View>
           <Text className="text-[#545A60] text-[8px] font-bold text-right mt-1">Ads served by Meta</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* SECTION 1: Favorite Leagues */}
         <View className="mb-5">

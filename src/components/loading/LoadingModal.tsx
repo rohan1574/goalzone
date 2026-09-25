@@ -89,7 +89,6 @@ export default function LoadingModal({ visible }: LoadingModalProps) {
       transparent={true}
       visible={visible}
       animationType="fade"
-      statusBarTranslucent={true}
     >
       <View style={styles.backdrop}>
         {/* Glassmorphic Container Card */}
