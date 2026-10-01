@@ -161,6 +161,85 @@ app.get('/football-get-matches-by-date', async (req, res) => {
   }
 });
 
+app.get('/football-get-fixtures-by-team', async (req, res) => {
+  const teamid = req.query.teamid as string;
+  if (!teamid) {
+    return res.status(400).json({ error: 'Missing teamid parameter' });
+  }
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const cacheKey = `fixtures_team_${teamid}_${todayStr}`;
+
+  try {
+    const data = await fetchAndCache(cacheKey, '/fixtures', { team: teamid, next: 20 }, 1800, (apiResponse: any) => {
+      const list = apiResponse.response || [];
+      return list.map((item: any) => {
+        const fixtureDate = item.fixture.date ? new Date(item.fixture.date) : new Date();
+        const time = fixtureDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const date = `${String(fixtureDate.getDate()).padStart(2, '0')}/${String(fixtureDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        const isHome = String(item.teams.home.id) === String(teamid);
+        const opponent = isHome ? item.teams.away : item.teams.home;
+
+        return {
+          id: String(item.fixture.id),
+          status: item.fixture.status.short || 'NS',
+          time,
+          date,
+          isHome,
+          opponent: opponent.name,
+          opponentLogo: opponent.logo
+        };
+      });
+    });
+
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to fetch team fixtures', message: err.message });
+  }
+});
+
+app.get('/football-get-team-squad', async (req, res) => {
+  const teamid = req.query.teamid as string;
+  if (!teamid) {
+    return res.status(400).json({ error: 'Missing teamid parameter' });
+  }
+
+  const cacheKey = `squad_team_${teamid}`;
+
+  try {
+    const data = await fetchAndCache(cacheKey, '/players/squads', { team: teamid }, 86400, (apiResponse: any) => {
+      const list = apiResponse.response || [];
+      if (list.length === 0) return [];
+
+      const players = list[0].players || [];
+      const positions: { [key: string]: string[] } = {
+        'Goalkeepers': [],
+        'Defenders': [],
+        'Midfielders': [],
+        'Forwards': []
+      };
+
+      players.forEach((p: any) => {
+        const pos = p.position;
+        if (pos === 'Goalkeeper') positions['Goalkeepers'].push(p.name);
+        else if (pos === 'Defender') positions['Defenders'].push(p.name);
+        else if (pos === 'Midfielder') positions['Midfielders'].push(p.name);
+        else if (pos === 'Attacker') positions['Forwards'].push(p.name);
+      });
+
+      return Object.keys(positions).map(pos => ({
+        position: pos,
+        players: positions[pos]
+      }));
+    });
+
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to fetch team squad', message: err.message });
+  }
+});
+
 // Helper for Lineup translation
 const translateLineup = (apiResponse: any, side: 'home' | 'away') => {
   const list = apiResponse.response || [];
