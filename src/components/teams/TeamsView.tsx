@@ -51,10 +51,7 @@ export default function TeamsView() {
   // Expandable sections
   const [favSectionExpanded, setFavSectionExpanded] = useState(true);
   const [allSectionExpanded, setAllSectionExpanded] = useState(true);
-  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
-    "International Teams": true,
-    "Club Teams": false,
-  });
+  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
 
   // Modal display managers
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
@@ -253,7 +250,7 @@ export default function TeamsView() {
             <View className="bg-[#131415] rounded-3xl border border-white/5 p-1">
               {categories.map((category) => {
                 const categoryTeams = teamsList.filter((t) => t.category === category);
-                const isCatExpanded = expandedCategories[category];
+                const isCatExpanded = expandedCategories[category] !== false;
 
                 return (
                   <View key={category} className="border-b border-white/3">
