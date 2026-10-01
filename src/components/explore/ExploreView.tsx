@@ -74,26 +74,7 @@ export default function ExploreView({
       {/* Horizontal Carousel of Live Matches */}
       <LiveMatches liveMatches={liveMatches} width={width} onPressDetails={onPressDetails} />
 
-      {/* Sticker Collection WC Yellow Promo Banner */}
-      <TouchableOpacity className="mx-4 mt-6 bg-[#FFC800] rounded-3xl p-5 flex-row items-center justify-between relative overflow-hidden">
-        <View className="flex-row items-center gap-3">
-          <View className="bg-white/20 p-2.5 rounded-full">
-            <Trophy size={26} color="#0D0E0F" />
-          </View>
-          <Text className="text-black font-black text-base tracking-tight">
-            Sticker Collection WC
-          </Text>
-        </View>
-
-        <View className="flex-row items-center gap-2">
-          <View className="bg-[#69F0AE] px-2.5 py-1 rounded-lg">
-            <Text className="text-black text-[10px] font-black uppercase tracking-wider">
-              New
-            </Text>
-          </View>
-          <ChevronRight size={18} color="#000000" />
-        </View>
-      </TouchableOpacity>
+     
 
       {/* Match Fixture lists categorized by League */}
       <Leagues

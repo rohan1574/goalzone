@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { fetchFootballNews, fetchHighlights } from "../../services/footballApi";
+import { fetchFootballNews } from "../../services/footballApi";
 
 const { width } = Dimensions.get("window");
 
@@ -23,26 +23,20 @@ export default function HighlightView() {
   // Tab State
   const [subTab, setSubTab] = useState<"videos" | "news">("videos");
 
-  // Data states
+  // News states
   const [news, setNews] = useState<any[]>([]);
-  const [highlights, setHighlights] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    loadNews();
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadNews = async () => {
     try {
-      const [newsData, highlightsData] = await Promise.all([
-        fetchFootballNews(),
-        fetchHighlights(),
-      ]);
-      setNews(newsData);
-      setHighlights(highlightsData);
+      const data = await fetchFootballNews();
+      setNews(data);
     } catch (e) {
-      console.warn("Failed to load data:", e);
+      console.warn("Failed to load news:", e);
     } finally {
       setLoading(false);
     }
@@ -70,40 +64,93 @@ export default function HighlightView() {
     },
   ];
 
+  // Mock data for video highlights
+  const mockHighlights = [
+    {
+      id: "vid-1",
+      title: "Real Madrid 3 - 2 Barcelona | El Clasico Highlights",
+      league: "La Liga",
+      leagueLogo:
+        "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png",
+      thumbnail:
+        "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600",
+      duration: "10:15",
+      date: "Yesterday",
+      videoUrl: "https://www.youtube.com/watch?v=M5FwM-f8d2M",
+      homeTeam: {
+        name: "Real Madrid",
+        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png",
+      },
+      awayTeam: {
+        name: "Barcelona",
+        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png",
+      },
+    },
+    {
+      id: "vid-2",
+      title: "Manchester City 2 - 2 Liverpool | Goals & Recap",
+      league: "Premier League",
+      leagueLogo:
+        "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png",
+      thumbnail:
+        "https://images.unsplash.com/photo-1540747737956-37872f747d7d?w=600",
+      duration: "08:40",
+      date: "2 days ago",
+      videoUrl: "https://www.youtube.com/watch?v=w7wK4m6wF5g",
+      homeTeam: {
+        name: "Man City",
+        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png",
+      },
+      awayTeam: {
+        name: "Liverpool",
+        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8467.png",
+      },
+    },
+    {
+      id: "vid-3",
+      title: "Argentina 3 - 3 France (Penalties 4-2) | World Cup Final",
+      league: "FIFA World Cup",
+      leagueLogo:
+        "https://images.fotmob.com/image_resources/logo/leaguelogo/42.png",
+      thumbnail:
+        "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600",
+      duration: "15:00",
+      date: "1 week ago",
+      videoUrl: "https://www.youtube.com/watch?v=t5JvD9c4JvA",
+      homeTeam: {
+        name: "Argentina",
+        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8066.png",
+      },
+      awayTeam: {
+        name: "France",
+        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8490.png",
+      },
+    },
+    {
+      id: "vid-4",
+      title: "Chelsea 1 - 3 Arsenal | Highlights & Match Reaction",
+      league: "Premier League",
+      leagueLogo:
+        "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png",
+      thumbnail:
+        "https://images.unsplash.com/photo-1504156069833-c98a77f19f85?w=600",
+      duration: "09:15",
+      date: "3 days ago",
+      videoUrl: "https://www.youtube.com/watch?v=mD_sE9W_Trc",
+      homeTeam: {
+        name: "Chelsea",
+        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png",
+      },
+      awayTeam: {
+        name: "Arsenal",
+        logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8456.png",
+      },
+    },
+  ];
+
   const featuredList = news.length > 0 ? news.slice(0, 3) : fallbackFeatured;
   const trendingList = news.length > 3 ? news.slice(3, 7) : news;
   const latestList = news.length > 7 ? news.slice(7) : news;
-
-  // Video highlights list (use API data or mock fallback)
-  const videoHighlights =
-    highlights.length > 0
-      ? highlights
-      : [
-          {
-            id: "vid-1",
-            title: "Real Madrid 3 - 2 Barcelona | El Clasico Highlights",
-            league: "La Liga",
-            leagueLogo:
-              "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png",
-            thumbnail:
-              "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600",
-            duration: "10:15",
-            date: "Yesterday",
-            videoUrl: "https://www.youtube.com/watch?v=M5FwM-f8d2M",
-          },
-          {
-            id: "vid-2",
-            title: "Manchester City 2 - 2 Liverpool | Goals & Recap",
-            league: "Premier League",
-            leagueLogo:
-              "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png",
-            thumbnail:
-              "https://images.unsplash.com/photo-1540747737956-37872f747d7d?w=600",
-            duration: "08:40",
-            date: "2 days ago",
-            videoUrl: "https://www.youtube.com/watch?v=w7wK4m6wF5g",
-          },
-        ];
 
   // Auto scroll effect for Featured news banner
   useEffect(() => {
@@ -211,7 +258,7 @@ export default function HighlightView() {
           contentContainerStyle={{ paddingBottom: 150 }}
           showsVerticalScrollIndicator={false}
         >
-          {videoHighlights.map((item) => (
+          {mockHighlights.map((item) => (
             <TouchableOpacity
               key={item.id}
               className="bg-[#131415] rounded-3xl border border-white/5 overflow-hidden mb-5"
@@ -259,26 +306,57 @@ export default function HighlightView() {
 
               {/* Match Details Area */}
               <View className="p-4 gap-3">
+                {/* Match matchup */}
+                <View className="flex-row items-center justify-between px-2">
+                  {/* Home Team */}
+                  <View className="flex-row items-center gap-2.5 w-[42%]">
+                    <Image
+                      source={{ uri: item.homeTeam.logo }}
+                      className="w-7 h-7"
+                      resizeMode="contain"
+                    />
+                    <Text
+                      className="text-white text-xs font-black"
+                      numberOfLines={1}
+                    >
+                      {item.homeTeam.name}
+                    </Text>
+                  </View>
+
+                  {/* Score Info Badge */}
+                  <View className="bg-[#02DB54]/10 border border-[#02DB54]/30 px-3 py-1 rounded-xl">
+                    <Text className="text-[#02DB54] text-xs font-black">
+                      FT
+                    </Text>
+                  </View>
+
+                  {/* Away Team */}
+                  <View className="flex-row items-center justify-end gap-2.5 w-[42%]">
+                    <Text
+                      className="text-white text-xs font-black text-right"
+                      numberOfLines={1}
+                    >
+                      {item.awayTeam.name}
+                    </Text>
+                    <Image
+                      source={{ uri: item.awayTeam.logo }}
+                      className="w-7 h-7"
+                      resizeMode="contain"
+                    />
+                  </View>
+                </View>
+
                 {/* Title & Date */}
-                <View className="flex-row justify-between items-start">
+                <View className="border-t border-white/5 pt-3 flex-row justify-between items-center">
                   <Text
-                    className="text-white text-sm font-black flex-1 mr-2"
-                    numberOfLines={2}
+                    className="text-gray-200 text-xs font-extrabold flex-1 mr-2"
+                    numberOfLines={1}
                   >
                     {item.title}
                   </Text>
-                  <Text className="text-gray-500 text-[10px] font-bold mt-1">
+                  <Text className="text-gray-500 text-[10px] font-bold">
                     {item.date}
                   </Text>
-                </View>
-
-                {/* Score Info Badge (Simple) */}
-                <View className="flex-row items-center gap-2">
-                  <View className="bg-[#02DB54]/10 border border-[#02DB54]/30 px-2.5 py-0.5 rounded-lg">
-                    <Text className="text-[#02DB54] text-[10px] font-black">
-                      Full Highlights
-                    </Text>
-                  </View>
                 </View>
               </View>
             </TouchableOpacity>

@@ -40,14 +40,7 @@ const api = axios.create({
 });
 
 // Helper to handle API requests and cache them
-async function fetchAndCache(
-  cacheKey,
-  endpoint,
-  params,
-  ttlSeconds,
-  mapper,
-  useExternalUrl = false,
-) {
+async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
   const cachedData = cache.get(cacheKey);
   if (cachedData !== null) {
     return cachedData;
@@ -55,15 +48,8 @@ async function fetchAndCache(
 
   console.log(`[API Call] Requesting ${endpoint} with params:`, params);
   try {
-    let response;
-    if (useExternalUrl) {
-      response = await axios.get(endpoint, { params });
-    } else {
-      response = await api.get(endpoint, { params });
-    }
-
+    const response = await api.get(endpoint, { params });
     if (
-      !useExternalUrl &&
       response.data &&
       response.data.errors &&
       Object.keys(response.data.errors).length > 0
@@ -661,41 +647,6 @@ app.get("/football-find-team-by-country", async (req, res) => {
     res
       .status(500)
       .json({ error: "Failed to find team", message: err.message });
-  }
-});
-
-app.get("/football-get-highlights", async (req, res) => {
-  const cacheKey = "video_highlights";
-  try {
-    const data = await fetchAndCache(
-      cacheKey,
-      "https://www.scorebat.com/video-api/v3/feed/",
-      {},
-      3600,
-      (apiResponse) => {
-        const list = apiResponse.response || [];
-        return list.map((item) => ({
-          id: item.title.replace(/\s+/g, "-").toLowerCase() + "-" + Date.now(),
-          title: item.title,
-          league: item.competition,
-          leagueLogo:
-            item.competitionLogo ||
-            "https://images.fotmob.com/image_resources/logo/leaguelogo/42.png",
-          thumbnail: item.thumbnail,
-          duration: "Highlights",
-          date: new Date(item.date).toLocaleDateString(),
-          videoUrl: item.matchviewUrl,
-          embedHtml:
-            item.videos && item.videos.length > 0 ? item.videos[0].embed : "",
-        }));
-      },
-      true, // useExternalUrl flag
-    );
-    res.json(data);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ error: "Failed to fetch highlights", message: err.message });
   }
 });
 
