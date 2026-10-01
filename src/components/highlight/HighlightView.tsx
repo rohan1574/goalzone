@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
+import { Newspaper, Play } from "lucide-react-native";
+import { useEffect, useRef, useState } from "react";
 import {
-  ScrollView,
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  Dimensions,
-  Linking,
   ActivityIndicator,
+  Dimensions,
+  Image,
+  Linking,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Bell, Play, Newspaper } from "lucide-react-native";
-import Svg, { Path } from "react-native-svg";
-import { fetchFootballNews } from "../../services/footballApi";
+import { fetchFootballNews, fetchHighlights } from "../../services/footballApi";
 
 const { width } = Dimensions.get("window");
 
@@ -24,20 +23,26 @@ export default function HighlightView() {
   // Tab State
   const [subTab, setSubTab] = useState<"videos" | "news">("videos");
 
-  // News states
+  // Data states
   const [news, setNews] = useState<any[]>([]);
+  const [highlights, setHighlights] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadNews();
+    loadData();
   }, []);
 
-  const loadNews = async () => {
+  const loadData = async () => {
+    setLoading(true);
     try {
-      const data = await fetchFootballNews();
-      setNews(data);
+      const [newsData, highlightsData] = await Promise.all([
+        fetchFootballNews(),
+        fetchHighlights(),
+      ]);
+      setNews(newsData);
+      setHighlights(highlightsData);
     } catch (e) {
-      console.warn("Failed to load news:", e);
+      console.warn("Failed to load data:", e);
     } finally {
       setLoading(false);
     }
@@ -48,7 +53,8 @@ export default function HighlightView() {
     {
       id: "feat-recap-1",
       title: "Champions League Semifinal Recap: Real Madrid vs Man City",
-      thumbnail: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500",
+      thumbnail:
+        "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500",
       description: "A thriller at the Bernabeu as City fights back.",
       date: "August 2026",
       link: "https://www.skysports.com/football",
@@ -56,68 +62,48 @@ export default function HighlightView() {
     {
       id: "feat-recap-2",
       title: "La Liga: Barcelona secures vital three points in El Clasico",
-      thumbnail: "https://images.unsplash.com/photo-1540747737956-37872f747d7d?w=500",
+      thumbnail:
+        "https://images.unsplash.com/photo-1540747737956-37872f747d7d?w=500",
       description: "A late goal by Lewandowski seals the match.",
       date: "August 2026",
       link: "https://www.skysports.com/football",
     },
   ];
 
-  // Mock data for video highlights
-  const mockHighlights = [
-    {
-      id: "vid-1",
-      title: "Real Madrid 3 - 2 Barcelona | El Clasico Highlights",
-      league: "La Liga",
-      leagueLogo: "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png",
-      thumbnail: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600",
-      duration: "10:15",
-      date: "Yesterday",
-      videoUrl: "https://www.youtube.com/watch?v=M5FwM-f8d2M",
-      homeTeam: { name: "Real Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png" },
-      awayTeam: { name: "Barcelona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png" }
-    },
-    {
-      id: "vid-2",
-      title: "Manchester City 2 - 2 Liverpool | Goals & Recap",
-      league: "Premier League",
-      leagueLogo: "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png",
-      thumbnail: "https://images.unsplash.com/photo-1540747737956-37872f747d7d?w=600",
-      duration: "08:40",
-      date: "2 days ago",
-      videoUrl: "https://www.youtube.com/watch?v=w7wK4m6wF5g",
-      homeTeam: { name: "Man City", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png" },
-      awayTeam: { name: "Liverpool", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8467.png" }
-    },
-    {
-      id: "vid-3",
-      title: "Argentina 3 - 3 France (Penalties 4-2) | World Cup Final",
-      league: "FIFA World Cup",
-      leagueLogo: "https://images.fotmob.com/image_resources/logo/leaguelogo/42.png",
-      thumbnail: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600",
-      duration: "15:00",
-      date: "1 week ago",
-      videoUrl: "https://www.youtube.com/watch?v=t5JvD9c4JvA",
-      homeTeam: { name: "Argentina", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8066.png" },
-      awayTeam: { name: "France", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8490.png" }
-    },
-    {
-      id: "vid-4",
-      title: "Chelsea 1 - 3 Arsenal | Highlights & Match Reaction",
-      league: "Premier League",
-      leagueLogo: "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png",
-      thumbnail: "https://images.unsplash.com/photo-1504156069833-c98a77f19f85?w=600",
-      duration: "09:15",
-      date: "3 days ago",
-      videoUrl: "https://www.youtube.com/watch?v=mD_sE9W_Trc",
-      homeTeam: { name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png" },
-      awayTeam: { name: "Arsenal", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8456.png" }
-    }
-  ];
-
   const featuredList = news.length > 0 ? news.slice(0, 3) : fallbackFeatured;
   const trendingList = news.length > 3 ? news.slice(3, 7) : news;
   const latestList = news.length > 7 ? news.slice(7) : news;
+
+  // Video highlights list (use API data or mock fallback)
+  const videoHighlights =
+    highlights.length > 0
+      ? highlights
+      : [
+          {
+            id: "vid-1",
+            title: "Real Madrid 3 - 2 Barcelona | El Clasico Highlights",
+            league: "La Liga",
+            leagueLogo:
+              "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png",
+            thumbnail:
+              "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600",
+            duration: "10:15",
+            date: "Yesterday",
+            videoUrl: "https://www.youtube.com/watch?v=M5FwM-f8d2M",
+          },
+          {
+            id: "vid-2",
+            title: "Manchester City 2 - 2 Liverpool | Goals & Recap",
+            league: "Premier League",
+            leagueLogo:
+              "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png",
+            thumbnail:
+              "https://images.unsplash.com/photo-1540747737956-37872f747d7d?w=600",
+            duration: "08:40",
+            date: "2 days ago",
+            videoUrl: "https://www.youtube.com/watch?v=w7wK4m6wF5g",
+          },
+        ];
 
   // Auto scroll effect for Featured news banner
   useEffect(() => {
@@ -162,7 +148,9 @@ export default function HighlightView() {
 
   const handleOpenLink = (url: string) => {
     if (url) {
-      Linking.openURL(url).catch((err) => console.error("Couldn't load page", err));
+      Linking.openURL(url).catch((err) =>
+        console.error("Couldn't load page", err),
+      );
     }
   };
 
@@ -170,7 +158,9 @@ export default function HighlightView() {
     <View className="flex-1 bg-[#0D0E0F]">
       {/* Header section matching screenshot */}
       <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-[#ffffff05]">
-        <Text className="text-white text-22 font-black tracking-[1.5px] uppercase">HIGHLIGHTS & NEWS</Text>
+        <Text className="text-white text-22 font-black tracking-[1.5px] uppercase">
+          HIGHLIGHTS & NEWS
+        </Text>
         {/* <TouchableOpacity className="p-2 rounded-full bg-white/5 relative">
           <Bell size={18} color="#ECEDEE" />
           <View className="absolute top-2 right-2 w-2 h-2 bg-[#02DB54] rounded-full" />
@@ -216,8 +206,12 @@ export default function HighlightView() {
         </View>
       ) : subTab === "videos" ? (
         /* Video Highlights Screen */
-        <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
-          {mockHighlights.map((item) => (
+        <ScrollView
+          className="flex-1 px-4"
+          contentContainerStyle={{ paddingBottom: 150 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {videoHighlights.map((item) => (
             <TouchableOpacity
               key={item.id}
               className="bg-[#131415] rounded-3xl border border-white/5 overflow-hidden mb-5"
@@ -226,54 +220,65 @@ export default function HighlightView() {
             >
               {/* Video Thumbnail Container */}
               <View className="h-48 w-full relative justify-center items-center">
-                <Image source={{ uri: item.thumbnail }} className="absolute inset-0 w-full h-full" resizeMode="cover" />
+                <Image
+                  source={{ uri: item.thumbnail }}
+                  className="absolute inset-0 w-full h-full"
+                  resizeMode="cover"
+                />
                 <View className="absolute inset-0 bg-black/40" />
 
                 {/* Play Button Overlay */}
                 <View className="bg-white/90 w-14 h-14 rounded-full items-center justify-center shadow-lg shadow-black/50">
-                  <Play size={24} color="#0D0E0F" fill="#0D0E0F" style={{ marginLeft: 3 }} />
+                  <Play
+                    size={24}
+                    color="#0D0E0F"
+                    fill="#0D0E0F"
+                    style={{ marginLeft: 3 }}
+                  />
                 </View>
 
                 {/* Duration Badge */}
                 <View className="absolute bottom-3 right-3 bg-black/75 px-2.5 py-1 rounded-lg">
-                  <Text className="text-white text-[10px] font-black">{item.duration}</Text>
+                  <Text className="text-white text-[10px] font-black">
+                    {item.duration}
+                  </Text>
                 </View>
 
                 {/* League Badge */}
                 <View className="absolute top-3 left-3 bg-[#0D0E0F]/80 border border-white/10 px-2.5 py-1 rounded-lg flex-row items-center gap-1.5">
-                  <Image source={{ uri: item.leagueLogo }} className="w-3.5 h-3.5" resizeMode="contain" />
-                  <Text className="text-white text-[9px] font-black">{item.league}</Text>
+                  <Image
+                    source={{ uri: item.leagueLogo }}
+                    className="w-3.5 h-3.5"
+                    resizeMode="contain"
+                  />
+                  <Text className="text-white text-[9px] font-black">
+                    {item.league}
+                  </Text>
                 </View>
               </View>
 
               {/* Match Details Area */}
               <View className="p-4 gap-3">
-                {/* Match matchup */}
-                <View className="flex-row items-center justify-between px-2">
-                  {/* Home Team */}
-                  <View className="flex-row items-center gap-2.5 w-[42%]">
-                    <Image source={{ uri: item.homeTeam.logo }} className="w-7 h-7" resizeMode="contain" />
-                    <Text className="text-white text-xs font-black" numberOfLines={1}>{item.homeTeam.name}</Text>
-                  </View>
-
-                  {/* Score Info Badge */}
-                  <View className="bg-[#02DB54]/10 border border-[#02DB54]/30 px-3 py-1 rounded-xl">
-                    <Text className="text-[#02DB54] text-xs font-black">FT</Text>
-                  </View>
-
-                  {/* Away Team */}
-                  <View className="flex-row items-center justify-end gap-2.5 w-[42%]">
-                    <Text className="text-white text-xs font-black text-right" numberOfLines={1}>{item.awayTeam.name}</Text>
-                    <Image source={{ uri: item.awayTeam.logo }} className="w-7 h-7" resizeMode="contain" />
-                  </View>
-                </View>
-
                 {/* Title & Date */}
-                <View className="border-t border-white/5 pt-3 flex-row justify-between items-center">
-                  <Text className="text-gray-200 text-xs font-extrabold flex-1 mr-2" numberOfLines={1}>
+                <View className="flex-row justify-between items-start">
+                  <Text
+                    className="text-white text-sm font-black flex-1 mr-2"
+                    numberOfLines={2}
+                  >
                     {item.title}
                   </Text>
-                  <Text className="text-gray-500 text-[10px] font-bold">{item.date}</Text>
+                  <Text className="text-gray-500 text-[10px] font-bold mt-1">
+                    {item.date}
+                  </Text>
+                </View>
+
+                {/* Score Info Badge (Simple) */}
+                <View className="flex-row items-center gap-2">
+                  <View className="bg-[#02DB54]/10 border border-[#02DB54]/30 px-2.5 py-0.5 rounded-lg">
+                    <Text className="text-[#02DB54] text-[10px] font-black">
+                      Full Highlights
+                    </Text>
+                  </View>
                 </View>
               </View>
             </TouchableOpacity>
@@ -282,7 +287,11 @@ export default function HighlightView() {
         </ScrollView>
       ) : (
         /* Latest News Screen (Original RSS View) */
-        <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 150 }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ paddingBottom: 150 }}
+          showsVerticalScrollIndicator={false}
+        >
           {/* HERO: Auto-scrolling Featured News Card */}
           <View className="mx-4 mt-4">
             <ScrollView
@@ -317,12 +326,20 @@ export default function HighlightView() {
                   <View className="z-10 gap-1.5">
                     <View className="flex-row items-center gap-1.5 self-start bg-[#02DB54]/10 border border-[#02DB54]/30 px-2.5 py-0.5 rounded-full mb-1">
                       <Newspaper size={10} color="#02DB54" />
-                      <Text className="text-[#02DB54] text-[9px] font-black uppercase tracking-wider">SKY NEWS</Text>
+                      <Text className="text-[#02DB54] text-[9px] font-black uppercase tracking-wider">
+                        SKY NEWS
+                      </Text>
                     </View>
-                    <Text className="text-white text-base font-black leading-tight" numberOfLines={2}>
+                    <Text
+                      className="text-white text-base font-black leading-tight"
+                      numberOfLines={2}
+                    >
                       {item.title}
                     </Text>
-                    <Text className="text-gray-400 text-[10px] font-bold" numberOfLines={1}>
+                    <Text
+                      className="text-gray-400 text-[10px] font-bold"
+                      numberOfLines={1}
+                    >
                       {item.description || "Read full article on Sky Sports..."}
                     </Text>
                   </View>
@@ -349,9 +366,13 @@ export default function HighlightView() {
           {/* SECTION 1: Trending News */}
           <View className="mt-6">
             <View className="flex-row items-center justify-between px-4 mb-3.5">
-              <Text className="text-white text-base font-extrabold">🔥 Trending News</Text>
+              <Text className="text-white text-base font-extrabold">
+                🔥 Trending News
+              </Text>
               <TouchableOpacity>
-                <Text className="text-[#02DB54] text-sm font-black">View all</Text>
+                <Text className="text-[#02DB54] text-sm font-black">
+                  View all
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -368,15 +389,25 @@ export default function HighlightView() {
                   onPress={() => handleOpenLink(item.link)}
                 >
                   <View className="h-38 w-full relative">
-                    <Image source={{ uri: item.thumbnail }} className="w-full h-full" resizeMode="cover" />
+                    <Image
+                      source={{ uri: item.thumbnail }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
                     <View className="absolute inset-0 bg-black/30" />
                   </View>
 
                   <View className="p-3.5">
-                    <Text className="text-white font-extrabold text-sm leading-tight mb-1" numberOfLines={2}>
+                    <Text
+                      className="text-white font-extrabold text-sm leading-tight mb-1"
+                      numberOfLines={2}
+                    >
                       {item.title}
                     </Text>
-                    <Text className="text-gray-400 text-xs font-semibold" numberOfLines={1}>
+                    <Text
+                      className="text-gray-400 text-xs font-semibold"
+                      numberOfLines={1}
+                    >
                       {item.description || "Click to read details."}
                     </Text>
                   </View>
@@ -388,9 +419,13 @@ export default function HighlightView() {
           {/* SECTION 2: More News */}
           <View className="mt-6">
             <View className="flex-row items-center justify-between px-4 mb-3.5">
-              <Text className="text-white text-base font-extrabold">Latest Stories</Text>
+              <Text className="text-white text-base font-extrabold">
+                Latest Stories
+              </Text>
               <TouchableOpacity>
-                <Text className="text-[#02DB54] text-sm font-black">View all</Text>
+                <Text className="text-[#02DB54] text-sm font-black">
+                  View all
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -407,15 +442,25 @@ export default function HighlightView() {
                   onPress={() => handleOpenLink(item.link)}
                 >
                   <View className="h-38 w-full relative">
-                    <Image source={{ uri: item.thumbnail }} className="w-full h-full" resizeMode="cover" />
+                    <Image
+                      source={{ uri: item.thumbnail }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
                     <View className="absolute inset-0 bg-black/30" />
                   </View>
 
                   <View className="p-3.5">
-                    <Text className="text-white font-extrabold text-sm leading-tight mb-1" numberOfLines={2}>
+                    <Text
+                      className="text-white font-extrabold text-sm leading-tight mb-1"
+                      numberOfLines={2}
+                    >
                       {item.title}
                     </Text>
-                    <Text className="text-gray-400 text-xs font-semibold" numberOfLines={1}>
+                    <Text
+                      className="text-gray-400 text-xs font-semibold"
+                      numberOfLines={1}
+                    >
                       {item.description || "Click to read details."}
                     </Text>
                   </View>

@@ -1076,3 +1076,44 @@ export const fetchTeamByCountry = async (country: string) => {
     return null;
   }
 };
+
+export const fetchHighlights = async () => {
+  const CACHE_KEY = "@goalzone_api_cache_highlights";
+  const CACHE_TIME_KEY = "@goalzone_api_cache_highlights_time";
+
+  try {
+    const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
+    const cachedData = await AsyncStorage.getItem(CACHE_KEY);
+
+    if (cachedTime && cachedData) {
+      const parsedTime = parseInt(cachedTime, 10);
+      const now = Date.now();
+      if (now - parsedTime < 3600000) { // 1 hour cache
+        console.log("[Cache] Using cached highlights.");
+        return JSON.parse(cachedData);
+      }
+    }
+  } catch (err) {
+    console.warn("Error reading highlights cache:", err);
+  }
+
+  console.log("[API] Fetching fresh highlights from backend...");
+  try {
+    const response = await api.get('/football-get-highlights');
+    const highlightsData = findArray(response.data);
+
+    if (highlightsData && highlightsData.length > 0) {
+      try {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(highlightsData));
+        await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+      } catch (err) {
+        console.warn("Error saving highlights cache:", err);
+      }
+    }
+
+    return highlightsData;
+  } catch (error) {
+    console.error('Error fetching highlights:', error);
+    return [];
+  }
+};

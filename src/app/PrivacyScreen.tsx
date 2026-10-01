@@ -1,15 +1,14 @@
-﻿
-import React from "react";
+﻿import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { ArrowLeft, Info } from "lucide-react-native";
 import {
-  View,
+  Linking,
+  ScrollView,
   Text,
   TouchableOpacity,
-  ScrollView,
+  View,
 } from "react-native";
-import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Info } from "lucide-react-native";
-import { router } from "expo-router";
 
 export default function PrivacyScreen() {
   return (
@@ -47,28 +46,25 @@ export default function PrivacyScreen() {
             NJR10 Live
           </Text>
 
-          <Text className="text-white/60 text-xs mt-2">
-            Privacy Policy
-          </Text>
+          <Text className="text-white/60 text-xs mt-2">Privacy Policy</Text>
         </View>
 
         {/* Content */}
         <View className="px-5 py-6">
-
           <Text className="text-black font-extrabold text-lg mb-4">
             Privacy Policy
           </Text>
 
           <Text className="text-gray-800 text-sm leading-6 mb-4">
             NJR10 Live is a football application that provides football scores,
-            fixtures, team information, news, highlights, predictions and
-            other football-related content.
+            fixtures, team information, news, highlights, predictions and other
+            football-related content.
           </Text>
 
           <Text className="text-gray-800 text-sm leading-6 mb-4">
-            This Privacy Policy explains how information may be handled when
-            you use the NJR10 Live application. NJR10 Live does not require users
-            to create an account or log in to use the application.
+            This Privacy Policy explains how information may be handled when you
+            use the NJR10 Live application. NJR10 Live does not require users to
+            create an account or log in to use the application.
           </Text>
 
           {/* Information Collection */}
@@ -85,9 +81,9 @@ export default function PrivacyScreen() {
           <Text className="text-gray-800 text-sm leading-6 mb-4">
             However, third-party services used by the application may
             automatically process certain information necessary to provide
-            advertising, notifications, security, diagnostics or other
-            services. The types of information handled depend on the
-            third-party service and its configuration.
+            advertising, notifications, security, diagnostics or other services.
+            The types of information handled depend on the third-party service
+            and its configuration.
           </Text>
 
           {/* Third Party Services */}
@@ -137,8 +133,8 @@ export default function PrivacyScreen() {
           </Text>
 
           <Text className="text-gray-800 text-sm leading-6 mb-4">
-            Advertising information may be used to provide, measure and
-            improve advertisements and to help prevent fraud and abuse.
+            Advertising information may be used to provide, measure and improve
+            advertisements and to help prevent fraud and abuse.
           </Text>
 
           {/* Football API */}
@@ -165,15 +161,15 @@ export default function PrivacyScreen() {
 
           <Text className="text-gray-800 text-sm leading-6 mb-4">
             NJR10 Live may use Firebase Cloud Messaging to send push
-            notifications, such as football updates, match information and
-            other app-related notifications.
+            notifications, such as football updates, match information and other
+            app-related notifications.
           </Text>
 
           <Text className="text-gray-800 text-sm leading-6 mb-4">
             Notification delivery may require a device or messaging token
-            provided by Firebase. These tokens are used to deliver
-            notifications to the appropriate device and are not used by
-            NJR10 Live to identify users personally.
+            provided by Firebase. These tokens are used to deliver notifications
+            to the appropriate device and are not used by NJR10 Live to identify
+            users personally.
           </Text>
 
           {/* Log Data */}
@@ -183,10 +179,10 @@ export default function PrivacyScreen() {
 
           <Text className="text-gray-800 text-sm leading-6 mb-4">
             In certain circumstances, third-party services may automatically
-            process technical information when the application is used. This
-            may include information such as IP address, device type,
-            operating system version, application version, date and time of
-            use, and other technical or diagnostic information.
+            process technical information when the application is used. This may
+            include information such as IP address, device type, operating
+            system version, application version, date and time of use, and other
+            technical or diagnostic information.
           </Text>
 
           {/* Cookies */}
@@ -196,9 +192,9 @@ export default function PrivacyScreen() {
 
           <Text className="text-gray-800 text-sm leading-6 mb-4">
             NJR10 Live itself does not intentionally use browser cookies.
-            However, third-party services integrated into the application
-            may use technologies that perform similar functions as described
-            in their respective privacy policies.
+            However, third-party services integrated into the application may
+            use technologies that perform similar functions as described in
+            their respective privacy policies.
           </Text>
 
           {/* Data Security */}
@@ -207,10 +203,10 @@ export default function PrivacyScreen() {
           </Text>
 
           <Text className="text-gray-800 text-sm leading-6 mb-4">
-            We take reasonable steps to protect information handled through
-            the application. However, no method of transmission over the
-            Internet or electronic storage is completely secure, and we
-            cannot guarantee absolute security.
+            We take reasonable steps to protect information handled through the
+            application. However, no method of transmission over the Internet or
+            electronic storage is completely secure, and we cannot guarantee
+            absolute security.
           </Text>
 
           {/* Children's Privacy */}
@@ -220,9 +216,9 @@ export default function PrivacyScreen() {
 
           <Text className="text-gray-800 text-sm leading-6 mb-4">
             NJR10 Live is intended for users aged 18 and over. The application
-            is not directed toward children under the age of 13, and we do
-            not knowingly collect personal information directly from
-            children under 13.
+            is not directed toward children under the age of 13, and we do not
+            knowingly collect personal information directly from children under
+            13.
           </Text>
 
           {/* External Links */}
@@ -232,9 +228,9 @@ export default function PrivacyScreen() {
 
           <Text className="text-gray-800 text-sm leading-6 mb-4">
             NJR10 Live may contain links to external websites or services,
-            including football news and video platforms. These external
-            websites are not operated by NJR10 Live. We recommend reviewing
-            the privacy policies of any external service you visit.
+            including football news and video platforms. These external websites
+            are not operated by NJR10 Live. We recommend reviewing the privacy
+            policies of any external service you visit.
           </Text>
 
           {/* Changes */}
@@ -260,17 +256,19 @@ export default function PrivacyScreen() {
           </Text>
 
           <Text className="text-gray-800 text-sm leading-6 mb-6">
-            If you have any questions or suggestions about this Privacy
-            Policy, please contact us at{" "}
-            <Text className="text-blue-600 font-bold underline">
+            If you have any questions or suggestions about this Privacy Policy,
+            please contact us at{" "}
+            <Text
+              className="text-blue-600 font-bold underline"
+              onPress={() =>
+                Linking.openURL("mailto:rjsavetimes1574@gmail.com")
+              }
+            >
               rjsavetimes1574@gmail.com
             </Text>
           </Text>
-
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-
