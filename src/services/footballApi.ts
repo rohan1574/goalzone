@@ -243,8 +243,9 @@ export const getTeamLogo = (match: any, side: 'home' | 'away') => {
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const loadFootballDashboard = async (forceRefresh = false) => {
-  const CACHE_KEY = "@goalzone_api_cache_dashboard";
-  const CACHE_TIME_KEY = "@goalzone_api_cache_dashboard_time";
+  // v2 cache key - forces refresh from old cache that didn't have teams field
+  const CACHE_KEY = "@goalzone_api_cache_dashboard_v2";
+  const CACHE_TIME_KEY = "@goalzone_api_cache_dashboard_v2_time";
   
   if (!forceRefresh) {
     try {
@@ -254,10 +255,15 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
       if (cachedTime && cachedData) {
         const parsedTime = parseInt(cachedTime, 10);
         const now = Date.now();
-        // If less than 5 minutes (300,000 ms) has passed, return cached data
         if (now - parsedTime < 300000) {
-          console.log(`[Cache] Using cached dashboard data. Time remaining: ${Math.round((300000 - (now - parsedTime)) / 1000)}s`);
-          return JSON.parse(cachedData);
+          const parsed = JSON.parse(cachedData);
+          // Only use cache if it has teams data
+          if (parsed?.data?.teams && parsed.data.teams.length > 0) {
+            console.log(`[Cache] Using cached dashboard data (v2). Teams: ${parsed.data.teams.length}, Time remaining: ${Math.round((300000 - (now - parsedTime)) / 1000)}s`);
+            return parsed;
+          } else {
+            console.warn("[Cache] Cached dashboard missing teams, fetching fresh data.");
+          }
         }
       }
     } catch (err) {
@@ -311,11 +317,11 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
   // Wait 1200ms to avoid 1 request/sec rate limit
   await delay(1200);
 
-  // Request 4: Popular Teams
+  // Request 4: Popular Teams (static endpoint - should always succeed)
   try {
     const res = await api.get('/football-get-popular-teams');
     const rawData = res.data;
-    console.log("[API] Fulfilled request for teams. Raw keys:", Object.keys(rawData || {}));
+    console.log("[API] Fulfilled request for teams. Count:", Array.isArray(rawData) ? rawData.length : Object.keys(rawData || {}).length);
     data.teams = findArray(rawData);
   } catch (err: any) {
     console.warn("[API] Request failed for teams:", err.response?.data || err.message || err);
@@ -326,21 +332,23 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
     hasPartialFailure,
   };
 
-  // Save to cache only if all sequential API requests succeeded
-  if (!hasPartialFailure) {
+  // Always save to cache if teams data is present (teams is static, always works)
+  if (data.teams && data.teams.length > 0) {
     try {
       await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(response));
       await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-      console.log("[Cache] Dashboard cache updated successfully.");
+      console.log(`[Cache] Dashboard cache v2 updated. Teams: ${data.teams.length}, Leagues: ${data.leagues.length}`);
     } catch (err) {
       console.warn("Error saving dashboard cache:", err);
     }
   } else {
-    console.log("[Cache] Skipping cache update due to partial/network failure.");
+    console.log("[Cache] Skipping cache update - teams data missing.");
   }
 
   return response;
 };
+
+
 
 export const fetchFixturesByDate = async (dateString: string) => {
   const CACHE_KEY = `@goalzone_api_cache_fixtures_${dateString}`;
