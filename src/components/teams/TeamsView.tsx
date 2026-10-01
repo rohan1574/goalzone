@@ -1,65 +1,70 @@
-import React, { useState, useEffect } from "react";
-import {
-  ScrollView,
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
-import { Search, Star, ChevronDown, ChevronUp } from "lucide-react-native";
-import Svg, { Path } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ChevronDown, ChevronUp, Star } from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Svg, { Path } from "react-native-svg";
+import LeagueDetailsModal, { League } from "../leagues/LeagueDetailsModal";
 import TeamDetailsModal, { Team } from "./TeamDetailsModal";
 
-const STORAGE_KEY = "@goalzone_favorite_teams";
+const STORAGE_KEY = "@goalzone_favorite_internationals";
 
-// Demo fallback data (same as API data, used when API is unavailable)
-const ALL_TEAMS: Team[] = [
-  { id: "8066", name: "Argentina", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8066.png", category: "International Teams", country: "Argentina" },
-  { id: "8550", name: "Brazil", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8550.png", category: "International Teams", country: "Brazil" },
-  { id: "8490", name: "France", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8490.png", category: "International Teams", country: "France" },
-  { id: "8489", name: "England", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8489.png", category: "International Teams", country: "England" },
-  { id: "8205", name: "Portugal", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8205.png", category: "International Teams", country: "Portugal" },
-  { id: "8322", name: "Spain", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8322.png", category: "International Teams", country: "Spain" },
-  { id: "8141", name: "Germany", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8141.png", category: "International Teams", country: "Germany" },
-  { id: "8142", name: "Italy", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8142.png", category: "International Teams", country: "Italy" },
-  { id: "8145", name: "Netherlands", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8145.png", category: "International Teams", country: "Netherlands" },
-  { id: "8256", name: "Belgium", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8256.png", category: "International Teams", country: "Belgium" },
-  { id: "8514", name: "Croatia", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8514.png", category: "International Teams", country: "Croatia" },
-  { id: "8492", name: "Uruguay", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8492.png", category: "International Teams", country: "Uruguay" },
-  { id: "8093", name: "Morocco", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8093.png", category: "International Teams", country: "Morocco" },
-  { id: "8143", name: "Japan", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8143.png", category: "International Teams", country: "Japan" },
-  { id: "8633", name: "Real Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png", category: "Club Teams", country: "Spain" },
-  { id: "8634", name: "FC Barcelona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png", category: "Club Teams", country: "Spain" },
-  { id: "8457", name: "Manchester City", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png", category: "Club Teams", country: "England" },
-  { id: "8455", name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png", category: "Club Teams", country: "England" },
-  { id: "9825", name: "Arsenal", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9825.png", category: "Club Teams", country: "England" },
-  { id: "8650", name: "Liverpool", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8650.png", category: "Club Teams", country: "England" },
-  { id: "9823", name: "Bayern Munich", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png", category: "Club Teams", country: "Germany" },
-  { id: "9847", name: "Paris Saint-Germain", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9847.png", category: "Club Teams", country: "France" },
-  { id: "9885", name: "Juventus", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9885.png", category: "Club Teams", country: "Italy" },
-  { id: "8636", name: "Inter Milan", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png", category: "Club Teams", country: "Italy" },
-  { id: "102643", name: "Al Nassr", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102643.png", category: "Club Teams", country: "Saudi Arabia" },
-  { id: "102534", name: "Inter Miami CF", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102534.png", category: "Club Teams", country: "USA" },
-];
+const getCategoryForLeague = (name: string, country?: string) => {
+  if (country && country !== "Unknown") return country;
+  const lower = name.toLowerCase();
+  if (
+    lower.includes("premier") ||
+    lower.includes("fa cup") ||
+    lower.includes("efl") ||
+    lower.includes("championship")
+  )
+    return "England";
+  if (
+    lower.includes("la liga") ||
+    lower.includes("copa del rey") ||
+    lower.includes("santander")
+  )
+    return "Spain";
+  if (lower.includes("serie a") || lower.includes("coppa italia"))
+    return "Italy";
+  if (lower.includes("bundesliga") || lower.includes("dfb")) return "Germany";
+  if (lower.includes("ligue 1") || lower.includes("coupe de france"))
+    return "France";
+  if (lower.includes("mls") || lower.includes("major league")) return "USA";
+  if (lower.includes("saudi") || lower.includes("pro league"))
+    return "Saudi Arabia";
+  return "International Tournaments";
+};
+
+type InternationalItem =
+  | (Team & { type: "team" })
+  | (League & { type: "league" });
 
 interface TeamsViewProps {
   apiTeams?: any[];
+  apiLeagues?: any[];
 }
 
-export default function TeamsView({ apiTeams }: TeamsViewProps) {
-  const [favorites, setFavorites] = useState<string[]>(["8066"]); // Default Argentina as favorite
+export default function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
+  const [favorites, setFavorites] = useState<string[]>(["8066"]);
   const [loading, setLoading] = useState(true);
 
-  // Expandable sections
   const [favSectionExpanded, setFavSectionExpanded] = useState(true);
   const [allSectionExpanded, setAllSectionExpanded] = useState(true);
-  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
+  const [expandedCategories, setExpandedCategories] = useState<{
+    [key: string]: boolean;
+  }>({});
 
-  // Modal display managers
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [detailsVisible, setDetailsVisible] = useState(false);
+  const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
+  const [teamDetailsVisible, setTeamDetailsVisible] = useState(false);
+  const [leagueDetailsVisible, setLeagueDetailsVisible] = useState(false);
 
   useEffect(() => {
     loadFavorites();
@@ -72,7 +77,7 @@ export default function TeamsView({ apiTeams }: TeamsViewProps) {
         setFavorites(JSON.parse(stored));
       }
     } catch (e) {
-      console.warn("Failed to load favorite teams", e);
+      console.warn("Failed to load favorite internationals", e);
     } finally {
       setLoading(false);
     }
@@ -89,7 +94,7 @@ export default function TeamsView({ apiTeams }: TeamsViewProps) {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     } catch (e) {
-      console.warn("Failed to save favorite teams", e);
+      console.warn("Failed to save favorite internationals", e);
     }
   };
 
@@ -100,22 +105,71 @@ export default function TeamsView({ apiTeams }: TeamsViewProps) {
     }));
   };
 
-  // Exactly like LeaguesView: use apiTeams prop if available, else fallback to ALL_TEAMS
-  const teamsList = React.useMemo(() => {
+  // International teams (only) from API
+  const internationalTeamsList: Team[] = React.useMemo(() => {
     if (apiTeams && apiTeams.length > 0) {
-      return apiTeams.map((item: any) => ({
-        id: String(item.id || item.teamId || Math.random().toString()),
-        name: item.name || item.teamName || "Team",
-        logo: item.logo || item.logoUrl || `https://images.fotmob.com/image_resources/logo/teamlogo/${item.id}.png`,
-        category: item.category || "International Teams",
-        country: item.country || "International",
-      }));
+      return apiTeams
+        .filter((item: any) => (item.category || "") === "International Teams")
+        .map((item: any) => ({
+          id: String(item.id || item.teamId || Math.random().toString()),
+          name: item.name || item.teamName || "Team",
+          logo:
+            item.logo ||
+            item.logoUrl ||
+            `https://images.fotmob.com/image_resources/logo/teamlogo/${item.id}.png`,
+          category: "International Teams",
+          country: item.country || "International",
+        }));
     }
-    return ALL_TEAMS;
+    return [];
   }, [apiTeams]);
 
-  const categories = Array.from(new Set(teamsList.map((t) => t.category)));
-  const favoriteTeamsList = teamsList.filter((t) => favorites.includes(t.id));
+  // International tournaments (only) from API leagues
+  const internationalLeaguesList: League[] = React.useMemo(() => {
+    if (apiLeagues && apiLeagues.length > 0) {
+      return apiLeagues
+        .map((item: any) => {
+          const id = String(
+            item.id ||
+              item.leagueId ||
+              item.league_id ||
+              Math.random().toString(),
+          );
+          const name =
+            item.name || item.leagueName || item.league_name || "League";
+          const logo =
+            item.logo ||
+            item.leagueLogo ||
+            item.logoUrl ||
+            `https://images.fotmob.com/image_resources/logo/leaguelogo/${id}.png`;
+          const country = getCategoryForLeague(
+            name,
+            item.country || item.countryName || item.region,
+          );
+          return { id, name, logo, category: country };
+        })
+        .filter(
+          (item: League) => item.category === "International Tournaments",
+        );
+    }
+    return [];
+  }, [apiLeagues]);
+
+  // Combined list with a discriminator
+  const itemsList: InternationalItem[] = React.useMemo(() => {
+    const teams: InternationalItem[] = internationalTeamsList.map((t) => ({
+      ...t,
+      type: "team",
+    }));
+    const leagues: InternationalItem[] = internationalLeaguesList.map((l) => ({
+      ...l,
+      type: "league",
+    }));
+    return [...teams, ...leagues];
+  }, [internationalTeamsList, internationalLeaguesList]);
+
+  const categories = Array.from(new Set(itemsList.map((t) => t.category)));
+  const favoriteItemsList = itemsList.filter((t) => favorites.includes(t.id));
 
   if (loading) {
     return (
@@ -125,16 +179,31 @@ export default function TeamsView({ apiTeams }: TeamsViewProps) {
     );
   }
 
+  if (itemsList.length === 0) {
+    return (
+      <View className="flex-1 bg-[#0D0E0F]">
+        <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-[#ffffff05]">
+          <Text className="text-white text-22 font-black tracking-[1.5px]">
+            TEAMS
+          </Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-6">
+          <ActivityIndicator size="large" color="#02DB54" />
+          <Text className="text-gray-400 text-xs font-bold mt-3 text-center">
+            Loading international teams & tournaments...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 bg-[#0D0E0F]">
-      {/* Search Header */}
+      {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-[#ffffff05]">
-        <Text className="text-white text-22 font-black tracking-[1.5px]">TEAMS</Text>
-        <View className="flex-row items-center gap-3">
-          {/* <TouchableOpacity className="p-2 rounded-full bg-white/5">
-            <Search size={18} color="#ECEDEE" />
-          </TouchableOpacity> */}
-        </View>
+        <Text className="text-white text-22 font-black tracking-[1.5px]">
+          INTERNATIONAL
+        </Text>
       </View>
 
       <ScrollView
@@ -142,15 +211,14 @@ export default function TeamsView({ apiTeams }: TeamsViewProps) {
         contentContainerStyle={{ paddingBottom: 150 }}
         showsVerticalScrollIndicator={false}
       >
-
-        {/* SECTION 1: Favorite Teams */}
+        {/* SECTION 1: Favorites */}
         <View className="mb-5">
           <TouchableOpacity
             className="flex-row justify-between items-center py-2 mb-3"
             onPress={() => setFavSectionExpanded(!favSectionExpanded)}
             activeOpacity={0.8}
           >
-            <Text className="text-white text-sm font-black">Favorite Teams</Text>
+            <Text className="text-white text-sm font-black">Favorites</Text>
             {favSectionExpanded ? (
               <ChevronDown size={18} color="#9BA1A6" />
             ) : (
@@ -160,42 +228,72 @@ export default function TeamsView({ apiTeams }: TeamsViewProps) {
 
           {favSectionExpanded && (
             <View className="gap-3">
-              {favoriteTeamsList.length > 0 ? (
-                favoriteTeamsList.map((team) => (
-                  <TouchableOpacity
-                    key={team.id}
-                    className="relative bg-[#131415] rounded-2xl px-4 py-3.5 border border-white/5 flex-row items-center overflow-hidden"
-                    onPress={() => {
-                      setSelectedTeam(team);
-                      setDetailsVisible(true);
-                    }}
-                  >
-                    <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#02DB54] rounded-l-2xl" />
-                    <Image source={{ uri: team.logo }} className="w-8 h-8 rounded-xl" />
-                    <Text className="text-white text-sm font-extrabold ml-3 flex-1">{team.name}</Text>
+              {favoriteItemsList.length > 0 ? (
+                favoriteItemsList.map((item) => {
+                  const isTeam = item.type === "team";
+                  const isFav = favorites.includes(item.id);
+                  return (
                     <TouchableOpacity
-                      onPress={() => toggleFavorite(team.id)}
-                      className="p-1.5"
+                      key={`${item.type}-${item.id}`}
+                      className="relative bg-[#131415] rounded-2xl px-4 py-3.5 border border-white/5 flex-row items-center overflow-hidden"
+                      onPress={() => {
+                        if (isTeam) {
+                          setSelectedTeam(item as Team);
+                          setTeamDetailsVisible(true);
+                        } else {
+                          setSelectedLeague(item as League);
+                          setLeagueDetailsVisible(true);
+                        }
+                      }}
                     >
-                      <Star size={18} color="#FFC800" fill="#FFC800" />
+                      <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#02DB54] rounded-l-2xl" />
+                      <Image
+                        source={{ uri: item.logo }}
+                        className={
+                          isTeam ? "w-8 h-8 rounded-xl" : "w-8 h-8 rounded-full"
+                        }
+                      />
+                      <View className="flex-1 ml-3">
+                        <Text
+                          className="text-white text-sm font-extrabold"
+                          numberOfLines={1}
+                        >
+                          {item.name}
+                        </Text>
+                        <Text className="text-gray-500 text-[10px] font-bold mt-0.5">
+                          {isTeam
+                            ? `National Team • ${(item as Team).country}`
+                            : "International Tournament"}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => toggleFavorite(item.id)}
+                        className="p-1.5"
+                      >
+                        <Star size={18} color="#FFC800" fill="#FFC800" />
+                      </TouchableOpacity>
                     </TouchableOpacity>
-                  </TouchableOpacity>
-                ))
+                  );
+                })
               ) : (
-                <Text className="text-gray-400 text-xs font-bold text-center py-3">No favorite teams added yet.</Text>
+                <Text className="text-gray-400 text-xs font-bold text-center py-3">
+                  No favorites added yet.
+                </Text>
               )}
             </View>
           )}
         </View>
 
-        {/* SECTION 2: All Teams */}
+        {/* SECTION 2: All international items */}
         <View className="mb-5">
           <TouchableOpacity
             className="flex-row justify-between items-center py-2 mb-3"
             onPress={() => setAllSectionExpanded(!allSectionExpanded)}
             activeOpacity={0.8}
           >
-            <Text className="text-white text-sm font-black">All teams</Text>
+            <Text className="text-white text-sm font-black">
+              All international
+            </Text>
             {allSectionExpanded ? (
               <ChevronDown size={18} color="#9BA1A6" />
             ) : (
@@ -206,7 +304,9 @@ export default function TeamsView({ apiTeams }: TeamsViewProps) {
           {allSectionExpanded && (
             <View className="bg-[#131415] rounded-3xl border border-white/5 p-1">
               {categories.map((category) => {
-                const categoryTeams = teamsList.filter((t) => t.category === category);
+                const categoryItems = itemsList.filter(
+                  (t) => t.category === category,
+                );
                 const isCatExpanded = expandedCategories[category] !== false;
 
                 return (
@@ -217,12 +317,37 @@ export default function TeamsView({ apiTeams }: TeamsViewProps) {
                       activeOpacity={0.8}
                     >
                       <View className="flex-row items-center gap-2.5">
-                        <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <Path d="M12 2L2 7l10 5 10-5-10-5z" stroke="#9BA1A6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          <Path d="M2 17l10 5 10-5" stroke="#9BA1A6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          <Path d="M2 12l10 5 10-5" stroke="#9BA1A6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <Svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <Path
+                            d="M12 2L2 7l10 5 10-5-10-5z"
+                            stroke="#9BA1A6"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <Path
+                            d="M2 17l10 5 10-5"
+                            stroke="#9BA1A6"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <Path
+                            d="M2 12l10 5 10-5"
+                            stroke="#9BA1A6"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                         </Svg>
-                        <Text className="text-white text-sm font-black">{category}</Text>
+                        <Text className="text-white text-sm font-black">
+                          {category}
+                        </Text>
                       </View>
                       {isCatExpanded ? (
                         <ChevronUp size={16} color="#9BA1A6" />
@@ -233,22 +358,47 @@ export default function TeamsView({ apiTeams }: TeamsViewProps) {
 
                     {isCatExpanded && (
                       <View className="px-2 pb-3 gap-2">
-                        {categoryTeams.map((team) => {
-                          const isFav = favorites.includes(team.id);
+                        {categoryItems.map((item) => {
+                          const isTeam = item.type === "team";
+                          const isFav = favorites.includes(item.id);
                           return (
                             <TouchableOpacity
-                              key={team.id}
+                              key={`${item.type}-${item.id}`}
                               className="relative bg-[#131415] rounded-2xl px-4 py-3.5 border border-white/5 flex-row items-center overflow-hidden"
                               onPress={() => {
-                                setSelectedTeam(team);
-                                setDetailsVisible(true);
+                                if (isTeam) {
+                                  setSelectedTeam(item as Team);
+                                  setTeamDetailsVisible(true);
+                                } else {
+                                  setSelectedLeague(item as League);
+                                  setLeagueDetailsVisible(true);
+                                }
                               }}
                             >
                               <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#02DB54] rounded-l-2xl" />
-                              <Image source={{ uri: team.logo }} className="w-8 h-8 rounded-xl" />
-                              <Text className="text-white text-sm font-extrabold ml-3 flex-1">{team.name}</Text>
+                              <Image
+                                source={{ uri: item.logo }}
+                                className={
+                                  isTeam
+                                    ? "w-8 h-8 rounded-xl"
+                                    : "w-8 h-8 rounded-full"
+                                }
+                              />
+                              <View className="flex-1 ml-3">
+                                <Text
+                                  className="text-white text-sm font-extrabold"
+                                  numberOfLines={1}
+                                >
+                                  {item.name}
+                                </Text>
+                                <Text className="text-gray-500 text-[10px] font-bold mt-0.5">
+                                  {isTeam
+                                    ? `National Team • ${(item as Team).country}`
+                                    : "International Tournament"}
+                                </Text>
+                              </View>
                               <TouchableOpacity
-                                onPress={() => toggleFavorite(team.id)}
+                                onPress={() => toggleFavorite(item.id)}
                                 className="p-1.5"
                               >
                                 <Star
@@ -271,11 +421,16 @@ export default function TeamsView({ apiTeams }: TeamsViewProps) {
         <View className="h-[100px]" />
       </ScrollView>
 
-      {/* Modal Detail Screen */}
+      {/* Modals */}
       <TeamDetailsModal
-        visible={detailsVisible}
+        visible={teamDetailsVisible}
         team={selectedTeam}
-        onClose={() => setDetailsVisible(false)}
+        onClose={() => setTeamDetailsVisible(false)}
+      />
+      <LeagueDetailsModal
+        visible={leagueDetailsVisible}
+        league={selectedLeague}
+        onClose={() => setLeagueDetailsVisible(false)}
       />
     </View>
   );

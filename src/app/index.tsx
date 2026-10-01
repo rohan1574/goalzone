@@ -440,7 +440,7 @@ export default function ExploreScreen() {
       case "highlight":
         return <HighlightView />;
       case "teams":
-        return <TeamsView apiTeams={apiData?.teams} />;
+        return <TeamsView apiTeams={apiData?.teams} apiLeagues={apiData?.leagues} />;
       case "prediction":
         return <PredictionView />;
       default:
