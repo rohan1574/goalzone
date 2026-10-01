@@ -14,17 +14,30 @@ import LeagueDetailsModal, { League } from "./LeagueDetailsModal";
 
 const STORAGE_KEY = "@goalzone_favorite_leagues";
 
+const getCategoryForLeague = (name: string, country?: string) => {
+  if (country && country !== "Unknown") return country;
+  const lower = name.toLowerCase();
+  if (lower.includes("premier") || lower.includes("fa cup") || lower.includes("efl") || lower.includes("championship")) return "England";
+  if (lower.includes("la liga") || lower.includes("copa del rey") || lower.includes("santander")) return "Spain";
+  if (lower.includes("serie a") || lower.includes("coppa italia")) return "Italy";
+  if (lower.includes("bundesliga") || lower.includes("dfb")) return "Germany";
+  if (lower.includes("ligue 1") || lower.includes("coupe de france")) return "France";
+  if (lower.includes("mls") || lower.includes("major league")) return "USA";
+  if (lower.includes("saudi") || lower.includes("pro league")) return "Saudi Arabia";
+  return "International Tournaments";
+};
+
 const ALL_LEAGUES: League[] = [
-  { id: "world-cup", name: "World Cup", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/world_cup.png", category: "International Tournaments" },
-  { id: "ucl", name: "Champions League", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/42.png", category: "International Tournaments" },
-  { id: "uel", name: "Europa League", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/82.png", category: "International Tournaments" },
-  { id: "copa-lib", name: "Copa Libertadores", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/44.png", category: "International Tournaments" },
-  { id: "afc-elite", name: "AFC Champions League Elite", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/248.png", category: "International Tournaments" },
-  { id: "afc-two", name: "AFC Champions League Two", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/249.png", category: "International Tournaments" },
-  { id: "laliga", name: "La Liga", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png", category: "Spain" },
-  { id: "copa-del-rey", name: "Copa del Rey", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/319.png", category: "Spain" },
-  { id: "epl", name: "Premier League", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png", category: "England" },
-  { id: "fa-cup", name: "FA Cup", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/315.png", category: "England" },
+  { id: "39", name: "Premier League", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png", category: "England" },
+  { id: "140", name: "La Liga", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png", category: "Spain" },
+  { id: "135", name: "Serie A", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/55.png", category: "Italy" },
+  { id: "78", name: "Bundesliga", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/54.png", category: "Germany" },
+  { id: "61", name: "Ligue 1", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/53.png", category: "France" },
+  { id: "253", name: "MLS", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/130.png", category: "USA" },
+  { id: "307", name: "Saudi Pro League", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/307.png", category: "Saudi Arabia" },
+  { id: "2", name: "UEFA Champions League", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/42.png", category: "International Tournaments" },
+  { id: "3", name: "UEFA Europa League", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/82.png", category: "International Tournaments" },
+  { id: "13", name: "Copa Libertadores", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/44.png", category: "International Tournaments" },
 ];
 
 interface LeaguesViewProps {
@@ -32,17 +45,13 @@ interface LeaguesViewProps {
 }
 
 export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
-  const [favorites, setFavorites] = useState<string[]>(["world-cup"]); // Default World Cup as favorite to match mock screenshot
+  const [favorites, setFavorites] = useState<string[]>(["39", "140"]); // Default Premier League & La Liga
   const [loading, setLoading] = useState(true);
 
   // Expandable state managers
   const [favSectionExpanded, setFavSectionExpanded] = useState(true);
   const [allSectionExpanded, setAllSectionExpanded] = useState(true);
-  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
-    "International Tournaments": true,
-    "Spain": false,
-    "England": false,
-  });
+  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
 
   // Modal detail display managers
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
@@ -55,7 +64,7 @@ export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
         const id = String(item.id || item.leagueId || item.league_id || Math.random().toString());
         const name = item.name || item.leagueName || item.league_name || "League";
         const logo = item.logo || item.leagueLogo || item.logoUrl || `https://images.fotmob.com/image_resources/logo/leaguelogo/${id}.png`;
-        const country = item.country || item.countryName || item.region || "International Tournaments";
+        const country = getCategoryForLeague(name, item.country || item.countryName || item.region);
         return {
           id,
           name,
@@ -225,7 +234,7 @@ export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
             <View className="bg-[#131415] rounded-3xl border border-white/5 p-1">
               {categories.map((category) => {
                 const categoryLeagues = leaguesList.filter((l) => l.category === category);
-                const isCatExpanded = expandedCategories[category];
+                const isCatExpanded = expandedCategories[category] !== false;
 
                 return (
                   <View key={category} className="border-b border-white/3">

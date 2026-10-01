@@ -111,27 +111,62 @@ app.get('/football-popular-leagues', (req, res) => {
     {
       leagueId: '39',
       leagueName: 'Premier League',
+      country: 'England',
       leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/47.png'
     },
     {
       leagueId: '140',
       leagueName: 'La Liga',
+      country: 'Spain',
       leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/87.png'
     },
     {
       leagueId: '135',
       leagueName: 'Serie A',
+      country: 'Italy',
       leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/55.png'
+    },
+    {
+      leagueId: '78',
+      leagueName: 'Bundesliga',
+      country: 'Germany',
+      leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/54.png'
+    },
+    {
+      leagueId: '61',
+      leagueName: 'Ligue 1',
+      country: 'France',
+      leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/53.png'
     },
     {
       leagueId: '253',
       leagueName: 'MLS',
+      country: 'USA',
       leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/130.png'
+    },
+    {
+      leagueId: '307',
+      leagueName: 'Saudi Pro League',
+      country: 'Saudi Arabia',
+      leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/307.png'
     },
     {
       leagueId: '2',
       leagueName: 'UEFA Champions League',
+      country: 'International Tournaments',
       leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/42.png'
+    },
+    {
+      leagueId: '3',
+      leagueName: 'UEFA Europa League',
+      country: 'International Tournaments',
+      leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/82.png'
+    },
+    {
+      leagueId: '13',
+      leagueName: 'Copa Libertadores',
+      country: 'International Tournaments',
+      leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/44.png'
     }
   ];
   res.json(popularLeagues);
@@ -178,6 +213,48 @@ app.get('/football-get-matches-by-date', async (req, res) => {
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch matches by date', message: err.message });
+  }
+});
+
+app.get('/football-get-fixtures-by-league', async (req, res) => {
+  const leagueid = req.query.leagueid;
+  if (!leagueid) {
+    return res.status(400).json({ error: 'Missing leagueid parameter' });
+  }
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const cacheKey = `fixtures_league_${leagueid}_${todayStr}`;
+
+  try {
+    const data = await fetchAndCache(cacheKey, '/fixtures', { league: leagueid, next: 10 }, 1800, (apiResponse) => {
+      const list = apiResponse.response || [];
+      return list.map((item) => {
+        const fixtureDate = item.fixture.date ? new Date(item.fixture.date) : new Date();
+        const time = fixtureDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const date = `${String(fixtureDate.getDate()).padStart(2, '0')}/${String(fixtureDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        return {
+          id: String(item.fixture.id),
+          status: item.fixture.status.short || 'NS',
+          time,
+          date,
+          home: {
+            id: item.teams.home.id,
+            name: item.teams.home.name,
+            logo: item.teams.home.logo,
+          },
+          away: {
+            id: item.teams.away.id,
+            name: item.teams.away.name,
+            logo: item.teams.away.logo,
+          },
+        };
+      });
+    });
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch league fixtures', message: err.message });
   }
 });
 

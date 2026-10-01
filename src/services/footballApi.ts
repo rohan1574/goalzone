@@ -729,3 +729,43 @@ export const fetchFixturePredictions = async (eventid: string | number) => {
     return null;
   }
 };
+
+export const fetchLeagueFixtures = async (leagueid: string | number) => {
+  if (!leagueid) return [];
+  const CACHE_KEY = `@goalzone_api_cache_league_fixtures_${leagueid}`;
+  const CACHE_TIME_KEY = `@goalzone_api_cache_league_fixtures_time_${leagueid}`;
+
+  try {
+    const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
+    const cachedData = await AsyncStorage.getItem(CACHE_KEY);
+
+    if (cachedTime && cachedData) {
+      const parsedTime = parseInt(cachedTime, 10);
+      const now = Date.now();
+      if (now - parsedTime < 600000) { // 10 minutes cache
+        console.log(`[Cache] Using cached fixtures for league ${leagueid}.`);
+        return JSON.parse(cachedData);
+      }
+    }
+  } catch (err) {
+    console.warn("Error reading league fixtures cache:", err);
+  }
+
+  console.log(`[API] Fetching fresh fixtures for league ${leagueid} from API...`);
+  try {
+    const response = await api.get('/football-get-fixtures-by-league', { params: { leagueid } });
+    const freshData = findArray(response.data);
+
+    try {
+      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
+      await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+    } catch (err) {
+      console.warn("Error saving league fixtures cache:", err);
+    }
+
+    return freshData;
+  } catch (error) {
+    console.error('Error fetching league fixtures:', error);
+    return [];
+  }
+};

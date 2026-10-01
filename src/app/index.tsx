@@ -218,22 +218,9 @@ export default function ExploreScreen() {
     };
   }, []);
 
-  // Handle navbar tab press: show interstitial ad for non-explore tabs
+  // Handle navbar tab press: switch directly without interstitial ads
   const handleTabPress = (tab: TabType) => {
-    if (tab === "explore") {
-      // Explore tab: no ad, switch directly
-      setActiveTab(tab);
-      return;
-    }
-    // Non-explore tabs: show interstitial ad first
-    pendingTabRef.current = tab;
-    if (interstitialLoaded) {
-      interstitialAd.show();
-    } else {
-      // Ad not ready, switch directly
-      setActiveTab(tab);
-      pendingTabRef.current = null;
-    }
+    setActiveTab(tab);
   };
 
   const getYYYYMMDD = (date: Date) => {
@@ -501,6 +488,11 @@ export default function ExploreScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0E0F" }}>
       <StatusBar style="light" />
+
+      {/* Top Banner Ad */}
+      <View style={{ width: "100%", alignItems: "center", backgroundColor: "#0D0E0F", paddingVertical: 2 }}>
+        <BannerAdComponent />
+      </View>
 
       {/* Modular Header */}
       {activeTab === "explore" && (

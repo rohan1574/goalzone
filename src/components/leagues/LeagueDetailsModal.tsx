@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Bell } from "lucide-react-native";
-import { fetchLeagueStandings } from "../../services/footballApi";
+import { fetchLeagueStandings, fetchLeagueFixtures } from "../../services/footballApi";
 
 export interface League {
   id: string;
@@ -179,14 +179,35 @@ export default function LeagueDetailsModal({
     },
   };
 
+  const [apiFixtures, setApiFixtures] = useState<any[]>([]);
+  const [loadingFixtures, setLoadingFixtures] = useState(false);
   const [apiTable, setApiTable] = useState<any[]>([]);
   const [loadingTable, setLoadingTable] = useState(false);
 
   useEffect(() => {
     if (visible && league) {
       loadStandings();
+      loadFixtures();
     }
   }, [visible, league]);
+
+  const loadFixtures = async () => {
+    if (!league) return;
+    setLoadingFixtures(true);
+    try {
+      const rawData = await fetchLeagueFixtures(league.id);
+      if (rawData && rawData.length > 0) {
+        setApiFixtures(rawData);
+      } else {
+        setApiFixtures([]);
+      }
+    } catch (e) {
+      console.warn("Failed to load league fixtures, fallback to mock:", e);
+      setApiFixtures([]);
+    } finally {
+      setLoadingFixtures(false);
+    }
+  };
 
   const loadStandings = async () => {
     if (!league) return;
@@ -227,6 +248,7 @@ export default function LeagueDetailsModal({
   };
 
   const activeData = mockLeagueData[league?.id || "laliga"] || mockLeagueData["laliga"];
+  const fixturesData = apiFixtures.length > 0 ? apiFixtures : activeData.fixtures;
   const tableData = apiTable.length > 0 ? apiTable : activeData.table;
 
   if (!league) return null;
@@ -287,63 +309,69 @@ export default function LeagueDetailsModal({
         >
           {activeTab === "fixtures" ? (
             <View className="gap-3">
-              {activeData.fixtures.map((match) => {
-                const isNotified = activeNotifications[match.id];
-                return (
-                  <View key={match.id} className="relative bg-[#131415] rounded-3xl px-4 py-4.5 border border-white/5 overflow-hidden flex-row items-center justify-between">
-                    {/* Left glow accent indicator */}
-                    <View className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#02DB54] rounded-l-3xl" />
+              {loadingFixtures ? (
+                <View className="py-10 items-center justify-center">
+                  <ActivityIndicator size="small" color="#02DB54" />
+                </View>
+              ) : (
+                fixturesData.map((match) => {
+                  const isNotified = activeNotifications[match.id];
+                  return (
+                    <View key={match.id} className="relative bg-[#131415] rounded-3xl px-4 py-4.5 border border-white/5 overflow-hidden flex-row items-center justify-between">
+                      {/* Left glow accent indicator */}
+                      <View className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#02DB54] rounded-l-3xl" />
 
-                    {/* Time & Date Column */}
-                    <View className="w-[18%] items-start justify-center">
-                      <Text className="text-[#9BA1A6] text-[11px] font-bold tracking-wider mb-0.5">TBD</Text>
-                      <Text className="text-white text-sm font-black mb-0.5">{match.time}</Text>
-                      <Text className="text-[#9BA1A6] text-[9px] font-semibold">{match.date}</Text>
-                    </View>
-
-                    {/* Divider Line */}
-                    <View className="w-[1px] h-10 bg-white/10 mx-1" />
-
-                    {/* Match details (Teams) */}
-                    <View className="flex-1 px-3 justify-center gap-2">
-                      <View className="flex-row items-center gap-2.5">
-                        <Image
-                          source={{ uri: match.home.logo }}
-                          className="w-6 h-6"
-                          resizeMode="contain"
-                        />
-                        <Text className="text-white text-sm font-extrabold" numberOfLines={1}>
-                          {match.home.name}
-                        </Text>
+                      {/* Time & Date Column */}
+                      <View className="w-[18%] items-start justify-center">
+                        <Text className="text-[#9BA1A6] text-[11px] font-bold tracking-wider mb-0.5">{match.status || 'NS'}</Text>
+                        <Text className="text-white text-sm font-black mb-0.5">{match.time}</Text>
+                        <Text className="text-[#9BA1A6] text-[9px] font-semibold">{match.date}</Text>
                       </View>
-                      <View className="flex-row items-center gap-2.5">
-                        <Image
-                          source={{ uri: match.away.logo }}
-                          className="w-6 h-6"
-                          resizeMode="contain"
-                        />
-                        <Text className="text-white text-sm font-extrabold" numberOfLines={1}>
-                          {match.away.name}
-                        </Text>
-                      </View>
-                    </View>
 
-                    {/* Bell Notification Button */}
-                    <TouchableOpacity
-                      onPress={() => toggleNotification(match.id)}
-                      className={`p-2.5 rounded-full ${
-                        isNotified ? "bg-[#02DB54]/15" : "bg-white/5"
-                      }`}
-                    >
-                      <Bell
-                        size={18}
-                        color={isNotified ? "#02DB54" : "#ECEDEE"}
-                        fill={isNotified ? "#02DB54" : "none"}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
+                      {/* Divider Line */}
+                      <View className="w-[1px] h-10 bg-white/10 mx-1" />
+
+                      {/* Match details (Teams) */}
+                      <View className="flex-1 px-3 justify-center gap-2">
+                        <View className="flex-row items-center gap-2.5">
+                          <Image
+                            source={{ uri: match.home.logo }}
+                            className="w-6 h-6"
+                            resizeMode="contain"
+                          />
+                          <Text className="text-white text-sm font-extrabold" numberOfLines={1}>
+                            {match.home.name}
+                          </Text>
+                        </View>
+                        <View className="flex-row items-center gap-2.5">
+                          <Image
+                            source={{ uri: match.away.logo }}
+                            className="w-6 h-6"
+                            resizeMode="contain"
+                          />
+                          <Text className="text-white text-sm font-extrabold" numberOfLines={1}>
+                            {match.away.name}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Bell Notification Button */}
+                      <TouchableOpacity
+                        onPress={() => toggleNotification(match.id)}
+                        className={`p-2.5 rounded-full ${
+                          isNotified ? "bg-[#02DB54]/15" : "bg-white/5"
+                        }`}
+                      >
+                        <Bell
+                          size={18}
+                          color={isNotified ? "#02DB54" : "#ECEDEE"}
+                          fill={isNotified ? "#02DB54" : "none"}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })
+              )}
             </View>
           ) : (
             <View className="bg-[#131415] rounded-3xl p-4 border border-white/5">
