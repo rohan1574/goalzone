@@ -240,6 +240,32 @@ app.get('/football-get-team-squad', async (req, res) => {
   }
 });
 
+app.get('/football-find-team-by-country', async (req, res) => {
+  const country = req.query.country as string;
+  if (!country) {
+    return res.status(400).json({ error: 'Missing country parameter' });
+  }
+
+  const cacheKey = `find_team_${country}`;
+  try {
+    const data = await fetchAndCache(cacheKey, '/teams', { name: country, country: country }, 86400, (apiResponse: any) => {
+      const teams = apiResponse.response || [];
+      const nationalTeam = teams.find((t: any) => t.team.national === true);
+      if (nationalTeam) {
+        return {
+          id: String(nationalTeam.team.id),
+          name: nationalTeam.team.name,
+          logo: nationalTeam.team.logo
+        };
+      }
+      return null;
+    });
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to find team', message: err.message });
+  }
+});
+
 // Helper for Lineup translation
 const translateLineup = (apiResponse: any, side: 'home' | 'away') => {
   const list = apiResponse.response || [];

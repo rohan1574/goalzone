@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import { fetchCountries } from "../../services/footballApi";
 import LeagueDetailsModal, { League } from "../leagues/LeagueDetailsModal";
 import TeamDetailsModal, { Team } from "./TeamDetailsModal";
 
@@ -54,6 +55,7 @@ interface TeamsViewProps {
 export default function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
   const [favorites, setFavorites] = useState<string[]>(["8066"]);
   const [loading, setLoading] = useState(true);
+  const [countries, setCountries] = useState<any[]>([]);
 
   const [favSectionExpanded, setFavSectionExpanded] = useState(true);
   const [allSectionExpanded, setAllSectionExpanded] = useState(true);
@@ -67,17 +69,24 @@ export default function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
   const [leagueDetailsVisible, setLeagueDetailsVisible] = useState(false);
 
   useEffect(() => {
-    loadFavorites();
+    loadInitialData();
   }, []);
 
-  const loadFavorites = async () => {
+  const loadInitialData = async () => {
+    setLoading(true);
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored !== null) {
-        setFavorites(JSON.parse(stored));
+      const [favs, countriesList] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEY),
+        fetchCountries(),
+      ]);
+
+      if (favs !== null) {
+        setFavorites(JSON.parse(favs));
       }
+
+      setCountries(countriesList || []);
     } catch (e) {
-      console.warn("Failed to load favorite internationals", e);
+      console.warn("Failed to load initial data", e);
     } finally {
       setLoading(false);
     }
@@ -105,24 +114,21 @@ export default function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
     }));
   };
 
-  // International teams (only) from API
+  // International teams (Countries) from API
   const internationalTeamsList: Team[] = React.useMemo(() => {
-    if (apiTeams && apiTeams.length > 0) {
-      return apiTeams
-        .filter((item: any) => (item.category || "") === "International Teams")
-        .map((item: any) => ({
-          id: String(item.id || item.teamId || Math.random().toString()),
-          name: item.name || item.teamName || "Team",
-          logo:
-            item.logo ||
-            item.logoUrl ||
-            `https://images.fotmob.com/image_resources/logo/teamlogo/${item.id}.png`,
-          category: "International Teams",
-          country: item.country || "International",
-        }));
+    if (countries && countries.length > 0) {
+      return countries.map((item: any) => ({
+        id: item.name, // Use country name as ID to resolve in Modal
+        name: item.name,
+        logo:
+          item.flag ||
+          `https://media.api-sports.io/flags/${item.code?.toLowerCase()}.svg`,
+        category: "Countries",
+        country: item.name,
+      }));
     }
     return [];
-  }, [apiTeams]);
+  }, [countries]);
 
   // International tournaments (only) from API leagues
   const internationalLeaguesList: League[] = React.useMemo(() => {

@@ -1,16 +1,20 @@
 import { ArrowLeft, Bell } from "lucide-react-native";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     Image,
     Modal,
     ScrollView,
     Text,
     TouchableOpacity,
     View,
-    ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { fetchTeamFixtures, fetchTeamSquad } from "../../services/footballApi";
+import {
+    fetchTeamByCountry,
+    fetchTeamFixtures,
+    fetchTeamSquad,
+} from "../../services/footballApi";
 
 export interface Team {
   id: string;
@@ -49,9 +53,25 @@ export default function TeamDetailsModal({
     if (!team) return;
     setLoading(true);
     try {
+      let teamId = team.id;
+
+      // If teamId is a country name (not a numeric ID), find the actual team ID
+      if (isNaN(Number(teamId))) {
+        const teamInfo = await fetchTeamByCountry(team.name);
+        if (teamInfo && teamInfo.id) {
+          teamId = teamInfo.id;
+        } else {
+          console.warn(`Could not find national team ID for ${team.name}`);
+          setFixtures([]);
+          setSquad([]);
+          setLoading(false);
+          return;
+        }
+      }
+
       const [fixturesData, squadData] = await Promise.all([
-        fetchTeamFixtures(team.id),
-        fetchTeamSquad(team.id),
+        fetchTeamFixtures(teamId),
+        fetchTeamSquad(teamId),
       ]);
       setFixtures(fixturesData || []);
       setSquad(squadData || []);
@@ -134,7 +154,9 @@ export default function TeamDetailsModal({
           {loading ? (
             <View className="flex-1 items-center justify-center py-10">
               <ActivityIndicator size="large" color="#02DB54" />
-              <Text className="text-gray-400 text-xs font-bold mt-3">Loading details...</Text>
+              <Text className="text-gray-400 text-xs font-bold mt-3">
+                Loading details...
+              </Text>
             </View>
           ) : activeTab === "fixtures" ? (
             <View className="gap-3">
@@ -169,7 +191,11 @@ export default function TeamDetailsModal({
                       <View className="flex-1 px-3 justify-center gap-2">
                         <View className="flex-row items-center gap-2.5">
                           <Image
-                            source={{ uri: match.isHome ? team.logo : match.opponentLogo }}
+                            source={{
+                              uri: match.isHome
+                                ? team.logo
+                                : match.opponentLogo,
+                            }}
                             className="w-6 h-6"
                             resizeMode="contain"
                           />
@@ -182,7 +208,11 @@ export default function TeamDetailsModal({
                         </View>
                         <View className="flex-row items-center gap-2.5">
                           <Image
-                            source={{ uri: match.isHome ? match.opponentLogo : team.logo }}
+                            source={{
+                              uri: match.isHome
+                                ? match.opponentLogo
+                                : team.logo,
+                            }}
                             className="w-6 h-6"
                             resizeMode="contain"
                           />
@@ -212,7 +242,9 @@ export default function TeamDetailsModal({
                   );
                 })
               ) : (
-                <Text className="text-gray-400 text-xs font-bold text-center py-10">No fixtures found.</Text>
+                <Text className="text-gray-400 text-xs font-bold text-center py-10">
+                  No fixtures found.
+                </Text>
               )}
             </View>
           ) : (
@@ -236,7 +268,9 @@ export default function TeamDetailsModal({
                   </View>
                 ))
               ) : (
-                <Text className="text-gray-400 text-xs font-bold text-center py-10">No squad data found.</Text>
+                <Text className="text-gray-400 text-xs font-bold text-center py-10">
+                  No squad data found.
+                </Text>
               )}
             </View>
           )}

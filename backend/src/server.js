@@ -616,6 +616,40 @@ app.get("/football-get-team-squad", async (req, res) => {
   }
 });
 
+app.get("/football-find-team-by-country", async (req, res) => {
+  const country = req.query.country;
+  if (!country) {
+    return res.status(400).json({ error: "Missing country parameter" });
+  }
+
+  const cacheKey = `find_team_${country}`;
+  try {
+    const data = await fetchAndCache(
+      cacheKey,
+      "/teams",
+      { name: country, country: country },
+      86400,
+      (apiResponse) => {
+        const teams = apiResponse.response || [];
+        const nationalTeam = teams.find((t) => t.team.national === true);
+        if (nationalTeam) {
+          return {
+            id: String(nationalTeam.team.id),
+            name: nationalTeam.team.name,
+            logo: nationalTeam.team.logo,
+          };
+        }
+        return null;
+      },
+    );
+    res.json(data);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to find team", message: err.message });
+  }
+});
+
 // ==========================================
 // 4. LINEUPS HELPERS & ADAPTERS
 // ==========================================

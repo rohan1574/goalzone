@@ -1032,7 +1032,47 @@ export const fetchTeamSquad = async (teamid: string | number) => {
 
     return freshData;
   } catch (error) {
-    console.error("Error fetching team squad:", error);
+    console.error('Error fetching team squad:', error);
     return [];
+  }
+};
+
+export const fetchTeamByCountry = async (country: string) => {
+  if (!country) return null;
+  const CACHE_KEY = `@goalzone_api_cache_team_search_${country}`;
+  const CACHE_TIME_KEY = `@goalzone_api_cache_team_search_time_${country}`;
+
+  try {
+    const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
+    const cachedData = await AsyncStorage.getItem(CACHE_KEY);
+
+    if (cachedTime && cachedData) {
+      const parsedTime = parseInt(cachedTime, 10);
+      const now = Date.now();
+      if (now - parsedTime < 86400000) { // 24 hours cache
+        return JSON.parse(cachedData);
+      }
+    }
+  } catch (err) {
+    console.warn("Error reading team search cache:", err);
+  }
+
+  try {
+    const response = await api.get('/football-find-team-by-country', { params: { country } });
+    const freshData = response.data;
+
+    if (freshData) {
+      try {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
+        await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+      } catch (err) {
+        console.warn("Error saving team search cache:", err);
+      }
+    }
+
+    return freshData;
+  } catch (error) {
+    console.error('Error finding team by country:', error);
+    return null;
   }
 };
