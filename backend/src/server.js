@@ -1,8 +1,10 @@
 const express = require('express');
 const cors = require('cors');
+const axios = require('axios');
 const dotenv = require('dotenv');
 const { initFirebase } = require('./firebase');
 const { getCachedLiveScores, startLiveScorePolling, stopLiveScorePolling } = require('./liveScoreManager');
+const { cache } = require('./cache');
 
 dotenv.config();
 
@@ -11,47 +13,646 @@ initFirebase();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const APISPORTS_URL = process.env.APISPORTS_URL || process.env.THIRD_PARTY_API_URL || 'https://v3.football.api-sports.io';
+const APISPORTS_KEY = process.env.APISPORTS_KEY || process.env.THIRD_PARTY_API_KEY || '';
+
+if (!APISPORTS_KEY) {
+  console.error('[Error] APISPORTS_KEY is not defined in .env file!');
+}
 
 app.use(cors());
 app.use(express.json());
 
+// API Client Instance
+const api = axios.create({
+  baseURL: APISPORTS_URL,
+  headers: {
+    'x-apisports-key': APISPORTS_KEY,
+  },
+});
+
+// Helper to handle API requests and cache them
+async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
+  const cachedData = cache.get(cacheKey);
+  if (cachedData !== null) {
+    return cachedData;
+  }
+
+  console.log(`[API Call] Requesting ${endpoint} with params:`, params);
+  try {
+    const response = await api.get(endpoint, { params });
+    if (response.data && response.data.errors && Object.keys(response.data.errors).length > 0) {
+      console.error(`[API Error] Errors returned from api-football:`, response.data.errors);
+      throw new Error(JSON.stringify(response.data.errors));
+    }
+
+    const mappedData = mapper(response.data);
+    cache.set(cacheKey, mappedData, ttlSeconds);
+    return mappedData;
+  } catch (err) {
+    console.error(`[API Request Failed] Endpoint: ${endpoint}, Error:`, err.message || err);
+    throw err;
+  }
+}
+
 // ==========================================
-// CLIENT PROXY ENDPOINT
+// 1. LIVE SCORES ENDPOINTS
 // ==========================================
-/**
- * Express endpoint for client devices (5,000 to 20,000+ DAU).
- * Reads directly from global in-memory object (0 third-party API hits per user).
- * Instantaneous ~1ms response time under high traffic.
- */
 app.get('/api/live-scores', (req, res) => {
   const data = getCachedLiveScores();
   res.setHeader('Cache-Control', 'public, max-age=15');
   res.json(data);
 });
 
-// Alias endpoint for existing frontend calls to /football-current-live
 app.get('/football-current-live', (req, res) => {
   const data = getCachedLiveScores();
   res.setHeader('Cache-Control', 'public, max-age=15');
-  res.json(data.matches || []);
+  
+  // If cache has matches list, return it
+  if (data && Array.isArray(data.matches) && data.matches.length > 0) {
+    return res.json(data.matches);
+  }
+  
+  // Fallback to fetchAndCache if in-memory poller hasn't populated yet
+  const cacheKey = 'current_live_matches_fallback';
+  fetchAndCache(cacheKey, '/fixtures', { live: 'all' }, 60, (apiResponse) => {
+    const list = apiResponse.response || [];
+    return list.map((item) => ({
+      id: String(item.fixture.id),
+      league: item.league.name,
+      leagueId: String(item.league.id),
+      leagueLogo: item.league.logo,
+      home: {
+        id: item.teams.home.id,
+        name: item.teams.home.name,
+        short: item.teams.home.code || item.teams.home.name.substring(0, 3).toUpperCase(),
+        logo: item.teams.home.logo,
+      },
+      away: {
+        id: item.teams.away.id,
+        name: item.teams.away.name,
+        short: item.teams.away.code || item.teams.away.name.substring(0, 3).toUpperCase(),
+        logo: item.teams.away.logo,
+      },
+      score: `${item.goals.home ?? 0} - ${item.goals.away ?? 0}`,
+      minute: item.fixture.status.elapsed ? `${item.fixture.status.elapsed}'` : item.fixture.status.short,
+      status: item.fixture.status.short,
+    }));
+  })
+  .then(data => res.json(data))
+  .catch(err => res.status(500).json({ error: 'Failed to fetch live matches', message: err.message }));
 });
 
+// ==========================================
+// 2. POPULAR LEAGUES
+// ==========================================
+app.get('/football-popular-leagues', (req, res) => {
+  const popularLeagues = [
+    {
+      leagueId: '39',
+      leagueName: 'Premier League',
+      leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/47.png'
+    },
+    {
+      leagueId: '140',
+      leagueName: 'La Liga',
+      leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/87.png'
+    },
+    {
+      leagueId: '135',
+      leagueName: 'Serie A',
+      leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/55.png'
+    },
+    {
+      leagueId: '253',
+      leagueName: 'MLS',
+      leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/130.png'
+    },
+    {
+      leagueId: '2',
+      leagueName: 'UEFA Champions League',
+      leagueLogo: 'https://images.fotmob.com/image_resources/logo/leaguelogo/42.png'
+    }
+  ];
+  res.json(popularLeagues);
+});
+
+// ==========================================
+// 3. MATCHES BY DATE
+// ==========================================
+app.get('/football-get-matches-by-date', async (req, res) => {
+  const dateQuery = req.query.date;
+  if (!dateQuery || dateQuery.length !== 8) {
+    return res.status(400).json({ error: 'Invalid date format. Expected YYYYMMDD' });
+  }
+
+  const formattedDate = `${dateQuery.substring(0, 4)}-${dateQuery.substring(4, 6)}-${dateQuery.substring(6, 8)}`;
+  const cacheKey = `fixtures_date_${dateQuery}`;
+
+  try {
+    const data = await fetchAndCache(cacheKey, '/fixtures', { date: formattedDate }, 1800, (apiResponse) => {
+      const list = apiResponse.response || [];
+      return list.map((item) => ({
+        id: String(item.fixture.id),
+        league: item.league.name,
+        leagueId: String(item.league.id),
+        leagueLogo: item.league.logo,
+        home: {
+          id: item.teams.home.id,
+          name: item.teams.home.name,
+          short: item.teams.home.code || item.teams.home.name.substring(0, 3).toUpperCase(),
+          logo: item.teams.home.logo,
+        },
+        away: {
+          id: item.teams.away.id,
+          name: item.teams.away.name,
+          short: item.teams.away.code || item.teams.away.name.substring(0, 3).toUpperCase(),
+          logo: item.teams.away.logo,
+        },
+        score: `${item.goals.home ?? 0} - ${item.goals.away ?? 0}`,
+        minute: item.fixture.status.elapsed ? `${item.fixture.status.elapsed}'` : item.fixture.status.short,
+        status: item.fixture.status.short,
+      }));
+    });
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch matches by date', message: err.message });
+  }
+});
+
+// ==========================================
+// 4. LINEUPS HELPERS & ADAPTERS
+// ==========================================
+const translateLineup = (apiResponse, side) => {
+  const list = apiResponse.response || [];
+  if (list.length === 0) return null;
+
+  const idx = side === 'home' ? 0 : 1;
+  const apiLineup = list[idx];
+  if (!apiLineup) return null;
+
+  const starters = apiLineup.startXI || [];
+  const subs = apiLineup.substitutes || [];
+
+  const rowPlayersMap = {};
+  starters.forEach((item) => {
+    const p = item.player;
+    const grid = p.grid || '';
+    const [rowStr, colStr] = grid.split(':');
+    const row = parseInt(rowStr, 10) || 1;
+    const col = parseInt(colStr, 10) || 1;
+
+    if (!rowPlayersMap[row]) {
+      rowPlayersMap[row] = [];
+    }
+    rowPlayersMap[row].push({ player: p, col });
+  });
+
+  const maxRow = Math.max(...Object.keys(rowPlayersMap).map(Number), 4);
+
+  const mappedStarters = starters.map((item) => {
+    const p = item.player;
+    const grid = p.grid || '';
+    const [rowStr, colStr] = grid.split(':');
+    const row = parseInt(rowStr, 10) || 1;
+    const col = parseInt(colStr, 10) || 1;
+
+    const rowPlayers = rowPlayersMap[row] || [];
+    rowPlayers.sort((a, b) => a.col - b.col);
+    const count = rowPlayers.length;
+    const index = rowPlayers.findIndex((pr) => pr.player.id === p.id);
+
+    let y = 0.5;
+    if (maxRow > 1) {
+      y = 0.1 + (row - 1) * (0.75 / (maxRow - 1));
+    } else {
+      y = 0.1;
+    }
+
+    let x = 0.5;
+    if (count > 1) {
+      x = 0.1 + index * (0.8 / (count - 1));
+    } else {
+      x = 0.5;
+    }
+
+    return {
+      id: p.id,
+      name: p.name,
+      shirtNumber: String(p.number || ''),
+      verticalLayout: { x, y }
+    };
+  });
+
+  const mappedSubs = subs.map((item) => {
+    const p = item.player;
+    return {
+      id: p.id,
+      name: p.name,
+      shirtNumber: String(p.number || '')
+    };
+  });
+
+  return {
+    lineup: {
+      id: apiLineup.team.id,
+      name: apiLineup.team.name,
+      formation: apiLineup.formation || 'N/A',
+      starters: mappedStarters,
+      subs: mappedSubs
+    }
+  };
+};
+
+function getMockLineup(eventid, side) {
+  const isHome = side === 'home';
+  if (isHome) {
+    return {
+      lineup: {
+        id: 9991,
+        name: "Home Team",
+        formation: "4-4-2",
+        starters: [
+          { id: 501, name: "Goalkeeper H", shirtNumber: "1", verticalLayout: { x: 0.5, y: 0.9 } },
+          { id: 502, name: "Defender HL", shirtNumber: "3", verticalLayout: { x: 0.15, y: 0.7 } },
+          { id: 503, name: "Defender HC1", shirtNumber: "4", verticalLayout: { x: 0.38, y: 0.75 } },
+          { id: 504, name: "Defender HC2", shirtNumber: "5", verticalLayout: { x: 0.62, y: 0.75 } },
+          { id: 505, name: "Defender HR", shirtNumber: "2", verticalLayout: { x: 0.85, y: 0.7 } },
+          { id: 506, name: "Midfielder HL", shirtNumber: "6", verticalLayout: { x: 0.15, y: 0.45 } },
+          { id: 507, name: "Midfielder HC1", shirtNumber: "8", verticalLayout: { x: 0.38, y: 0.45 } },
+          { id: 508, name: "Midfielder HC2", shirtNumber: "10", verticalLayout: { x: 0.62, y: 0.45 } },
+          { id: 509, name: "Midfielder HR", shirtNumber: "7", verticalLayout: { x: 0.85, y: 0.45 } },
+          { id: 510, name: "Forward HL", shirtNumber: "9", verticalLayout: { x: 0.35, y: 0.2 } },
+          { id: 511, name: "Forward HR", shirtNumber: "11", verticalLayout: { x: 0.65, y: 0.2 } }
+        ],
+        subs: [
+          { id: 512, name: "Substitute H1", shirtNumber: "12" },
+          { id: 513, name: "Substitute H2", shirtNumber: "14" }
+        ]
+      }
+    };
+  } else {
+    return {
+      lineup: {
+        id: 9992,
+        name: "Away Team",
+        formation: "4-3-3",
+        starters: [
+          { id: 601, name: "Goalkeeper A", shirtNumber: "1", verticalLayout: { x: 0.5, y: 0.9 } },
+          { id: 602, name: "Defender AL", shirtNumber: "3", verticalLayout: { x: 0.15, y: 0.7 } },
+          { id: 603, name: "Defender AC1", shirtNumber: "4", verticalLayout: { x: 0.38, y: 0.75 } },
+          { id: 604, name: "Defender AC2", shirtNumber: "5", verticalLayout: { x: 0.62, y: 0.75 } },
+          { id: 605, name: "Defender AR", shirtNumber: "2", verticalLayout: { x: 0.85, y: 0.7 } },
+          { id: 606, name: "Midfielder AL", shirtNumber: "8", verticalLayout: { x: 0.25, y: 0.45 } },
+          { id: 607, name: "Midfielder AC", shirtNumber: "6", verticalLayout: { x: 0.5, y: 0.5 } },
+          { id: 608, name: "Midfielder AR", shirtNumber: "10", verticalLayout: { x: 0.75, y: 0.45 } },
+          { id: 609, name: "Forward AL", shirtNumber: "7", verticalLayout: { x: 0.2, y: 0.2 } },
+          { id: 610, name: "Forward AC", shirtNumber: "9", verticalLayout: { x: 0.5, y: 0.15 } },
+          { id: 611, name: "Forward AR", shirtNumber: "11", verticalLayout: { x: 0.8, y: 0.2 } }
+        ],
+        subs: [
+          { id: 612, name: "Substitute A1", shirtNumber: "12" },
+          { id: 613, name: "Substitute A2", shirtNumber: "14" }
+        ]
+      }
+    };
+  }
+}
+
+app.get('/football-get-hometeam-lineup', async (req, res) => {
+  const eventid = req.query.eventid;
+  if (!eventid) {
+    return res.status(400).json({ error: 'Missing eventid parameter' });
+  }
+
+  if (!/^\d+$/.test(eventid)) {
+    return res.json(getMockLineup(eventid, 'home'));
+  }
+
+  const cacheKey = `lineup_home_${eventid}`;
+  try {
+    const data = await fetchAndCache(cacheKey, '/fixtures/lineups', { fixture: eventid }, 86400, (apiResponse) => {
+      return translateLineup(apiResponse, 'home');
+    });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch home team lineup', message: err.message });
+  }
+});
+
+app.get('/football-get-awayteam-lineup', async (req, res) => {
+  const eventid = req.query.eventid;
+  if (!eventid) {
+    return res.status(400).json({ error: 'Missing eventid parameter' });
+  }
+
+  if (!/^\d+$/.test(eventid)) {
+    return res.json(getMockLineup(eventid, 'away'));
+  }
+
+  const cacheKey = `lineup_away_${eventid}`;
+  try {
+    const data = await fetchAndCache(cacheKey, '/fixtures/lineups', { fixture: eventid }, 86400, (apiResponse) => {
+      return translateLineup(apiResponse, 'away');
+    });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch away team lineup', message: err.message });
+  }
+});
+
+// ==========================================
+// 5. STANDINGS TABLE
+// ==========================================
+app.get('/football-get-standing-all', async (req, res) => {
+  const leagueid = req.query.leagueid;
+  if (!leagueid || leagueid === 'undefined' || leagueid === 'null') {
+    return res.status(400).json({ error: 'Missing or invalid leagueid parameter' });
+  }
+
+  const currentYear = new Date().getFullYear();
+  const seasonsToTry = [currentYear, 2024, 2023];
+  let lastError = null;
+
+  for (const season of seasonsToTry) {
+    const cacheKey = `standings_${leagueid}_${season}`;
+    try {
+      const data = await fetchAndCache(cacheKey, '/standings', { league: leagueid, season }, 14400, (apiResponse) => {
+        const list = apiResponse.response || [];
+        if (list.length === 0) return [];
+        
+        const apiStandings = list[0]?.league?.standings?.[0] || [];
+        return apiStandings.map((item) => ({
+          teamId: item.team.id,
+          teamName: item.team.name,
+          logoUrl: item.team.logo,
+          pos: item.rank,
+          played: item.all.played,
+          goalsDiff: item.goalsDiff,
+          points: item.points
+        }));
+      });
+
+      return res.json(data);
+    } catch (err) {
+      lastError = err;
+      if (err.message && (err.message.includes('plan') || err.message.includes('plans') || err.message.includes('access'))) {
+        continue;
+      }
+    }
+  }
+
+  res.status(500).json({ error: 'Failed to fetch standings', message: lastError?.message });
+});
+
+// ==========================================
+// 6. MATCH LOCATION & COUNTRIES
+// ==========================================
+app.get('/football-get-match-location', async (req, res) => {
+  const eventid = req.query.eventid;
+  if (!eventid) {
+    return res.status(400).json({ error: 'Missing eventid parameter' });
+  }
+
+  const cacheKey = `location_${eventid}`;
+  try {
+    const data = await fetchAndCache(cacheKey, '/fixtures', { id: eventid }, 86400, (apiResponse) => {
+      const list = apiResponse.response || [];
+      const item = list[0];
+      return {
+        venue: item?.fixture?.venue?.name || 'Football Arena',
+        city: item?.fixture?.venue?.city || ''
+      };
+    });
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch match location', message: err.message });
+  }
+});
+
+app.get('/football-get-all-countries', async (req, res) => {
+  const cacheKey = 'all_countries';
+  try {
+    const data = await fetchAndCache(cacheKey, '/countries', {}, 86400, (apiResponse) => {
+      return apiResponse.response || [];
+    });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch countries list', message: err.message });
+  }
+});
+
+// ==========================================
+// 7. FOOTBALL NEWS RSS
+// ==========================================
+app.get('/football-get-news', async (req, res) => {
+  const cacheKey = 'football_news';
+
+  try {
+    const cachedData = cache.get(cacheKey);
+    if (cachedData) {
+      return res.json(cachedData);
+    }
+
+    const response = await axios.get('https://www.skysports.com/rss/12040', {
+      headers: {
+        'Accept': 'application/xml, text/xml, */*'
+      }
+    });
+
+    const xmlText = response.data;
+    if (typeof xmlText !== 'string') {
+      throw new Error('Invalid RSS response type');
+    }
+
+    const items = [];
+    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+    let match;
+
+    while ((match = itemRegex.exec(xmlText)) !== null) {
+      const itemXml = match[1];
+
+      const title = itemXml.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/)?.[1]?.trim() || "";
+      const link = itemXml.match(/<link>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/link>/)?.[1]?.trim() || "";
+      let description = itemXml.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/)?.[1]?.trim() || "";
+      description = description.replace(/<[^>]*>/g, "");
+      const pubDate = itemXml.match(/<pubDate>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/pubDate>/)?.[1]?.trim() || "";
+
+      let thumbnail = "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500";
+      const enclosureMatch = itemXml.match(/<enclosure[^>]+url=["']([^"']+)["']/);
+      const mediaContentMatch = itemXml.match(/<media:content[^>]+url=["']([^"']+)["']/);
+
+      if (enclosureMatch && enclosureMatch[1]) {
+        thumbnail = enclosureMatch[1];
+      } else if (mediaContentMatch && mediaContentMatch[1]) {
+        thumbnail = mediaContentMatch[1];
+      }
+
+      items.push({
+        id: link || Math.random().toString(),
+        title,
+        description,
+        thumbnail,
+        date: pubDate,
+        link
+      });
+    }
+
+    cache.set(cacheKey, items, 300);
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch football news', message: err.message });
+  }
+});
+
+// ==========================================
+// 8. MATCH STATISTICS & PREDICTIONS
+// ==========================================
+function getMockStats(eventid) {
+  return [
+    { name: "Possession", home: "50%", away: "50%", homePct: 50, awayPct: 50 },
+    { name: "Shots", home: "10", away: "10", homePct: 50, awayPct: 50 },
+    { name: "Shots on Target", home: "4", away: "4", homePct: 50, awayPct: 50 },
+    { name: "Fouls", home: "12", away: "12", homePct: 50, awayPct: 50 },
+    { name: "Corner Kicks", home: "5", away: "5", homePct: 50, awayPct: 50 },
+    { name: "Yellow Cards", home: "2", away: "2", homePct: 50, awayPct: 50 }
+  ];
+}
+
+function parseFixtureStats(apiResponse) {
+  const responseList = apiResponse.response || [];
+  if (responseList.length === 0) return getMockStats("generic");
+
+  const homeTeamStats = responseList[0]?.statistics || [];
+  const awayTeamStats = responseList[1]?.statistics || [];
+
+  const targetStats = [
+    { key: "Ball Possession", name: "Possession" },
+    { key: "Total Shots", name: "Shots" },
+    { key: "Shots on Goal", name: "Shots on Target" },
+    { key: "Fouls", name: "Fouls" },
+    { key: "Corner Kicks", name: "Corner Kicks" },
+    { key: "Yellow Cards", name: "Yellow Cards" }
+  ];
+
+  return targetStats.map(target => {
+    const homeStat = homeTeamStats.find((s) => s.type === target.key);
+    const awayStat = awayTeamStats.find((s) => s.type === target.key);
+
+    let homeValStr = homeStat?.value !== null && homeStat?.value !== undefined ? String(homeStat.value) : "0";
+    let awayValStr = awayStat?.value !== null && awayStat?.value !== undefined ? String(awayStat.value) : "0";
+
+    let homeValNum = parseFloat(homeValStr.replace('%', '')) || 0;
+    let awayValNum = parseFloat(awayValStr.replace('%', '')) || 0;
+
+    let homePct = 50;
+    let awayPct = 50;
+
+    const total = homeValNum + awayValNum;
+    if (total > 0) {
+      homePct = Math.round((homeValNum / total) * 100);
+      awayPct = Math.round((awayValNum / total) * 100);
+    }
+
+    return {
+      name: target.name,
+      home: homeValStr,
+      away: awayValStr,
+      homePct,
+      awayPct
+    };
+  });
+}
+
+app.get('/football-get-match-statistics', async (req, res) => {
+  const eventid = req.query.eventid;
+  if (!eventid) {
+    return res.status(400).json({ error: 'Missing eventid parameter' });
+  }
+
+  if (isNaN(Number(eventid))) {
+    return res.json(getMockStats(eventid));
+  }
+
+  const cacheKey = `stats_event_${eventid}`;
+  try {
+    const data = await fetchAndCache(cacheKey, '/fixtures/statistics', { fixture: eventid }, 60, (apiResponse) => {
+      return parseFixtureStats(apiResponse);
+    });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch match statistics', message: err.message });
+  }
+});
+
+function getMockPredictions(eventid) {
+  return {
+    advice: "Double chance : home team or draw",
+    percent: {
+      home: "40%",
+      draw: "35%",
+      away: "25%"
+    },
+    winner: "Home Team"
+  };
+}
+
+function parsePredictions(apiResponse) {
+  const list = apiResponse.response || [];
+  if (list.length === 0) return getMockPredictions("generic");
+
+  const pred = list[0]?.predictions;
+  if (!pred) return getMockPredictions("generic");
+
+  return {
+    advice: pred.advice || "No advice available",
+    percent: {
+      home: pred.percent?.home || "33%",
+      draw: pred.percent?.draw || "34%",
+      away: pred.percent?.away || "33%"
+    },
+    winner: pred.winner?.name || "Draw"
+  };
+}
+
+app.get('/football-get-predictions', async (req, res) => {
+  const eventid = req.query.eventid;
+  if (!eventid) {
+    return res.status(400).json({ error: 'Missing eventid parameter' });
+  }
+
+  if (isNaN(Number(eventid))) {
+    return res.json(getMockPredictions(eventid));
+  }
+
+  const cacheKey = `predictions_event_${eventid}`;
+  try {
+    const data = await fetchAndCache(cacheKey, '/predictions', { fixture: eventid }, 86400, (apiResponse) => {
+      return parsePredictions(apiResponse);
+    });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch predictions', message: err.message });
+  }
+});
 
 // Health check endpoint for VPS process manager (PM2 / Docker)
 app.get('/health', (req, res) => {
-  const cache = getCachedLiveScores();
+  const cacheData = getCachedLiveScores();
   res.json({
     status: 'ok',
     uptime: process.uptime(),
-    lastUpdated: cache.lastUpdated,
-    liveMatches: cache.count
+    lastUpdated: cacheData.lastUpdated,
+    liveMatches: cacheData.count
   });
 });
 
 // Start Express server
 const server = app.listen(PORT, () => {
   console.log(`====================================================`);
-  console.log(`🚀 Football Live Score Proxy Server running on port ${PORT}`);
+  console.log(`🚀 Football Full Backend Server running on port ${PORT}`);
   console.log(`📡 Client Proxy Endpoint: http://localhost:${PORT}/api/live-scores`);
   console.log(`====================================================`);
 
@@ -69,7 +670,6 @@ function gracefulShutdown(signal) {
     process.exit(0);
   });
 
-  // Force exit after 10s if shutdown hangs
   setTimeout(() => {
     console.error('[Server] Could not close connections in time, forcing exit.');
     process.exit(1);

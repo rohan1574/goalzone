@@ -1,8 +1,8 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Render hosted live backend URL
-const BACKEND_URL = "https://goalzone-1-k075.onrender.com";
+// Contabo VPS hosted live backend URL
+const BACKEND_URL = "http://62.84.190.145";
 
 export const api = axios.create({
   baseURL: BACKEND_URL,
