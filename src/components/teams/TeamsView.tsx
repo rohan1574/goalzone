@@ -36,7 +36,11 @@ const ALL_TEAMS: Team[] = [
   { id: "8455", name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png", category: "Club Teams", country: "England" },
 ];
 
-export default function TeamsView() {
+interface TeamsViewProps {
+  apiTeams?: any[];
+}
+
+export default function TeamsView({ apiTeams: propApiTeams }: TeamsViewProps) {
   const [favorites, setFavorites] = useState<string[]>(["8066"]); // Default Argentina as favorite
   const [loading, setLoading] = useState(true);
   const [apiTeams, setApiTeams] = useState<Team[]>([]);
@@ -112,13 +116,20 @@ export default function TeamsView() {
     }));
   };
 
-  // Use API teams if available, fallback to ALL_TEAMS
+  // Use API teams if available (from props or fetch), fallback to ALL_TEAMS
   const teamsList = React.useMemo(() => {
-    if (apiTeams && apiTeams.length > 0) {
-      return apiTeams;
+    const listToUse = (propApiTeams && propApiTeams.length > 0) ? propApiTeams : apiTeams;
+    if (listToUse && listToUse.length > 0) {
+      return listToUse.map((item: any) => ({
+        id: String(item.id || item.teamId || Math.random().toString()),
+        name: item.name || item.teamName || "Team",
+        logo: item.logo || item.logoUrl || `https://images.fotmob.com/image_resources/logo/teamlogo/${item.id}.png`,
+        category: item.category || "International Teams",
+        country: item.country || "International"
+      }));
     }
     return ALL_TEAMS;
-  }, [apiTeams]);
+  }, [propApiTeams, apiTeams]);
 
   const categories = Array.from(new Set(teamsList.map((t) => t.category)));
   const favoriteTeamsList = teamsList.filter((t) => favorites.includes(t.id));

@@ -266,7 +266,7 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
   }
 
   console.log("[API] Fetching fresh dashboard data from API (sequentially to prevent 429 rate limit)...");
-  const data: { [key: string]: any[] } = { live: [], leagues: [], fixtures: [] };
+  const data: { [key: string]: any[] } = { live: [], leagues: [], fixtures: [], teams: [] };
   let hasPartialFailure = false;
 
   // Request 1: Live matches
@@ -306,6 +306,19 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
   } catch (err: any) {
     console.warn("[API] Request failed for fixtures:", err.response?.data || err.message || err);
     hasPartialFailure = true;
+  }
+
+  // Wait 1200ms to avoid 1 request/sec rate limit
+  await delay(1200);
+
+  // Request 4: Popular Teams
+  try {
+    const res = await api.get('/football-get-popular-teams');
+    const rawData = res.data;
+    console.log("[API] Fulfilled request for teams. Raw keys:", Object.keys(rawData || {}));
+    data.teams = findArray(rawData);
+  } catch (err: any) {
+    console.warn("[API] Request failed for teams:", err.response?.data || err.message || err);
   }
 
   const response = {
