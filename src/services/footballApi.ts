@@ -792,27 +792,39 @@ export const fetchPopularTeams = async () => {
     const cachedData = await AsyncStorage.getItem(CACHE_KEY);
 
     if (cachedTime && cachedData) {
-      const parsedTime = parseInt(cachedTime, 10);
-      const now = Date.now();
-      if (now - parsedTime < 86400000) { // 24 hours cache
-        console.log("[Cache] Using cached popular teams.");
-        return JSON.parse(cachedData);
+      const parsed = JSON.parse(cachedData);
+      // Only use cache if it has actual data
+      if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+        const parsedTime = parseInt(cachedTime, 10);
+        const now = Date.now();
+        if (now - parsedTime < 86400000) { // 24 hours cache
+          console.log("[Cache] Using cached popular teams:", parsed.length);
+          return parsed;
+        }
+      } else {
+        // Cached empty data - invalidate cache so we refetch
+        console.warn("[Cache] Cached popular teams is empty, clearing cache to refetch.");
+        await AsyncStorage.removeItem(CACHE_KEY);
+        await AsyncStorage.removeItem(CACHE_TIME_KEY);
       }
     }
   } catch (err) {
     console.warn("Error reading popular teams cache:", err);
   }
 
-  console.log("[API] Fetching fresh popular teams from API...");
+  console.log("[API] Fetching fresh popular teams from backend...");
   try {
     const response = await api.get('/football-get-popular-teams');
     const teamsData = findArray(response.data);
+    console.log("[API] Popular teams fetched:", teamsData?.length);
 
-    try {
-      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(teamsData));
-      await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-    } catch (err) {
-      console.warn("Error saving popular teams cache:", err);
+    if (teamsData && teamsData.length > 0) {
+      try {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(teamsData));
+        await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+      } catch (err) {
+        console.warn("Error saving popular teams cache:", err);
+      }
     }
 
     return teamsData;

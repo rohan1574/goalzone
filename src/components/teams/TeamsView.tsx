@@ -44,7 +44,7 @@ export default function TeamsView({ apiTeams: propApiTeams }: TeamsViewProps) {
   const [favorites, setFavorites] = useState<string[]>(["8066"]); // Default Argentina as favorite
   const [loading, setLoading] = useState(true);
   const [apiTeams, setApiTeams] = useState<Team[]>([]);
-  const [loadingApiTeams, setLoadingApiTeams] = useState(false);
+  const [loadingApiTeams, setLoadingApiTeams] = useState(true);
 
   // Expandable sections
   const [favSectionExpanded, setFavSectionExpanded] = useState(true);
@@ -64,6 +64,7 @@ export default function TeamsView({ apiTeams: propApiTeams }: TeamsViewProps) {
     setLoadingApiTeams(true);
     try {
       const data = await fetchPopularTeams();
+      console.log("[TeamsView] fetchPopularTeams result:", data?.length, data);
       if (data && data.length > 0) {
         const mapped = data.map((item: any) => ({
           id: String(item.id || item.teamId || Math.random().toString()),
@@ -73,9 +74,11 @@ export default function TeamsView({ apiTeams: propApiTeams }: TeamsViewProps) {
           country: item.country || "International"
         }));
         setApiTeams(mapped);
+      } else {
+        console.warn("[TeamsView] fetchPopularTeams returned empty, using demo data");
       }
     } catch (err) {
-      console.warn("Failed to load popular teams from API:", err);
+      console.warn("[TeamsView] Failed to load popular teams from API:", err);
     } finally {
       setLoadingApiTeams(false);
     }
@@ -116,20 +119,16 @@ export default function TeamsView({ apiTeams: propApiTeams }: TeamsViewProps) {
     }));
   };
 
-  // Use API teams if available (from props or fetch), fallback to ALL_TEAMS
+  // Use API teams if available (from direct fetch), fallback to ALL_TEAMS
   const teamsList = React.useMemo(() => {
-    const listToUse = (propApiTeams && propApiTeams.length > 0) ? propApiTeams : apiTeams;
-    if (listToUse && listToUse.length > 0) {
-      return listToUse.map((item: any) => ({
-        id: String(item.id || item.teamId || Math.random().toString()),
-        name: item.name || item.teamName || "Team",
-        logo: item.logo || item.logoUrl || `https://images.fotmob.com/image_resources/logo/teamlogo/${item.id}.png`,
-        category: item.category || "International Teams",
-        country: item.country || "International"
-      }));
+    // Priority: direct API fetch result > ALL_TEAMS demo
+    if (apiTeams && apiTeams.length > 0) {
+      console.log("[TeamsView] Using API teams:", apiTeams.length);
+      return apiTeams;
     }
+    console.log("[TeamsView] Using demo ALL_TEAMS");
     return ALL_TEAMS;
-  }, [propApiTeams, apiTeams]);
+  }, [apiTeams]);
 
   const categories = Array.from(new Set(teamsList.map((t) => t.category)));
   const favoriteTeamsList = teamsList.filter((t) => favorites.includes(t.id));
