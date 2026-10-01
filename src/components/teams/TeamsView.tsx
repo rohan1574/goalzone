@@ -11,10 +11,10 @@ import { Search, Star, ChevronDown, ChevronUp } from "lucide-react-native";
 import Svg, { Path } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import TeamDetailsModal, { Team } from "./TeamDetailsModal";
-import { fetchPopularTeams } from "../../services/footballApi";
 
 const STORAGE_KEY = "@goalzone_favorite_teams";
 
+// Demo fallback data (same as API data, used when API is unavailable)
 const ALL_TEAMS: Team[] = [
   { id: "8066", name: "Argentina", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8066.png", category: "International Teams", country: "Argentina" },
   { id: "8550", name: "Brazil", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8550.png", category: "International Teams", country: "Brazil" },
@@ -34,17 +34,23 @@ const ALL_TEAMS: Team[] = [
   { id: "8634", name: "FC Barcelona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png", category: "Club Teams", country: "Spain" },
   { id: "8457", name: "Manchester City", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png", category: "Club Teams", country: "England" },
   { id: "8455", name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png", category: "Club Teams", country: "England" },
+  { id: "9825", name: "Arsenal", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9825.png", category: "Club Teams", country: "England" },
+  { id: "8650", name: "Liverpool", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8650.png", category: "Club Teams", country: "England" },
+  { id: "9823", name: "Bayern Munich", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9823.png", category: "Club Teams", country: "Germany" },
+  { id: "9847", name: "Paris Saint-Germain", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9847.png", category: "Club Teams", country: "France" },
+  { id: "9885", name: "Juventus", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9885.png", category: "Club Teams", country: "Italy" },
+  { id: "8636", name: "Inter Milan", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8636.png", category: "Club Teams", country: "Italy" },
+  { id: "102643", name: "Al Nassr", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102643.png", category: "Club Teams", country: "Saudi Arabia" },
+  { id: "102534", name: "Inter Miami CF", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/102534.png", category: "Club Teams", country: "USA" },
 ];
 
 interface TeamsViewProps {
   apiTeams?: any[];
 }
 
-export default function TeamsView({ apiTeams: propApiTeams }: TeamsViewProps) {
+export default function TeamsView({ apiTeams }: TeamsViewProps) {
   const [favorites, setFavorites] = useState<string[]>(["8066"]); // Default Argentina as favorite
   const [loading, setLoading] = useState(true);
-  const [apiTeams, setApiTeams] = useState<Team[]>([]);
-  const [loadingApiTeams, setLoadingApiTeams] = useState(true);
 
   // Expandable sections
   const [favSectionExpanded, setFavSectionExpanded] = useState(true);
@@ -57,32 +63,7 @@ export default function TeamsView({ apiTeams: propApiTeams }: TeamsViewProps) {
 
   useEffect(() => {
     loadFavorites();
-    loadApiTeams();
   }, []);
-
-  const loadApiTeams = async () => {
-    setLoadingApiTeams(true);
-    try {
-      const data = await fetchPopularTeams();
-      console.log("[TeamsView] fetchPopularTeams result:", data?.length, data);
-      if (data && data.length > 0) {
-        const mapped = data.map((item: any) => ({
-          id: String(item.id || item.teamId || Math.random().toString()),
-          name: item.name || item.teamName || "Team",
-          logo: item.logo || item.logoUrl || `https://images.fotmob.com/image_resources/logo/teamlogo/${item.id}.png`,
-          category: item.category || "International Teams",
-          country: item.country || "International"
-        }));
-        setApiTeams(mapped);
-      } else {
-        console.warn("[TeamsView] fetchPopularTeams returned empty, using demo data");
-      }
-    } catch (err) {
-      console.warn("[TeamsView] Failed to load popular teams from API:", err);
-    } finally {
-      setLoadingApiTeams(false);
-    }
-  };
 
   const loadFavorites = async () => {
     try {
@@ -119,14 +100,17 @@ export default function TeamsView({ apiTeams: propApiTeams }: TeamsViewProps) {
     }));
   };
 
-  // Use API teams if available (from direct fetch), fallback to ALL_TEAMS
+  // Exactly like LeaguesView: use apiTeams prop if available, else fallback to ALL_TEAMS
   const teamsList = React.useMemo(() => {
-    // Priority: direct API fetch result > ALL_TEAMS demo
     if (apiTeams && apiTeams.length > 0) {
-      console.log("[TeamsView] Using API teams:", apiTeams.length);
-      return apiTeams;
+      return apiTeams.map((item: any) => ({
+        id: String(item.id || item.teamId || Math.random().toString()),
+        name: item.name || item.teamName || "Team",
+        logo: item.logo || item.logoUrl || `https://images.fotmob.com/image_resources/logo/teamlogo/${item.id}.png`,
+        category: item.category || "International Teams",
+        country: item.country || "International",
+      }));
     }
-    console.log("[TeamsView] Using demo ALL_TEAMS");
     return ALL_TEAMS;
   }, [apiTeams]);
 
@@ -158,7 +142,6 @@ export default function TeamsView({ apiTeams: propApiTeams }: TeamsViewProps) {
         contentContainerStyle={{ paddingBottom: 150 }}
         showsVerticalScrollIndicator={false}
       >
-       
 
         {/* SECTION 1: Favorite Teams */}
         <View className="mb-5">

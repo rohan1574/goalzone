@@ -267,6 +267,7 @@ export default function ExploreScreen() {
         liveMatchesCount: res?.data?.live?.length,
         fixturesCount: res?.data?.fixtures?.length,
         leaguesCount: res?.data?.leagues?.length,
+        teamsCount: res?.data?.teams?.length,
       });
       if (res && res.data) {
         setApiData(res.data);
