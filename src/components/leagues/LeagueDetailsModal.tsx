@@ -177,6 +177,68 @@ export default function LeagueDetailsModal({
         { pos: 4, name: "AFC Bournemouth", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8086.png", pl: 1, gd: "-2", pts: 0 },
       ],
     },
+    "39": {
+      fixtures: [
+        {
+          id: "ep-1",
+          time: "19:00",
+          date: "23/08",
+          home: { name: "Manchester City", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png" },
+          away: { name: "AFC Bournemouth", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8086.png" },
+        },
+        {
+          id: "ep-2",
+          time: "19:00",
+          date: "23/08",
+          home: { name: "Brighton & Hove Albion", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png" },
+          away: { name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png" },
+        },
+      ],
+      table: [
+        { pos: 1, name: "Manchester City", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png", pl: 1, gd: "+2", pts: 3 },
+        { pos: 2, name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png", pl: 1, gd: "+1", pts: 3 },
+        { pos: 3, name: "Brighton", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png", pl: 1, gd: "-1", pts: 0 },
+        { pos: 4, name: "AFC Bournemouth", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8086.png", pl: 1, gd: "-2", pts: 0 },
+      ],
+    },
+    "140": {
+      fixtures: [
+        {
+          id: "ll-1",
+          time: "01:00",
+          date: "26/08",
+          home: { name: "Valencia", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10205.png" },
+          away: { name: "Real Betis", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png" },
+        },
+        {
+          id: "ll-2",
+          time: "01:00",
+          date: "27/08",
+          home: { name: "Real Sociedad", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8560.png" },
+          away: { name: "Real Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png" },
+        },
+        {
+          id: "ll-3",
+          time: "00:30",
+          date: "28/08",
+          home: { name: "Celta de Vigo", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9910.png" },
+          away: { name: "Osasuna", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8371.png" },
+        },
+        {
+          id: "ll-4",
+          time: "01:00",
+          date: "28/08",
+          home: { name: "FC Barcelona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png" },
+          away: { name: "Athletic Club", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8315.png" },
+        },
+      ],
+      table: [
+        { pos: 1, name: "FC Barcelona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png", pl: 2, gd: "+5", pts: 6 },
+        { pos: 2, name: "Real Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png", pl: 2, gd: "+3", pts: 6 },
+        { pos: 3, name: "Atletico Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9906.png", pl: 2, gd: "+2", pts: 4 },
+        { pos: 4, name: "Girona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/7765.png", pl: 2, gd: "+2", pts: 4 },
+      ],
+    },
   };
 
   const [apiFixtures, setApiFixtures] = useState<any[]>([]);
@@ -247,7 +309,7 @@ export default function LeagueDetailsModal({
     }
   };
 
-  const activeData = mockLeagueData[league?.id || "laliga"] || mockLeagueData["laliga"];
+  const activeData = mockLeagueData[league?.id || "140"] || mockLeagueData["140"] || mockLeagueData["laliga"];
   const fixturesData = apiFixtures.length > 0 ? apiFixtures : activeData.fixtures;
   const tableData = apiTable.length > 0 ? apiTable : activeData.table;
 
