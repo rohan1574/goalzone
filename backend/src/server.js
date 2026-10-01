@@ -172,6 +172,41 @@ app.get('/football-popular-leagues', (req, res) => {
   res.json(popularLeagues);
 });
 
+app.get('/football-get-popular-teams', (req, res) => {
+  const popularTeams = [
+    // International Teams
+    { id: '8066', name: 'Argentina', category: 'International Teams', country: 'Argentina', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8066.png' },
+    { id: '8550', name: 'Brazil', category: 'International Teams', country: 'Brazil', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8550.png' },
+    { id: '8490', name: 'France', category: 'International Teams', country: 'France', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8490.png' },
+    { id: '8489', name: 'England', category: 'International Teams', country: 'England', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8489.png' },
+    { id: '8205', name: 'Portugal', category: 'International Teams', country: 'Portugal', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8205.png' },
+    { id: '8322', name: 'Spain', category: 'International Teams', country: 'Spain', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8322.png' },
+    { id: '8141', name: 'Germany', category: 'International Teams', country: 'Germany', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8141.png' },
+    { id: '8142', name: 'Italy', category: 'International Teams', country: 'Italy', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8142.png' },
+    { id: '8145', name: 'Netherlands', category: 'International Teams', country: 'Netherlands', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8145.png' },
+    { id: '8256', name: 'Belgium', category: 'International Teams', country: 'Belgium', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8256.png' },
+    { id: '8514', name: 'Croatia', category: 'International Teams', country: 'Croatia', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8514.png' },
+    { id: '8492', name: 'Uruguay', category: 'International Teams', country: 'Uruguay', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8492.png' },
+    { id: '8093', name: 'Morocco', category: 'International Teams', country: 'Morocco', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8093.png' },
+    { id: '8143', name: 'Japan', category: 'International Teams', country: 'Japan', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8143.png' },
+    
+    // Club Teams
+    { id: '8633', name: 'Real Madrid', category: 'Club Teams', country: 'Spain', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8633.png' },
+    { id: '8634', name: 'FC Barcelona', category: 'Club Teams', country: 'Spain', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8634.png' },
+    { id: '8457', name: 'Manchester City', category: 'Club Teams', country: 'England', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8457.png' },
+    { id: '8455', name: 'Chelsea', category: 'Club Teams', country: 'England', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8455.png' },
+    { id: '9825', name: 'Arsenal', category: 'Club Teams', country: 'England', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/9825.png' },
+    { id: '8650', name: 'Liverpool', category: 'Club Teams', country: 'England', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8650.png' },
+    { id: '9823', name: 'Bayern Munich', category: 'Club Teams', country: 'Germany', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/9823.png' },
+    { id: '9847', name: 'Paris Saint-Germain', category: 'Club Teams', country: 'France', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/9847.png' },
+    { id: '9885', name: 'Juventus', category: 'Club Teams', country: 'Italy', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/9885.png' },
+    { id: '8636', name: 'Inter Milan', category: 'Club Teams', country: 'Italy', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/8636.png' },
+    { id: '102643', name: 'Al Nassr', category: 'Club Teams', country: 'Saudi Arabia', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/102643.png' },
+    { id: '102534', name: 'Inter Miami CF', category: 'Club Teams', country: 'USA', logo: 'https://images.fotmob.com/image_resources/logo/teamlogo/102534.png' }
+  ];
+  res.json(popularTeams);
+});
+
 // ==========================================
 // 3. MATCHES BY DATE
 // ==========================================

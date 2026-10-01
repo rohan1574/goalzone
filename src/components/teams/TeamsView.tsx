@@ -11,42 +11,36 @@ import { Search, Star, ChevronDown, ChevronUp } from "lucide-react-native";
 import Svg, { Path } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import TeamDetailsModal, { Team } from "./TeamDetailsModal";
-import { fetchCountries } from "../../services/footballApi";
+import { fetchPopularTeams } from "../../services/footballApi";
 
 const STORAGE_KEY = "@goalzone_favorite_teams";
 
 const ALL_TEAMS: Team[] = [
-  { id: "argentina", name: "Argentina", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8066.png", category: "International Teams", country: "Argentina" },
-  { id: "brazil", name: "Brazil", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8550.png", category: "International Teams", country: "Brazil" },
-  { id: "france", name: "France", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8490.png", category: "International Teams", country: "France" },
-  { id: "england", name: "England", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8489.png", category: "International Teams", country: "England" },
-  { id: "portugal", name: "Portugal", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8205.png", category: "International Teams", country: "Portugal" },
-  { id: "spain", name: "Spain", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8322.png", category: "International Teams", country: "Spain" },
-  { id: "germany", name: "Germany", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8141.png", category: "International Teams", country: "Germany" },
-  { id: "italy", name: "Italy", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8142.png", category: "International Teams", country: "Italy" },
-  { id: "netherlands", name: "Netherlands", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8145.png", category: "International Teams", country: "Netherlands" },
-  { id: "belgium", name: "Belgium", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8256.png", category: "International Teams", country: "Belgium" },
-  { id: "croatia", name: "Croatia", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8514.png", category: "International Teams", country: "Croatia" },
-  { id: "uruguay", name: "Uruguay", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8492.png", category: "International Teams", country: "Uruguay" },
-  { id: "morocco", name: "Morocco", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8093.png", category: "International Teams", country: "Morocco" },
-  { id: "senegal", name: "Senegal", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8348.png", category: "International Teams", country: "Senegal" },
-  { id: "japan", name: "Japan", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8143.png", category: "International Teams", country: "Japan" },
-  { id: "southkorea", name: "South Korea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8243.png", category: "International Teams", country: "South Korea" },
-  { id: "usa", name: "USA", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8244.png", category: "International Teams", country: "USA" },
-  { id: "mexico", name: "Mexico", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8092.png", category: "International Teams", country: "Mexico" },
-  { id: "colombia", name: "Colombia", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8204.png", category: "International Teams", country: "Colombia" },
-  { id: "switzerland", name: "Switzerland", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9820.png", category: "International Teams", country: "Switzerland" },
-  { id: "realmadrid", name: "Real Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png", category: "Club Teams", country: "Spain" },
-  { id: "barcelona", name: "FC Barcelona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png", category: "Club Teams", country: "Spain" },
-  { id: "mancity", name: "Manchester City", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png", category: "Club Teams", country: "England" },
-  { id: "chelsea", name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png", category: "Club Teams", country: "England" },
+  { id: "8066", name: "Argentina", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8066.png", category: "International Teams", country: "Argentina" },
+  { id: "8550", name: "Brazil", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8550.png", category: "International Teams", country: "Brazil" },
+  { id: "8490", name: "France", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8490.png", category: "International Teams", country: "France" },
+  { id: "8489", name: "England", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8489.png", category: "International Teams", country: "England" },
+  { id: "8205", name: "Portugal", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8205.png", category: "International Teams", country: "Portugal" },
+  { id: "8322", name: "Spain", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8322.png", category: "International Teams", country: "Spain" },
+  { id: "8141", name: "Germany", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8141.png", category: "International Teams", country: "Germany" },
+  { id: "8142", name: "Italy", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8142.png", category: "International Teams", country: "Italy" },
+  { id: "8145", name: "Netherlands", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8145.png", category: "International Teams", country: "Netherlands" },
+  { id: "8256", name: "Belgium", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8256.png", category: "International Teams", country: "Belgium" },
+  { id: "8514", name: "Croatia", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8514.png", category: "International Teams", country: "Croatia" },
+  { id: "8492", name: "Uruguay", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8492.png", category: "International Teams", country: "Uruguay" },
+  { id: "8093", name: "Morocco", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8093.png", category: "International Teams", country: "Morocco" },
+  { id: "8143", name: "Japan", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8143.png", category: "International Teams", country: "Japan" },
+  { id: "8633", name: "Real Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png", category: "Club Teams", country: "Spain" },
+  { id: "8634", name: "FC Barcelona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png", category: "Club Teams", country: "Spain" },
+  { id: "8457", name: "Manchester City", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png", category: "Club Teams", country: "England" },
+  { id: "8455", name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png", category: "Club Teams", country: "England" },
 ];
 
 export default function TeamsView() {
-  const [favorites, setFavorites] = useState<string[]>(["argentina"]); // Default Argentina as favorite
+  const [favorites, setFavorites] = useState<string[]>(["8066"]); // Default Argentina as favorite
   const [loading, setLoading] = useState(true);
-  const [apiCountries, setApiCountries] = useState<Team[]>([]);
-  const [loadingCountries, setLoadingCountries] = useState(false);
+  const [apiTeams, setApiTeams] = useState<Team[]>([]);
+  const [loadingApiTeams, setLoadingApiTeams] = useState(false);
 
   // Expandable sections
   const [favSectionExpanded, setFavSectionExpanded] = useState(true);
@@ -59,32 +53,27 @@ export default function TeamsView() {
 
   useEffect(() => {
     loadFavorites();
-    loadApiCountries();
+    loadApiTeams();
   }, []);
 
-  const loadApiCountries = async () => {
-    setLoadingCountries(true);
+  const loadApiTeams = async () => {
+    setLoadingApiTeams(true);
     try {
-      const data = await fetchCountries();
+      const data = await fetchPopularTeams();
       if (data && data.length > 0) {
-        const mapped = data.map((item: any) => {
-          const name = item.name || item.countryName || item.title || "Country";
-          const id = String(item.id || item.countryCode || name.toLowerCase().replace(/\s+/g, ""));
-          const logo = item.flag || item.countryFlag || item.flagUrl || `https://images.fotmob.com/image_resources/logo/teamlogo/${id.substring(0, 3)}.png`;
-          return {
-            id,
-            name,
-            logo,
-            category: "International Teams",
-            country: name
-          };
-        });
-        setApiCountries(mapped);
+        const mapped = data.map((item: any) => ({
+          id: String(item.id || item.teamId || Math.random().toString()),
+          name: item.name || item.teamName || "Team",
+          logo: item.logo || item.logoUrl || `https://images.fotmob.com/image_resources/logo/teamlogo/${item.id}.png`,
+          category: item.category || "International Teams",
+          country: item.country || "International"
+        }));
+        setApiTeams(mapped);
       }
     } catch (err) {
-      console.warn("Failed to load countries from API:", err);
+      console.warn("Failed to load popular teams from API:", err);
     } finally {
-      setLoadingCountries(false);
+      setLoadingApiTeams(false);
     }
   };
 
@@ -123,14 +112,13 @@ export default function TeamsView() {
     }));
   };
 
-  // Merge dynamic countries with club teams
+  // Use API teams if available, fallback to ALL_TEAMS
   const teamsList = React.useMemo(() => {
-    const clubTeams = ALL_TEAMS.filter((t) => t.category === "Club Teams");
-    if (apiCountries.length > 0) {
-      return [...apiCountries, ...clubTeams];
+    if (apiTeams && apiTeams.length > 0) {
+      return apiTeams;
     }
     return ALL_TEAMS;
-  }, [apiCountries]);
+  }, [apiTeams]);
 
   const categories = Array.from(new Set(teamsList.map((t) => t.category)));
   const favoriteTeamsList = teamsList.filter((t) => favorites.includes(t.id));
@@ -160,31 +148,7 @@ export default function TeamsView() {
         contentContainerStyle={{ paddingBottom: 150 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Meta Sponsor Promo Banner */}
-        {/* <TouchableOpacity className="bg-[#131415] rounded-3xl p-3 border border-white/5 mb-6 relative overflow-hidden" activeOpacity={0.9}>
-          <View className="absolute left-3 top-3 bg-[#02DB54] px-1.5 py-0.5 rounded z-10">
-            <Text className="text-black text-[8px] font-black uppercase">Ad</Text>
-          </View>
-          
-          <View className="flex-row items-center mt-3 mb-2">
-            <Image
-              source={{ uri: "https://images.fotmob.com/image_resources/logo/teamlogo/8066.png" }}
-              className="w-12 h-12 rounded-xl"
-            />
-            <View className="flex-1 ml-3 mr-2">
-              <Text className="text-white text-sm font-black mb-1" numberOfLines={1}>
-                বন্ধ রবি সিম খুলুন এবার
-              </Text>
-              <Text className="text-gray-400 text-[10px] font-bold" numberOfLines={1}>
-                বন্ধ সিম চালু করলেই পাচ্ছেন মিনিট ও ডাটার অফার...
-              </Text>
-            </View>
-            <View className="bg-[#7CFC00] rounded-2xl px-3 py-2 justify-center items-center">
-              <Text className="text-black text-[10px] font-black text-center">অ্যাপ ব্যবহার করুন</Text>
-            </View>
-          </View>
-          <Text className="text-[#545A60] text-[8px] font-bold text-right mt-1">Ads served by Meta</Text>
-        </TouchableOpacity> */}
+       
 
         {/* SECTION 1: Favorite Teams */}
         <View className="mb-5">

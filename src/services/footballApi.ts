@@ -769,3 +769,42 @@ export const fetchLeagueFixtures = async (leagueid: string | number) => {
     return [];
   }
 };
+
+export const fetchPopularTeams = async () => {
+  const CACHE_KEY = "@goalzone_api_cache_popular_teams";
+  const CACHE_TIME_KEY = "@goalzone_api_cache_popular_teams_time";
+
+  try {
+    const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
+    const cachedData = await AsyncStorage.getItem(CACHE_KEY);
+
+    if (cachedTime && cachedData) {
+      const parsedTime = parseInt(cachedTime, 10);
+      const now = Date.now();
+      if (now - parsedTime < 86400000) { // 24 hours cache
+        console.log("[Cache] Using cached popular teams.");
+        return JSON.parse(cachedData);
+      }
+    }
+  } catch (err) {
+    console.warn("Error reading popular teams cache:", err);
+  }
+
+  console.log("[API] Fetching fresh popular teams from API...");
+  try {
+    const response = await api.get('/football-get-popular-teams');
+    const teamsData = findArray(response.data);
+
+    try {
+      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(teamsData));
+      await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+    } catch (err) {
+      console.warn("Error saving popular teams cache:", err);
+    }
+
+    return teamsData;
+  } catch (error) {
+    console.error('Error fetching popular teams:', error);
+    return [];
+  }
+};
