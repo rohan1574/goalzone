@@ -1,8 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
-// Contabo VPS hosted live backend URL
-const BACKEND_URL = "http://62.84.190.145";
+// Backend URL from env variable (EXPO_PUBLIC_BACKEND_URL in .env.local)
+// Fallback to Contabo VPS (HTTP only works in dev - use HTTPS in production)
+const BACKEND_URL =
+  process.env.EXPO_PUBLIC_BACKEND_URL || "http://62.84.190.145";
 
 export const api = axios.create({
   baseURL: BACKEND_URL,
