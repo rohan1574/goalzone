@@ -146,6 +146,8 @@ export default function ExploreScreen() {
   const pendingMatchRef = React.useRef<any>(null);
   const pendingTabRef = React.useRef<TabType | null>(null);
   const pendingShowMainRef = React.useRef<boolean>(false);
+  // Counter: show interstitial every 2nd tab switch (leagues/highlight/teams/prediction)
+  const tabSwitchCountRef = React.useRef<number>(0);
 
   // SplashScreen shown every time the app starts (no AsyncStorage check needed)
 
@@ -219,9 +221,32 @@ export default function ExploreScreen() {
     };
   }, []);
 
-  // Handle navbar tab press: switch directly without interstitial ads
+  // Handle navbar tab press: show interstitial ad on non-explore tabs every 2nd press
   const handleTabPress = (tab: TabType) => {
-    setActiveTab(tab);
+    // Explore tab: always instant, no ad
+    if (tab === "explore" || tab === activeTab) {
+      setActiveTab(tab);
+      return;
+    }
+
+    tabSwitchCountRef.current += 1;
+    const shouldShowAd = tabSwitchCountRef.current % 2 === 1; // Ad on 1st, 3rd, 5th... switch
+
+    if (shouldShowAd && interstitialLoaded) {
+      // Store pending tab — it will be activated when ad closes
+      pendingTabRef.current = tab;
+      try {
+        interstitialAd.show();
+      } catch (err) {
+        console.warn("Failed to show interstitial ad on tab press:", err);
+        // Fallback: switch directly if ad fails to show
+        pendingTabRef.current = null;
+        setActiveTab(tab);
+      }
+    } else {
+      // Ad not loaded or even-numbered switch: instant navigation
+      setActiveTab(tab);
+    }
   };
 
   const getYYYYMMDD = (date: Date) => {

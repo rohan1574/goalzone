@@ -73,7 +73,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
       const timer = setTimeout(() => {
         setCurrentStep(1);
-      }, 3000);
+      }, 2000);
 
       return () => {
         clearTimeout(timer);
