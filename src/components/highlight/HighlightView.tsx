@@ -247,12 +247,8 @@ export default function HighlightView() {
         </TouchableOpacity>
       </View>
 
-      {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#02DB54" />
-        </View>
-      ) : subTab === "videos" ? (
-        /* Video Highlights Screen */
+      {subTab === "videos" ? (
+        /* Video Highlights Screen - Instant display without blocking */
         <ScrollView
           className="flex-1 px-4"
           contentContainerStyle={{ paddingBottom: 150 }}

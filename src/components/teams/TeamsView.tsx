@@ -54,7 +54,7 @@ interface TeamsViewProps {
 
 export default function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
   const [favorites, setFavorites] = useState<string[]>(["8066"]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [countries, setCountries] = useState<any[]>([]);
 
   const [favSectionExpanded, setFavSectionExpanded] = useState(true);
@@ -73,7 +73,10 @@ export default function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
   }, []);
 
   const loadInitialData = async () => {
-    setLoading(true);
+    // Only show full loading if we have no teams from props
+    if (!apiTeams || apiTeams.length === 0) {
+      setLoading(true);
+    }
     try {
       const [favs, countriesList] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEY),
@@ -114,7 +117,7 @@ export default function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
     }));
   };
 
-  // International teams (Countries) from API
+  // International teams (Countries) from API or apiTeams fallback
   const internationalTeamsList: Team[] = React.useMemo(() => {
     if (countries && countries.length > 0) {
       return countries.map((item: any) => ({
@@ -127,8 +130,17 @@ export default function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
         country: item.name,
       }));
     }
+    if (apiTeams && apiTeams.length > 0) {
+      return apiTeams.map((item: any) => ({
+        id: String(item.id),
+        name: item.name,
+        logo: item.logo || `https://images.fotmob.com/image_resources/logo/teamlogo/${item.id}.png`,
+        category: item.category || "Popular Teams",
+        country: item.country || item.name,
+      }));
+    }
     return [];
-  }, [countries]);
+  }, [countries, apiTeams]);
 
   // International tournaments (only) from API leagues
   const internationalLeaguesList: League[] = React.useMemo(() => {

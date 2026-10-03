@@ -174,61 +174,76 @@ const generateStatsForMatch = (id: string, homeName: string, awayName: string) =
   };
 };
 
-export default function PredictionView() {
-  const [matches, setMatches] = useState<MatchData[]>(MOCK_PREDICTIONS);
-  const [activeMatchId, setActiveMatchId] = useState("pred-1");
+interface PredictionViewProps {
+  initialFixtures?: any[];
+}
+
+const mapFixturesToMatches = (data: any[]): MatchData[] => {
+  return data.slice(0, 8).map((m: any) => {
+    const hName = getMatchValue(m, ["home.name", "homeTeam.name"]) || "Home Team";
+    const hShort = getMatchValue(m, ["home.shortName", "home.code", "homeTeam.code"]);
+    const hShortStr = hShort && hShort !== "TBD" ? hShort : hName.substring(0, 3).toUpperCase();
+    const hLogo = getTeamLogo(m, "home");
+
+    const aName = getMatchValue(m, ["away.name", "awayTeam.name"]) || "Away Team";
+    const aShort = getMatchValue(m, ["away.shortName", "away.code", "awayTeam.code"]);
+    const aShortStr = aShort && aShort !== "TBD" ? aShort : aName.substring(0, 3).toUpperCase();
+    const aLogo = getTeamLogo(m, "away");
+
+    const league = getMatchLeague(m) || "Live Matches";
+    const id = String(getMatchEventId(m) || Math.random().toString());
+
+    const generatedStats = generateStatsForMatch(id, hName, aName);
+
+    return {
+      id,
+      league,
+      home: { name: hName, short: hShortStr, logo: hLogo },
+      away: { name: aName, short: aShortStr, logo: aLogo },
+      ...generatedStats,
+    };
+  });
+};
+
+export default function PredictionView({ initialFixtures }: PredictionViewProps = {}) {
+  const initialMapped = initialFixtures && initialFixtures.length > 0 ? mapFixturesToMatches(initialFixtures) : MOCK_PREDICTIONS;
+  const [matches, setMatches] = useState<MatchData[]>(initialMapped);
+  const [activeMatchId, setActiveMatchId] = useState(initialMapped[0]?.id || "pred-1");
   const [userPredictions, setUserPredictions] = useState<{ [key: string]: "home" | "draw" | "away" }>({});
   const [xpPoints, setXpPoints] = useState(1450);
   const [activeDetailTab, setActiveDetailTab] = useState<"ai" | "h2h">("ai");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch real matches on mount
+  // Use initialFixtures if available, or fetch in background
   useEffect(() => {
+    if (initialFixtures && initialFixtures.length > 0) {
+      const mapped = mapFixturesToMatches(initialFixtures);
+      setMatches(mapped);
+      if (mapped.length > 0 && !activeMatchId) {
+        setActiveMatchId(mapped[0].id);
+      }
+      return;
+    }
+
     const loadRealMatches = async () => {
       try {
-        setLoading(true);
         const todayDate = formatFootballDate(0);
         const data = await fetchFixturesByDate(todayDate);
-        
+
         if (data && data.length > 0) {
-          // Map raw API fixtures to our MatchData schema (top 8 matches)
-          const mappedMatches: MatchData[] = data.slice(0, 8).map((m: any) => {
-            const hName = getMatchValue(m, ["home.name", "homeTeam.name"]) || "Home Team";
-            const hShort = getMatchValue(m, ["home.shortName", "home.code", "homeTeam.code"]);
-            const hShortStr = hShort && hShort !== "TBD" ? hShort : hName.substring(0, 3).toUpperCase();
-            const hLogo = getTeamLogo(m, "home");
-
-            const aName = getMatchValue(m, ["away.name", "awayTeam.name"]) || "Away Team";
-            const aShort = getMatchValue(m, ["away.shortName", "away.code", "awayTeam.code"]);
-            const aShortStr = aShort && aShort !== "TBD" ? aShort : aName.substring(0, 3).toUpperCase();
-            const aLogo = getTeamLogo(m, "away");
-
-            const league = getMatchLeague(m) || "Live Matches";
-            const id = String(getMatchEventId(m) || Math.random().toString());
-
-            const generatedStats = generateStatsForMatch(id, hName, aName);
-
-            return {
-              id,
-              league,
-              home: { name: hName, short: hShortStr, logo: hLogo },
-              away: { name: aName, short: aShortStr, logo: aLogo },
-              ...generatedStats
-            };
-          });
-
+          const mappedMatches = mapFixturesToMatches(data);
           setMatches(mappedMatches);
-          setActiveMatchId(mappedMatches[0].id);
+          if (mappedMatches.length > 0) {
+            setActiveMatchId(mappedMatches[0].id);
+          }
         }
       } catch (err) {
         console.error("Failed to load real prediction fixtures:", err);
-      } finally {
-        setLoading(false);
       }
     };
 
     loadRealMatches();
-  }, []);
+  }, [initialFixtures]);
 
   const currentMatch = matches.find(m => m.id === activeMatchId) || matches[0] || MOCK_PREDICTIONS[0];
   const hasPredictedCurrent = !!userPredictions[currentMatch.id];

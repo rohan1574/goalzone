@@ -1,17 +1,33 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
-// Backend URL from env variable (EXPO_PUBLIC_BACKEND_URL in .env.local)
-// Fallback to Contabo VPS (HTTP only works in dev - use HTTPS in production)
-const BACKEND_URL =
-  process.env.EXPO_PUBLIC_BACKEND_URL || "http://62.84.190.145";
+// Contabo VPS hosted live backend URL
+const BACKEND_URL = "http://62.84.190.145";
 
 export const api = axios.create({
   baseURL: BACKEND_URL,
+  timeout: 10000, // 10s timeout prevents 30s hangs
   headers: {
     "Content-Type": "application/json",
   },
 });
+
+// Fast In-Memory Cache (0ms response time on tab navigation)
+const memoryCache = new Map<string, { data: any; expiry: number }>();
+
+export const getFromMemoryCache = (key: string): any | null => {
+  const item = memoryCache.get(key);
+  if (!item) return null;
+  if (Date.now() > item.expiry) {
+    memoryCache.delete(key);
+    return null;
+  }
+  return item.data;
+};
+
+export const setMemoryCache = (key: string, data: any, ttlMs: number) => {
+  memoryCache.set(key, { data, expiry: Date.now() + ttlMs });
+};
 
 export const hasFootballApiKey = true;
 
@@ -276,11 +292,18 @@ export const getTeamLogo = (match: any, side: "home" | "away") => {
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const loadFootballDashboard = async (forceRefresh = false) => {
-  // v2 cache key - forces refresh from old cache that didn't have teams field
+  const MEM_KEY = "@goalzone_mem_dashboard";
   const CACHE_KEY = "@goalzone_api_cache_dashboard_v2";
   const CACHE_TIME_KEY = "@goalzone_api_cache_dashboard_v2_time";
 
+  // 1. Instant in-memory check (0ms tab switch)
   if (!forceRefresh) {
+    const memData = getFromMemoryCache(MEM_KEY);
+    if (memData?.data?.teams && memData.data.teams.length > 0) {
+      console.log("[Cache] Served dashboard instantly from memory cache.");
+      return memData;
+    }
+
     try {
       const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
       const cachedData = await AsyncStorage.getItem(CACHE_KEY);
@@ -290,16 +313,12 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
         const now = Date.now();
         if (now - parsedTime < 300000) {
           const parsed = JSON.parse(cachedData);
-          // Only use cache if it has teams data
           if (parsed?.data?.teams && parsed.data.teams.length > 0) {
+            setMemoryCache(MEM_KEY, parsed, 300000);
             console.log(
-              `[Cache] Using cached dashboard data (v2). Teams: ${parsed.data.teams.length}, Time remaining: ${Math.round((300000 - (now - parsedTime)) / 1000)}s`,
+              `[Cache] Using cached dashboard data (v2). Teams: ${parsed.data.teams.length}`,
             );
             return parsed;
-          } else {
-            console.warn(
-              "[Cache] Cached dashboard missing teams, fetching fresh data.",
-            );
           }
         }
       }
@@ -308,9 +327,38 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
     }
   }
 
-  console.log(
-    "[API] Fetching fresh dashboard data from API (sequentially to prevent 429 rate limit)...",
-  );
+  console.log("[API] Fetching fresh dashboard data from backend...");
+
+  // 2. Try single aggregated /football-dashboard endpoint first (1 fast request)
+  try {
+    const aggRes = await api.get("/football-dashboard", {
+      params: { date: formatFootballDate(0) },
+    });
+    if (aggRes.data && aggRes.data.teams && aggRes.data.teams.length > 0) {
+      const response = {
+        data: {
+          live: aggRes.data.live || [],
+          leagues: aggRes.data.leagues || [],
+          fixtures: aggRes.data.fixtures || [],
+          teams: aggRes.data.teams || [],
+        },
+        hasPartialFailure: false,
+      };
+
+      setMemoryCache(MEM_KEY, response, 300000);
+      try {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(response));
+        await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+      } catch (e) {
+        console.warn("AsyncStorage save error:", e);
+      }
+      return response;
+    }
+  } catch (aggErr) {
+    console.log("[API] Aggregated dashboard not available, falling back to parallel endpoints.");
+  }
+
+  // 3. Fallback: Concurrent parallel fetch without artificial rate-limit delays
   const data: { [key: string]: any[] } = {
     live: [],
     leagues: [],
@@ -319,84 +367,36 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
   };
   let hasPartialFailure = false;
 
-  // Request 1: Live matches
-  try {
-    const res = await api.get("/football-current-live");
-    const rawData = res.data;
-    console.log(
-      "[API] Fulfilled request for live matches. Raw keys:",
-      Object.keys(rawData || {}),
-    );
-    data.live = findArray(rawData);
-  } catch (err: any) {
-    console.warn(
-      "[API] Request failed for live:",
-      err.response?.data || err.message || err,
-    );
+  const [liveSettled, leaguesSettled, fixturesSettled, teamsSettled] =
+    await Promise.allSettled([
+      api.get("/football-current-live"),
+      api.get("/football-popular-leagues"),
+      api.get("/football-get-matches-by-date", {
+        params: { date: formatFootballDate(0) },
+      }),
+      api.get("/football-get-popular-teams"),
+    ]);
+
+  if (liveSettled.status === "fulfilled") {
+    data.live = findArray(liveSettled.value.data);
+  } else {
     hasPartialFailure = true;
   }
 
-  // Wait 1200ms to avoid 1 request/sec rate limit of RapidAPI Free Tier
-  await delay(1200);
-
-  // Request 2: Popular Leagues
-  try {
-    const res = await api.get("/football-popular-leagues");
-    const rawData = res.data;
-    console.log(
-      "[API] Fulfilled request for leagues. Raw keys:",
-      Object.keys(rawData || {}),
-    );
-    data.leagues = findArray(rawData);
-  } catch (err: any) {
-    console.warn(
-      "[API] Request failed for leagues:",
-      err.response?.data || err.message || err,
-    );
+  if (leaguesSettled.status === "fulfilled") {
+    data.leagues = findArray(leaguesSettled.value.data);
+  } else {
     hasPartialFailure = true;
   }
 
-  // Wait 1200ms to avoid 1 request/sec rate limit
-  await delay(1200);
-
-  // Request 3: Fixtures by date
-  try {
-    const res = await api.get("/football-get-matches-by-date", {
-      params: { date: formatFootballDate(0) },
-    });
-    const rawData = res.data;
-    console.log(
-      "[API] Fulfilled request for fixtures. Raw keys:",
-      Object.keys(rawData || {}),
-    );
-    data.fixtures = findArray(rawData);
-  } catch (err: any) {
-    console.warn(
-      "[API] Request failed for fixtures:",
-      err.response?.data || err.message || err,
-    );
+  if (fixturesSettled.status === "fulfilled") {
+    data.fixtures = findArray(fixturesSettled.value.data);
+  } else {
     hasPartialFailure = true;
   }
 
-  // Wait 1200ms to avoid 1 request/sec rate limit
-  await delay(1200);
-
-  // Request 4: Popular Teams (static endpoint - should always succeed)
-  try {
-    const res = await api.get("/football-get-popular-teams");
-    const rawData = res.data;
-    console.log(
-      "[API] Fulfilled request for teams. Count:",
-      Array.isArray(rawData)
-        ? rawData.length
-        : Object.keys(rawData || {}).length,
-    );
-    data.teams = findArray(rawData);
-  } catch (err: any) {
-    console.warn(
-      "[API] Request failed for teams:",
-      err.response?.data || err.message || err,
-    );
+  if (teamsSettled.status === "fulfilled") {
+    data.teams = findArray(teamsSettled.value.data);
   }
 
   const response = {
@@ -404,28 +404,31 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
     hasPartialFailure,
   };
 
-  // Always save to cache if teams data is present (teams is static, always works)
   if (data.teams && data.teams.length > 0) {
+    setMemoryCache(MEM_KEY, response, 300000);
     try {
       await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(response));
       await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-      console.log(
-        `[Cache] Dashboard cache v2 updated. Teams: ${data.teams.length}, Leagues: ${data.leagues.length}`,
-      );
     } catch (err) {
       console.warn("Error saving dashboard cache:", err);
     }
-  } else {
-    console.log("[Cache] Skipping cache update - teams data missing.");
   }
 
   return response;
 };
 
 export const fetchFixturesByDate = async (dateString: string) => {
+  const MEM_KEY = `@goalzone_mem_fixtures_${dateString}`;
   const CACHE_KEY = `@goalzone_api_cache_fixtures_${dateString}`;
   const CACHE_TIME_KEY = `@goalzone_api_cache_fixtures_time_${dateString}`;
 
+  // 1. In-memory check (instant)
+  const memData = getFromMemoryCache(MEM_KEY);
+  if (memData) {
+    return memData;
+  }
+
+  // 2. Persistent storage check (15 minutes TTL)
   try {
     const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
     const cachedData = await AsyncStorage.getItem(CACHE_KEY);
@@ -433,11 +436,10 @@ export const fetchFixturesByDate = async (dateString: string) => {
     if (cachedTime && cachedData) {
       const parsedTime = parseInt(cachedTime, 10);
       const now = Date.now();
-      if (now - parsedTime < 60000) {
-        console.log(
-          `[Cache] Using cached fixtures for date ${dateString}. Time remaining: ${Math.round((60000 - (now - parsedTime)) / 1000)}s`,
-        );
-        return JSON.parse(cachedData);
+      if (now - parsedTime < 900000) { // 15 minutes TTL
+        const parsed = JSON.parse(cachedData);
+        setMemoryCache(MEM_KEY, parsed, 900000);
+        return parsed;
       }
     }
   } catch (err) {
@@ -453,7 +455,8 @@ export const fetchFixturesByDate = async (dateString: string) => {
     });
     const freshData = findArray(response.data);
 
-    // Save to cache
+    // Save to memory cache and AsyncStorage
+    setMemoryCache(MEM_KEY, freshData, 900000);
     try {
       await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
       await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
@@ -519,9 +522,17 @@ export const fetchMatchLocation = async (eventid: string | number) => {
 };
 
 export const fetchFootballNews = async () => {
+  const MEM_KEY = "@goalzone_mem_news";
   const CACHE_KEY = "@goalzone_api_cache_news";
   const CACHE_TIME_KEY = "@goalzone_api_cache_news_time";
 
+  // 1. Instant in-memory check
+  const memData = getFromMemoryCache(MEM_KEY);
+  if (memData && memData.length > 0) {
+    return memData;
+  }
+
+  // 2. Persistent storage check
   try {
     const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
     const cachedData = await AsyncStorage.getItem(CACHE_KEY);
@@ -529,10 +540,12 @@ export const fetchFootballNews = async () => {
     if (cachedTime && cachedData) {
       const parsedTime = parseInt(cachedTime, 10);
       const now = Date.now();
-      // Cache news for 5 minutes (300,000 ms)
-      if (now - parsedTime < 300000) {
+      // Cache news for 10 minutes (600,000 ms)
+      if (now - parsedTime < 600000) {
+        const parsed = JSON.parse(cachedData);
+        setMemoryCache(MEM_KEY, parsed, 600000);
         console.log("[Cache] Using cached football news.");
-        return JSON.parse(cachedData);
+        return parsed;
       }
     }
   } catch (err) {
@@ -544,11 +557,14 @@ export const fetchFootballNews = async () => {
     const response = await api.get("/football-get-news");
     const newsData = findArray(response.data);
 
-    try {
-      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(newsData));
-      await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-    } catch (err) {
-      console.warn("Error saving news cache:", err);
+    if (newsData && newsData.length > 0) {
+      setMemoryCache(MEM_KEY, newsData, 600000);
+      try {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(newsData));
+        await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+      } catch (err) {
+        console.warn("Error saving news cache:", err);
+      }
     }
 
     return newsData;
@@ -637,9 +653,17 @@ export const fetchLeagueStandings = async (
 };
 
 export const fetchCountries = async () => {
+  const MEM_KEY = "@goalzone_mem_countries";
   const CACHE_KEY = "@goalzone_api_cache_countries";
   const CACHE_TIME_KEY = "@goalzone_api_cache_countries_time";
 
+  // 1. Instant in-memory check
+  const memData = getFromMemoryCache(MEM_KEY);
+  if (memData && memData.length > 0) {
+    return memData;
+  }
+
+  // 2. Persistent storage check
   try {
     const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
     const cachedData = await AsyncStorage.getItem(CACHE_KEY);
@@ -649,8 +673,10 @@ export const fetchCountries = async () => {
       const now = Date.now();
       // Cache countries for 1 day (86,400,000 ms) since they don't change
       if (now - parsedTime < 86400000) {
+        const parsed = JSON.parse(cachedData);
+        setMemoryCache(MEM_KEY, parsed, 86400000);
         console.log("[Cache] Using cached countries list.");
-        return JSON.parse(cachedData);
+        return parsed;
       }
     }
   } catch (err) {
@@ -662,11 +688,14 @@ export const fetchCountries = async () => {
     const response = await api.get("/football-get-all-countries");
     const countriesData = findArray(response.data);
 
-    try {
-      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(countriesData));
-      await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-    } catch (err) {
-      console.warn("Error saving countries cache:", err);
+    if (countriesData && countriesData.length > 0) {
+      setMemoryCache(MEM_KEY, countriesData, 86400000);
+      try {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(countriesData));
+        await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+      } catch (err) {
+        console.warn("Error saving countries cache:", err);
+      }
     }
 
     return countriesData;

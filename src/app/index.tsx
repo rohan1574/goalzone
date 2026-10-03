@@ -337,36 +337,113 @@ export default function ExploreScreen() {
   const FORCE_REAL_API = true;
 
   // Process data from API or fall back to mock data
-  const liveMatches =
-    apiData?.live && apiData.live.length > 0
-      ? apiData.live.map((m: any) => {
+  // Process data from API or fall back to mock data (useMemo + slice to prevent UI thread lag)
+  const liveMatches = React.useMemo(() => {
+    if (!apiData?.live || apiData.live.length === 0) {
+      return MOCK_LIVE_MATCHES.map((m) => ({
+        ...m,
+        leagueId: m.id.includes("mls") ? "130" : "87",
+      }));
+    }
+
+    // Limit to top 25 live matches to prevent UI freezing
+    return apiData.live.slice(0, 25).map((m: any) => {
+      const hName =
+        m.home?.name ||
+        getMatchValue(m, [
+          "home.name",
+          "homeTeam.name",
+          "teams.home.name",
+        ]) ||
+        "TBD";
+      const hShort =
+        m.home?.short ||
+        getMatchValue(m, ["home.shortName", "home.code", "homeTeam.code"]);
+      const hShortStr =
+        hShort && hShort !== "TBD"
+          ? hShort
+          : hName.substring(0, 3).toUpperCase();
+
+      const aName =
+        m.away?.name ||
+        getMatchValue(m, [
+          "away.name",
+          "awayTeam.name",
+          "teams.away.name",
+        ]) ||
+        "TBD";
+      const aShort =
+        m.away?.short ||
+        getMatchValue(m, ["away.shortName", "away.code", "awayTeam.code"]);
+      const aShortStr =
+        aShort && aShort !== "TBD"
+          ? aShort
+          : aName.substring(0, 3).toUpperCase();
+
+      return {
+        id: getMatchEventId(m) || Math.random().toString(),
+        league: m.league || getMatchLeague(m),
+        leagueId: getMatchLeagueId(m),
+        home: {
+          id:
+            m.home?.id ||
+            getMatchValue(m, ["home.id", "homeTeam.id", "teams.home.id"]),
+          name: hName,
+          short: hShortStr,
+          logo: m.home?.logo || getTeamLogo(m, "home"),
+        },
+        away: {
+          id:
+            m.away?.id ||
+            getMatchValue(m, ["away.id", "awayTeam.id", "teams.away.id"]),
+          name: aName,
+          short: aShortStr,
+          logo: m.away?.logo || getTeamLogo(m, "away"),
+        },
+        score: m.score || getMatchScore(m).display,
+        minute: m.minute || getMatchStatus(m),
+        status: "Live",
+      };
+    });
+  }, [apiData?.live]);
+
+  const leaguesList = React.useMemo(() => {
+    if (!dateFixtures || dateFixtures.length === 0) {
+      return MOCK_LEAGUES.map((l) => ({
+        ...l,
+        matches: l.matches.map((m) => ({ ...m, leagueId: "47" })),
+      }));
+    }
+
+    // Limit to top 50 matches so ScrollView doesn't lag/freeze
+    return [
+      {
+        leagueId: "popular",
+        leagueName: isToday
+          ? "Today's Matches"
+          : `Matches on ${formatDateString(selectedDate)}`,
+        leagueLogo:
+          "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png",
+        matches: dateFixtures.slice(0, 50).map((m: any) => {
           const hName =
-            m.home?.name ||
-            getMatchValue(m, [
-              "home.name",
-              "homeTeam.name",
-              "teams.home.name",
-            ]) ||
-            "TBD";
-          const hShort =
-            m.home?.short ||
-            getMatchValue(m, ["home.shortName", "home.code", "homeTeam.code"]);
+            getMatchValue(m, ["home.name", "homeTeam.name"]) || "TBD";
+          const hShort = getMatchValue(m, [
+            "home.shortName",
+            "home.code",
+            "homeTeam.code",
+          ]);
           const hShortStr =
             hShort && hShort !== "TBD"
               ? hShort
               : hName.substring(0, 3).toUpperCase();
 
           const aName =
-            m.away?.name ||
-            getMatchValue(m, [
-              "away.name",
-              "awayTeam.name",
-              "teams.away.name",
-            ]) ||
-            "TBD";
-          const aShort =
-            m.away?.short ||
-            getMatchValue(m, ["away.shortName", "away.code", "awayTeam.code"]);
+            getMatchValue(m, ["away.name", "awayTeam.name"]) || "TBD";
+          const aShort = getMatchValue(m, [
+            "away.shortName",
+            "away.code",
+            "awayTeam.code",
+          ]);
           const aShortStr =
             aShort && aShort !== "TBD"
               ? aShort
@@ -374,183 +451,79 @@ export default function ExploreScreen() {
 
           return {
             id: getMatchEventId(m) || Math.random().toString(),
-            league: m.league || getMatchLeague(m),
+            status: getMatchStatus(m) === "Live" ? "Live" : "NS",
+            time:
+              getMatchValue(m, ["time", "status.time", "date"]) || "19:00",
+            date: formatDateString(selectedDate),
             leagueId: getMatchLeagueId(m),
             home: {
               id:
                 m.home?.id ||
-                getMatchValue(m, ["home.id", "homeTeam.id", "teams.home.id"]),
+                getMatchValue(m, [
+                  "home.id",
+                  "homeTeam.id",
+                  "teams.home.id",
+                ]),
               name: hName,
               short: hShortStr,
-              logo: m.home?.logo || getTeamLogo(m, "home"),
+              logo: getTeamLogo(m, "home"),
             },
             away: {
               id:
                 m.away?.id ||
-                getMatchValue(m, ["away.id", "awayTeam.id", "teams.away.id"]),
+                getMatchValue(m, [
+                  "away.id",
+                  "awayTeam.id",
+                  "teams.away.id",
+                ]),
               name: aName,
               short: aShortStr,
-              logo: m.away?.logo || getTeamLogo(m, "away"),
+              logo: getTeamLogo(m, "away"),
             },
-            score: m.score || getMatchScore(m).display,
-            minute: m.minute || getMatchStatus(m),
-            status: "Live",
           };
-        })
-      : MOCK_LIVE_MATCHES.map((m) => ({
-          ...m,
-          leagueId: m.id.includes("mls") ? "130" : "87",
-        }));
+        }),
+      },
+    ];
+  }, [dateFixtures, isToday, selectedDate]);
 
-  const leaguesList =
-    dateFixtures && dateFixtures.length > 0
-      ? [
-          {
-            leagueId: "popular",
-            leagueName: isToday
-              ? "Today's Matches"
-              : `Matches on ${formatDateString(selectedDate)}`,
-            leagueLogo:
-              "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png",
-            matches: dateFixtures.map((m: any) => {
-              const hName =
-                getMatchValue(m, ["home.name", "homeTeam.name"]) || "TBD";
-              const hShort = getMatchValue(m, [
-                "home.shortName",
-                "home.code",
-                "homeTeam.code",
-              ]);
-              const hShortStr =
-                hShort && hShort !== "TBD"
-                  ? hShort
-                  : hName.substring(0, 3).toUpperCase();
+  const filteredLiveMatches = React.useMemo(() => {
+    if (!searchQuery) return liveMatches;
+    const q = searchQuery.toLowerCase();
+    return liveMatches.filter(
+      (m: any) =>
+        m.home.name.toLowerCase().includes(q) ||
+        m.away.name.toLowerCase().includes(q) ||
+        m.league.toLowerCase().includes(q),
+    );
+  }, [searchQuery, liveMatches]);
 
-              const aName =
-                getMatchValue(m, ["away.name", "awayTeam.name"]) || "TBD";
-              const aShort = getMatchValue(m, [
-                "away.shortName",
-                "away.code",
-                "awayTeam.code",
-              ]);
-              const aShortStr =
-                aShort && aShort !== "TBD"
-                  ? aShort
-                  : aName.substring(0, 3).toUpperCase();
-
-              return {
-                id: getMatchEventId(m) || Math.random().toString(),
-                status: getMatchStatus(m) === "Live" ? "Live" : "NS",
-                time:
-                  getMatchValue(m, ["time", "status.time", "date"]) || "19:00",
-                date: formatDateString(selectedDate),
-                leagueId: getMatchLeagueId(m),
-                home: {
-                  id:
-                    m.home?.id ||
-                    getMatchValue(m, [
-                      "home.id",
-                      "homeTeam.id",
-                      "teams.home.id",
-                    ]),
-                  name: hName,
-                  short: hShortStr,
-                  logo: getTeamLogo(m, "home"),
-                },
-                away: {
-                  id:
-                    m.away?.id ||
-                    getMatchValue(m, [
-                      "away.id",
-                      "awayTeam.id",
-                      "teams.away.id",
-                    ]),
-                  name: aName,
-                  short: aShortStr,
-                  logo: getTeamLogo(m, "away"),
-                },
-              };
-            }),
-          },
-        ]
-      : MOCK_LEAGUES.map((l) => ({
-          ...l,
-          matches: l.matches.map((m) => ({ ...m, leagueId: "47" })),
-        }));
-
-  // Local getMatchValue helper is now removed in favor of imported getMatchValue from footballApi.ts
-
-  const filteredLiveMatches = searchQuery
-    ? liveMatches.filter(
-        (m: any) =>
-          m.home.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          m.away.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          m.league.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : liveMatches;
-
-  const filteredLeaguesList = searchQuery
-    ? leaguesList
-        .map((league: any) => {
-          const filteredMatches = league.matches.filter(
-            (m: any) =>
-              m.home.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              m.away.name.toLowerCase().includes(searchQuery.toLowerCase()),
-          );
-          return { ...league, matches: filteredMatches };
-        })
-        .filter((league: any) => league.matches.length > 0)
-    : leaguesList;
-
-  // View Components depending on Active Bottom Tab
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "leagues":
-        return <LeaguesView apiLeagues={apiData?.leagues} />;
-      case "highlight":
-        return <HighlightView />;
-      case "teams":
-        return (
-          <TeamsView apiTeams={apiData?.teams} apiLeagues={apiData?.leagues} />
+  const filteredLeaguesList = React.useMemo(() => {
+    if (!searchQuery) return leaguesList;
+    const q = searchQuery.toLowerCase();
+    return leaguesList
+      .map((league: any) => {
+        const filteredMatches = league.matches.filter(
+          (m: any) =>
+            m.home.name.toLowerCase().includes(q) ||
+            m.away.name.toLowerCase().includes(q),
         );
-      case "prediction":
-        return <PredictionView />;
-      default:
-        return (
-          <ExploreView
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            liveMatches={filteredLiveMatches}
-            leaguesList={filteredLeaguesList}
-            activeNotifications={activeNotifications}
-            onToggleNotification={toggleNotification}
-            width={width}
-            onPressDetails={(match: any) => {
-              pendingMatchRef.current = match;
-              if (interstitialLoaded) {
-                // Show interstitial ad; modal opens after ad is dismissed (via CLOSED event)
-                interstitialAd.show();
-              } else {
-                // Ad not ready yet, open modal directly
-                setSelectedMatch(match);
-                setDetailsVisible(true);
-                pendingMatchRef.current = null;
-              }
-            }}
-          />
-        );
-    }
-  };
+        return { ...league, matches: filteredMatches };
+      })
+      .filter((league: any) => league.matches.length > 0);
+  }, [searchQuery, leaguesList]);
+
   if (!isOnboardingCompleted) {
     return (
       <SplashScreen
         onComplete={() => {
-          // Show interstitial ad after SplashScreen, then go to main app
-          pendingShowMainRef.current = true;
+          // Immediately go to main app screen without blocking
+          setIsOnboardingCompleted(true);
           if (interstitialLoaded) {
-            interstitialAd.show();
-          } else {
-            // Ad not ready, go directly to main app
-            setIsOnboardingCompleted(true);
+            try {
+              interstitialAd.show();
+            } catch (err) {
+              console.warn("Failed to show interstitial ad:", err);
+            }
           }
         }}
       />
@@ -586,11 +559,49 @@ export default function ExploreScreen() {
         />
       )}
 
-      {/* Dynamic Main Body Content */}
-      {renderTabContent()}
+      {/* Dynamic Main Body Content: Preserved screens for 0ms instantaneous tab navigation */}
+      <View style={{ flex: 1, display: activeTab === "explore" ? "flex" : "none" }}>
+        <ExploreView
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          liveMatches={filteredLiveMatches}
+          leaguesList={filteredLeaguesList}
+          activeNotifications={activeNotifications}
+          onToggleNotification={toggleNotification}
+          width={width}
+          onPressDetails={(match: any) => {
+            pendingMatchRef.current = match;
+            if (interstitialLoaded) {
+              // Show interstitial ad; modal opens after ad is dismissed (via CLOSED event)
+              interstitialAd.show();
+            } else {
+              // Ad not ready yet, open modal directly
+              setSelectedMatch(match);
+              setDetailsVisible(true);
+              pendingMatchRef.current = null;
+            }
+          }}
+        />
+      </View>
 
-      {/* Full-Screen Bouncing Football Loading Overlay */}
-      <LoadingModal visible={loading} />
+      <View style={{ flex: 1, display: activeTab === "leagues" ? "flex" : "none" }}>
+        <LeaguesView apiLeagues={apiData?.leagues} />
+      </View>
+
+      <View style={{ flex: 1, display: activeTab === "highlight" ? "flex" : "none" }}>
+        <HighlightView />
+      </View>
+
+      <View style={{ flex: 1, display: activeTab === "teams" ? "flex" : "none" }}>
+        <TeamsView apiTeams={apiData?.teams} apiLeagues={apiData?.leagues} />
+      </View>
+
+      <View style={{ flex: 1, display: activeTab === "prediction" ? "flex" : "none" }}>
+        <PredictionView initialFixtures={apiData?.fixtures} />
+      </View>
+
+      {/* Full-Screen Bouncing Football Loading Overlay - Only on fresh boot without any cache */}
+      <LoadingModal visible={loading && !apiData} />
 
       {/* Match Details Modal */}
       <MatchDetailsModal

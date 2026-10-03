@@ -12,8 +12,24 @@ const getCacheFilePath = (key) => {
   return path.join(CACHE_DIR, `${safeKey}.json`);
 };
 
+// In-memory cache layer for instant sub-millisecond retrieval
+const inMemoryCache = new Map();
+
 const cache = {
   get: (key) => {
+    const now = Date.now();
+
+    // 1. Fast in-memory check
+    const memItem = inMemoryCache.get(key);
+    if (memItem) {
+      if (now <= memItem.expireAt) {
+        console.log(`[Cache HIT Memory] Served data for key: ${key}`);
+        return memItem.data;
+      }
+      inMemoryCache.delete(key);
+    }
+
+    // 2. Fallback to disk cache
     const filePath = getCacheFilePath(key);
     if (!fs.existsSync(filePath)) {
       return null;
@@ -22,7 +38,6 @@ const cache = {
     try {
       const fileContent = fs.readFileSync(filePath, 'utf-8');
       const cacheItem = JSON.parse(fileContent);
-      const now = Date.now();
 
       if (now > cacheItem.expireAt) {
         fs.unlink(filePath, (err) => {
@@ -31,7 +46,9 @@ const cache = {
         return null;
       }
 
-      console.log(`[Cache HIT] Served data for key: ${key}`);
+      // Populate in-memory cache for subsequent instant calls
+      inMemoryCache.set(key, cacheItem);
+      console.log(`[Cache HIT Disk -> Mem] Served data for key: ${key}`);
       return cacheItem.data;
     } catch (err) {
       console.error(`Error reading cache file ${filePath}:`, err);
@@ -40,22 +57,25 @@ const cache = {
   },
 
   set: (key, data, ttlSeconds) => {
-    const filePath = getCacheFilePath(key);
     const expireAt = Date.now() + ttlSeconds * 1000;
     const cacheItem = {
       expireAt,
       data
     };
 
-    try {
-      fs.writeFileSync(filePath, JSON.stringify(cacheItem, null, 2), 'utf-8');
-      console.log(`[Cache SET] Saved key: ${key} (TTL: ${ttlSeconds}s)`);
-    } catch (err) {
-      console.error(`Error writing cache file ${filePath}:`, err);
-    }
+    // 1. Save to in-memory cache immediately
+    inMemoryCache.set(key, cacheItem);
+
+    // 2. Persist to disk asynchronously
+    const filePath = getCacheFilePath(key);
+    fs.writeFile(filePath, JSON.stringify(cacheItem), 'utf-8', (err) => {
+      if (err) console.error(`Error writing cache file ${filePath}:`, err);
+    });
+    console.log(`[Cache SET Memory+Disk] Saved key: ${key} (TTL: ${ttlSeconds}s)`);
   },
 
   clear: (key) => {
+    inMemoryCache.delete(key);
     const filePath = getCacheFilePath(key);
     if (fs.existsSync(filePath)) {
       fs.unlink(filePath, (err) => {
