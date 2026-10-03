@@ -69,7 +69,11 @@ export default function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
   const [leagueDetailsVisible, setLeagueDetailsVisible] = useState(false);
 
   useEffect(() => {
-    loadInitialData();
+    // Defer heavy data loading to next idle frame so component renders first
+    const id = setTimeout(() => {
+      loadInitialData();
+    }, 100);
+    return () => clearTimeout(id);
   }, []);
 
   const loadInitialData = async () => {

@@ -51,10 +51,10 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
             Live Matches
           </Text>
         </View>
-        <TouchableOpacity className="flex-row items-center">
+        {/* <TouchableOpacity className="flex-row items-center">
           <Text className="text-gray-400 text-sm font-bold mr-1">See all</Text>
           <ChevronRight size={16} color="#9BA1A6" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       {/* Horizontal scroll of Live Matches */}

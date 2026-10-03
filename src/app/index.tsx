@@ -130,6 +130,9 @@ export default function ExploreScreen() {
   const [apiData, setApiData] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState<TabType>("explore");
+  // Lazy mount: track which tabs have been visited (mounted) at least once
+  // Once mounted, stays mounted forever for instant switching
+  const [mountedTabs, setMountedTabs] = useState<Set<TabType>>(new Set(["explore"]));
   const [activeNotifications, setActiveNotifications] = useState<{
     [key: string]: boolean;
   }>({
@@ -164,22 +167,37 @@ export default function ExploreScreen() {
       () => {
         console.log("Interstitial ad closed");
         setInterstitialLoaded(false);
-        // Transition from SplashScreen to main app after ad
-        if (pendingShowMainRef.current) {
+
+        // Check if this ad was shown from SplashScreen transition
+        const comingFromSplash = pendingShowMainRef.current;
+        if (comingFromSplash) {
+          // Clear ALL pending refs - do NOT switch tab or open match after splash ad
           pendingShowMainRef.current = false;
-          setIsOnboardingCompleted(true);
-        }
-        // Open match details after the ad is dismissed
-        if (pendingMatchRef.current) {
-          setSelectedMatch(pendingMatchRef.current);
-          setDetailsVisible(true);
           pendingMatchRef.current = null;
-        }
-        // Switch to the pending tab after the ad is dismissed
-        if (pendingTabRef.current) {
-          setActiveTab(pendingTabRef.current);
           pendingTabRef.current = null;
+          setIsOnboardingCompleted(true);
+          interstitialAd.load();
+          return;
         }
+
+        // Capture refs before clearing
+        const pendingMatch = pendingMatchRef.current;
+        const pendingTab = pendingTabRef.current;
+        pendingMatchRef.current = null;
+        pendingTabRef.current = null;
+
+        // Use a 0ms timeout so tab switch happens after native ad dismiss animation
+        // This prevents the UI freeze without adding any visible delay
+        setTimeout(() => {
+          if (pendingMatch) {
+            setSelectedMatch(pendingMatch);
+            setDetailsVisible(true);
+          }
+          if (pendingTab) {
+            setActiveTab(pendingTab);
+          }
+        }, 0);
+
         // Pre-load the next interstitial ad
         interstitialAd.load();
       },
@@ -193,18 +211,22 @@ export default function ExploreScreen() {
         // If ad fails, still go to main app
         if (pendingShowMainRef.current) {
           pendingShowMainRef.current = false;
-          setIsOnboardingCompleted(true);
-        }
-        // If ad fails, open the match details directly
-        if (pendingMatchRef.current) {
-          setSelectedMatch(pendingMatchRef.current);
-          setDetailsVisible(true);
           pendingMatchRef.current = null;
-        }
-        // If ad fails, still switch to the pending tab
-        if (pendingTabRef.current) {
-          setActiveTab(pendingTabRef.current);
           pendingTabRef.current = null;
+          setIsOnboardingCompleted(true);
+          return;
+        }
+        // If ad fails, open the match details or switch tab directly
+        const pendingMatch = pendingMatchRef.current;
+        const pendingTab = pendingTabRef.current;
+        pendingMatchRef.current = null;
+        pendingTabRef.current = null;
+        if (pendingMatch) {
+          setSelectedMatch(pendingMatch);
+          setDetailsVisible(true);
+        }
+        if (pendingTab) {
+          setActiveTab(pendingTab);
         }
       },
     );
@@ -219,8 +241,16 @@ export default function ExploreScreen() {
     };
   }, []);
 
-  // Handle navbar tab press: switch directly without interstitial ads
+  // Handle navbar tab press: instant switch, no ads on tab navigation
   const handleTabPress = (tab: TabType) => {
+    // Lazy mount: first time visiting this tab, mount it
+    setMountedTabs((prev) => {
+      if (prev.has(tab)) return prev;
+      const next = new Set(prev);
+      next.add(tab);
+      return next;
+    });
+    // Switch instantly, no interstitial ad
     setActiveTab(tab);
   };
 
@@ -516,14 +546,25 @@ export default function ExploreScreen() {
     return (
       <SplashScreen
         onComplete={() => {
-          // Immediately go to main app screen without blocking
-          setIsOnboardingCompleted(true);
+          // Clear all pending refs to prevent any stale tab switch or match open
+          pendingMatchRef.current = null;
+          pendingTabRef.current = null;
+
           if (interstitialLoaded) {
+            // Mark that we're transitioning from splash
+            // The CLOSED event will call setIsOnboardingCompleted(true)
+            pendingShowMainRef.current = true;
             try {
               interstitialAd.show();
             } catch (err) {
               console.warn("Failed to show interstitial ad:", err);
+              // Ad failed to show, go directly to main app
+              pendingShowMainRef.current = false;
+              setIsOnboardingCompleted(true);
             }
+          } else {
+            // No ad loaded, go directly to main app
+            setIsOnboardingCompleted(true);
           }
         }}
       />
@@ -559,7 +600,8 @@ export default function ExploreScreen() {
         />
       )}
 
-      {/* Dynamic Main Body Content: Preserved screens for 0ms instantaneous tab navigation */}
+      {/* Dynamic Main Body Content: Lazy-mount + persistent tabs for instant navigation */}
+      {/* Explore: Always mounted (default tab) */}
       <View style={{ flex: 1, display: activeTab === "explore" ? "flex" : "none" }}>
         <ExploreView
           refreshing={refreshing}
@@ -584,21 +626,33 @@ export default function ExploreScreen() {
         />
       </View>
 
-      <View style={{ flex: 1, display: activeTab === "leagues" ? "flex" : "none" }}>
-        <LeaguesView apiLeagues={apiData?.leagues} />
-      </View>
+      {/* Leagues: Lazy mount on first visit, then persist */}
+      {mountedTabs.has("leagues") && (
+        <View style={{ flex: 1, display: activeTab === "leagues" ? "flex" : "none" }}>
+          <LeaguesView apiLeagues={apiData?.leagues} />
+        </View>
+      )}
 
-      <View style={{ flex: 1, display: activeTab === "highlight" ? "flex" : "none" }}>
-        <HighlightView />
-      </View>
+      {/* Highlight: Lazy mount on first visit, then persist */}
+      {mountedTabs.has("highlight") && (
+        <View style={{ flex: 1, display: activeTab === "highlight" ? "flex" : "none" }}>
+          <HighlightView />
+        </View>
+      )}
 
-      <View style={{ flex: 1, display: activeTab === "teams" ? "flex" : "none" }}>
-        <TeamsView apiTeams={apiData?.teams} apiLeagues={apiData?.leagues} />
-      </View>
+      {/* Teams: Lazy mount on first visit, then persist */}
+      {mountedTabs.has("teams") && (
+        <View style={{ flex: 1, display: activeTab === "teams" ? "flex" : "none" }}>
+          <TeamsView apiTeams={apiData?.teams} apiLeagues={apiData?.leagues} />
+        </View>
+      )}
 
-      <View style={{ flex: 1, display: activeTab === "prediction" ? "flex" : "none" }}>
-        <PredictionView initialFixtures={apiData?.fixtures} />
-      </View>
+      {/* Prediction: Lazy mount on first visit, then persist */}
+      {mountedTabs.has("prediction") && (
+        <View style={{ flex: 1, display: activeTab === "prediction" ? "flex" : "none" }}>
+          <PredictionView initialFixtures={apiData?.fixtures} />
+        </View>
+      )}
 
       {/* Full-Screen Bouncing Football Loading Overlay - Only on fresh boot without any cache */}
       <LoadingModal visible={loading && !apiData} />

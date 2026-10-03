@@ -28,7 +28,11 @@ export default function HighlightView() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadNews();
+    // Defer news API call to next frame so component renders with mock data first
+    const id = setTimeout(() => {
+      loadNews();
+    }, 100);
+    return () => clearTimeout(id);
   }, []);
 
   const loadNews = async () => {

@@ -46,7 +46,7 @@ interface LeaguesViewProps {
 
 export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
   const [favorites, setFavorites] = useState<string[]>(["39", "140"]); // Default Premier League & La Liga
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // false = render immediately with defaults, update after AsyncStorage loads
 
   // Expandable state managers
   const [favSectionExpanded, setFavSectionExpanded] = useState(true);
