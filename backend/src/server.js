@@ -1431,11 +1431,19 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   );
   console.log(`====================================================`);
 
-  // Start dynamic polling loop in background
-  startLiveScorePolling();
-
-  // Start background cache warmer (pre-fetches popular data proactively)
-  startCacheWarmer();
+  // In PM2 cluster mode, multiple instances run simultaneously.
+  // Background tasks (polling + cache warming) must ONLY run on instance 0
+  // to avoid multiplying API quota usage by the number of instances.
+  const instanceId = process.env.NODE_APP_INSTANCE || '0';
+  if (instanceId === '0') {
+    console.log(`[Server] Instance 0: Starting background services...`);
+    // Start dynamic polling loop in background
+    startLiveScorePolling();
+    // Start background cache warmer (pre-fetches popular data proactively)
+    startCacheWarmer();
+  } else {
+    console.log(`[Server] Instance ${instanceId}: Skipping background services (handled by instance 0).`);
+  }
 });
 
 // Graceful Shutdown Handler

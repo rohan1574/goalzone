@@ -270,9 +270,8 @@ async function runWarmCycle() {
   await sleep(300);
 
   await warmLeagueFixtures();
-  await sleep(300);
 
-  await warmStandings();
+  // NOTE: warmStandings() removed - /standings requires a paid API plan (returns 403 on free)
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
   console.log(`[CacheWarmer] Warm cycle completed in ${elapsed}s\n`);
