@@ -22,12 +22,14 @@ interface LeaguesProps {
   leaguesList: LeagueGroup[];
   activeNotifications: { [key: string]: boolean };
   onToggleNotification: (id: string) => void;
+  onPressDetails?: (match: any) => void;
 }
 
 export default function Leagues({
   leaguesList,
   activeNotifications,
   onToggleNotification,
+  onPressDetails,
 }: LeaguesProps) {
   return (
     <View className="mt-6 px-4 mb-24 bg-[#0D0E0F]">
@@ -47,9 +49,37 @@ export default function Leagues({
           {/* League Match Cards */}
           {league.matches.map((match) => {
             const isBellActive = activeNotifications[match.id];
+            const handleCardPress = () => {
+              if (onPressDetails) {
+                onPressDetails({
+                  id: match.id,
+                  league: league.leagueName,
+                  leagueId: league.leagueId,
+                  leagueLogo: league.leagueLogo,
+                  home: {
+                    id: (match.home as any)?.id,
+                    name: match.home.name,
+                    short: match.home.name.substring(0, 3).toUpperCase(),
+                    logo: match.home.logo,
+                  },
+                  away: {
+                    id: (match.away as any)?.id,
+                    name: match.away.name,
+                    short: match.away.name.substring(0, 3).toUpperCase(),
+                    logo: match.away.logo,
+                  },
+                  score: match.time || "VS",
+                  minute: match.status || "Upcoming",
+                  status: match.status || "Upcoming",
+                });
+              }
+            };
+
             return (
-              <View
+              <TouchableOpacity
                 key={match.id}
+                activeOpacity={0.7}
+                onPress={handleCardPress}
                 className="relative bg-[#131415] rounded-3xl p-4.5 mb-3 border border-[#ffffff08] overflow-hidden flex-row justify-between items-center"
               >
                 {/* Glow indicator line on left */}
@@ -99,7 +129,10 @@ export default function Leagues({
 
                 {/* Right column: Notification Bell Icon */}
                 <TouchableOpacity
-                  onPress={() => onToggleNotification(match.id)}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    onToggleNotification(match.id);
+                  }}
                   className={`p-2.5 rounded-full ${
                     isBellActive ? "bg-[#02DB54]/15" : "bg-white/5"
                   }`}
@@ -110,7 +143,7 @@ export default function Leagues({
                     fill={isBellActive ? "#02DB54" : "none"}
                   />
                 </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
             );
           })}
         </View>

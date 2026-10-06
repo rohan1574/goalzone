@@ -205,16 +205,26 @@ export default function MatchDetailsModal({
     if (events && events.length > 0) {
       return events;
     }
+    const isUpcoming =
+      !match.score ||
+      match.score === "VS" ||
+      match.status === "NS" ||
+      match.status === "Scheduled" ||
+      match.status === "Upcoming";
+    if (isUpcoming) return [];
+
     const scores = match.score.split("-").map((s) => parseInt(s.trim()));
     const homeGoals = isNaN(scores[0]) ? 0 : scores[0];
     const awayGoals = isNaN(scores[1]) ? 0 : scores[1];
+    if (homeGoals === 0 && awayGoals === 0) return [];
+
     const fallbackList: any[] = [];
 
     for (let i = 0; i < homeGoals; i++) {
       fallbackList.push({
         id: `h-g-${i}`,
         type: "goal",
-        player: i === 0 ? "Fabricio Pérez" : `Home Player ${i + 1}`,
+        player: `Goalscorer H${i + 1}`,
         minute: `${90 - i * 4}'`,
         elapsed: 90 - i * 4,
         teamId: match.home.id,
@@ -225,7 +235,7 @@ export default function MatchDetailsModal({
       fallbackList.push({
         id: `a-g-${i}`,
         type: "goal",
-        player: `Away Player ${i + 1}`,
+        player: `Goalscorer A${i + 1}`,
         minute: `${80 - i * 10}'`,
         elapsed: 80 - i * 10,
         teamId: match.away.id,
@@ -389,7 +399,10 @@ export default function MatchDetailsModal({
               {loadingEvents ? (
                 <ActivityIndicator color="#02DB54" className="my-6" />
               ) : timelineEvents.length === 0 ? (
-                <Text className="text-gray-400 text-center py-6">No timeline events yet.</Text>
+                <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
+                  <Text className="text-[#02DB54] font-black text-sm mb-1">Match Has Not Started</Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">No timeline data available yet.</Text>
+                </View>
               ) : (
                 <View className="space-y-4">
                   {timelineEvents.map((item, index) => {
@@ -486,9 +499,10 @@ export default function MatchDetailsModal({
               {loadingStats ? (
                 <ActivityIndicator color="#02DB54" className="my-6" />
               ) : stats.length === 0 ? (
-                <Text className="text-gray-400 text-center py-6">
-                  No statistics available for this match.
-                </Text>
+                <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
+                  <Text className="text-[#02DB54] font-black text-sm mb-1">No Statistics Available</Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">Statistics will appear once the match begins.</Text>
+                </View>
               ) : (
                 <View className="space-y-3">
                   {stats.map((stat, idx) => {

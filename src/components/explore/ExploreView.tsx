@@ -81,6 +81,7 @@ export default function ExploreView({
         leaguesList={leaguesList}
         activeNotifications={activeNotifications}
         onToggleNotification={onToggleNotification}
+        onPressDetails={onPressDetails}
       />
     </ScrollView>
   );
