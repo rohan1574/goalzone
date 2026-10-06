@@ -67,8 +67,11 @@ export default function MatchDetailsModal({
   const [loadingH2h, setLoadingH2h] = useState<boolean>(false);
 
   // 1. Fetch Timeline Events for Infor tab
+  // 1. Fetch Timeline Events, Stats, Lineups, Standings, H2H when modal opens
   useEffect(() => {
     if (!visible || !match?.id) return;
+
+    // Load Events
     const loadEvents = async () => {
       setLoadingEvents(true);
       try {
@@ -80,12 +83,8 @@ export default function MatchDetailsModal({
         setLoadingEvents(false);
       }
     };
-    loadEvents();
-  }, [visible, match?.id]);
 
-  // 2. Fetch Statistics for Stats tab
-  useEffect(() => {
-    if (!visible || !match?.id || activeTab !== "stats") return;
+    // Load Stats
     const loadStats = async () => {
       setLoadingStats(true);
       try {
@@ -97,17 +96,12 @@ export default function MatchDetailsModal({
         setLoadingStats(false);
       }
     };
-    loadStats();
-  }, [visible, match?.id, activeTab]);
 
-  // 3. Fetch Lineups for Lineup tab
-  useEffect(() => {
-    if (!visible || !match?.id || activeTab !== "lineup") return;
+    // Load Lineups
     const loadLineups = async () => {
       setLoadingLineup(true);
       try {
         const homeData = await fetchHomeTeamLineup(match.id);
-        await new Promise((resolve) => setTimeout(resolve, 800));
         const awayData = await fetchAwayTeamLineup(match.id);
         setHomeLineup(homeData);
         setAwayLineup(awayData);
@@ -117,13 +111,10 @@ export default function MatchDetailsModal({
         setLoadingLineup(false);
       }
     };
-    loadLineups();
-  }, [visible, match?.id, activeTab]);
 
-  // 4. Fetch Standings for Table tab
-  useEffect(() => {
-    if (!visible || !match?.leagueId || activeTab !== "table") return;
+    // Load Standings
     const loadStandings = async () => {
+      if (!match?.leagueId) return;
       setLoadingStandings(true);
       try {
         const rawData = await fetchLeagueStandings(match.leagueId);
@@ -175,13 +166,10 @@ export default function MatchDetailsModal({
         setLoadingStandings(false);
       }
     };
-    loadStandings();
-  }, [visible, match?.leagueId, activeTab]);
 
-  // 5. Fetch H2H for H2H tab
-  useEffect(() => {
-    if (!visible || !match?.home?.id || !match?.away?.id || activeTab !== "h2h") return;
+    // Load H2H
     const loadH2H = async () => {
+      if (!match?.home?.id || !match?.away?.id) return;
       setLoadingH2h(true);
       try {
         const data = await fetchFixtureH2H(match.home.id!, match.away.id!);
@@ -192,8 +180,13 @@ export default function MatchDetailsModal({
         setLoadingH2h(false);
       }
     };
+
+    loadEvents();
+    loadStats();
+    loadLineups();
+    loadStandings();
     loadH2H();
-  }, [visible, match?.home?.id, match?.away?.id, activeTab]);
+  }, [visible, match?.id]);
 
   if (!match) return null;
 
@@ -250,12 +243,13 @@ export default function MatchDetailsModal({
 
   // Helper to extract lineup data flexibly (no demo fallback)
   const getLineupObj = (data: any, fallbackName: string) => {
-    if (!data) return { starters: [], formation: "", teamName: fallbackName };
+    if (!data) return { starters: [], subs: [], formation: "", teamName: fallbackName };
     const l = data.lineup || data;
     const starters = l.starters || l.startXI || l.startingXI || l.startersList || [];
+    const subs = l.subs || l.substitutes || [];
     const formation = l.formation || "";
     const teamName = l.name || l.teamName || fallbackName;
-    return { starters, formation, teamName };
+    return { starters, subs, formation, teamName };
   };
 
   const homeLineupData = getLineupObj(homeLineup, match.home.name);
@@ -600,82 +594,107 @@ export default function MatchDetailsModal({
                   <Text className="text-gray-400 font-bold text-xs text-center">Lineup data could not be found for this match.</Text>
                 </View>
               ) : (
-                <View className="bg-[#122818] rounded-2xl p-4 border border-[#02DB54]/30 relative overflow-hidden min-h-[460px]">
-                  {/* Soccer Pitch Markings Overlay */}
-                  <Svg height="100%" width="100%" style={{ position: "absolute" }}>
-                    <Rect x="5%" y="3%" width="90%" height="94%" fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
-                    <SvgLine x1="5%" y1="50%" x2="95%" y2="50%" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
-                    <Circle cx="50%" cy="50%" r="40" fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
-                  </Svg>
+                <View>
+                  {/* Soccer Pitch Container */}
+                  <View className="bg-[#122818] rounded-2xl p-4 border border-[#02DB54]/30 relative overflow-hidden min-h-[480px]">
+                    {/* Soccer Pitch Markings Overlay */}
+                    <Svg height="100%" width="100%" style={{ position: "absolute" }}>
+                      <Rect x="5%" y="3%" width="90%" height="94%" fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
+                      <SvgLine x1="5%" y1="50%" x2="95%" y2="50%" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
+                      <Circle cx="50%" cy="50%" r="40" fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
+                    </Svg>
 
-                  {/* Home Team (Top Half Pitch) */}
-                  <View className="flex-1 justify-around py-2">
-                    <Text className="text-[#86EFAC] text-[10px] font-black uppercase text-center mb-2">
-                      {homeLineupData.teamName} ({homeLineupData.formation})
-                    </Text>
+                    {/* Home Team (Top Half Pitch - All Starters) */}
+                    <View className="flex-1 py-2">
+                      <Text className="text-[#86EFAC] text-[10px] font-black uppercase text-center mb-3">
+                        {homeLineupData.teamName} ({homeLineupData.formation})
+                      </Text>
 
-                    <View className="flex-row justify-around my-2">
-                      {homeStarters.slice(0, 4).map((p: any, i: number) => (
-                        <View key={i} className="items-center">
-                          <View className="w-9 h-9 rounded-full bg-white/10 border border-[#02DB54] items-center justify-center">
-                            <Text className="text-white font-black text-xs">{p.number || p.shirtNumber || p.player?.number || i+1}</Text>
+                      <View className="flex-row flex-wrap justify-around items-center">
+                        {homeStarters.map((p: any, i: number) => (
+                          <View key={i} className="items-center mx-1 my-1.5" style={{ width: 62 }}>
+                            <View className="w-8 h-8 rounded-full bg-black/60 border border-[#02DB54] items-center justify-center">
+                              <Text className="text-white font-black text-[11px]">
+                                {p.number || p.shirtNumber || p.player?.number || i + 1}
+                              </Text>
+                            </View>
+                            <Text className="text-white font-bold text-[9px] mt-1 text-center" numberOfLines={1}>
+                              {p.name || p.player?.name}
+                            </Text>
                           </View>
-                          <Text className="text-white font-bold text-[9px] mt-1 text-center max-w-[65px]" numberOfLines={1}>
-                            {p.name || p.player?.name}
-                          </Text>
-                        </View>
-                      ))}
+                        ))}
+                      </View>
                     </View>
 
-                    <View className="flex-row justify-around my-2">
-                      {homeStarters.slice(4, 7).map((p: any, i: number) => (
-                        <View key={i} className="items-center">
-                          <View className="w-9 h-9 rounded-full bg-white/10 border border-[#02DB54] items-center justify-center">
-                            <Text className="text-white font-black text-xs">{p.number || p.shirtNumber || p.player?.number || i+5}</Text>
+                    {/* Pitch Divider Line */}
+                    <View className="h-[1px] bg-white/20 my-4" />
+
+                    {/* Away Team (Bottom Half Pitch - All Starters) */}
+                    <View className="flex-1 py-2">
+                      <View className="flex-row flex-wrap justify-around items-center">
+                        {awayStarters.map((p: any, i: number) => (
+                          <View key={i} className="items-center mx-1 my-1.5" style={{ width: 62 }}>
+                            <View className="w-8 h-8 rounded-full bg-black/60 border border-white/60 items-center justify-center">
+                              <Text className="text-white font-black text-[11px]">
+                                {p.number || p.shirtNumber || p.player?.number || i + 1}
+                              </Text>
+                            </View>
+                            <Text className="text-white font-bold text-[9px] mt-1 text-center" numberOfLines={1}>
+                              {p.name || p.player?.name}
+                            </Text>
                           </View>
-                          <Text className="text-white font-bold text-[9px] mt-1 text-center max-w-[65px]" numberOfLines={1}>
-                            {p.name || p.player?.name}
-                          </Text>
-                        </View>
-                      ))}
+                        ))}
+                      </View>
+
+                      <Text className="text-gray-300 text-[10px] font-black uppercase text-center mt-3">
+                        {awayLineupData.teamName} ({awayLineupData.formation})
+                      </Text>
                     </View>
                   </View>
 
-                  {/* Pitch Divider Line */}
-                  <View className="h-[1px] bg-white/20 my-3" />
-
-                  {/* Away Team (Bottom Half Pitch) */}
-                  <View className="flex-1 justify-around py-2">
-                    <View className="flex-row justify-around my-2">
-                      {awayStarters.slice(4, 7).map((p: any, i: number) => (
-                        <View key={i} className="items-center">
-                          <View className="w-9 h-9 rounded-full bg-white/10 border border-white/50 items-center justify-center">
-                            <Text className="text-white font-black text-xs">{p.number || p.shirtNumber || p.player?.number || i+5}</Text>
-                          </View>
-                          <Text className="text-white font-bold text-[9px] mt-1 text-center max-w-[65px]" numberOfLines={1}>
-                            {p.name || p.player?.name}
+                  {/* Substitutes Bench */}
+                  {(homeLineupData.subs.length > 0 || awayLineupData.subs.length > 0) && (
+                    <View className="bg-[#131517] rounded-2xl p-4 mt-4 border border-white/5">
+                      <Text className="text-[#02DB54] font-black text-xs uppercase tracking-wider mb-3 text-center">
+                        Substitutes Bench
+                      </Text>
+                      <View className="flex-row justify-between">
+                        {/* Home Subs */}
+                        <View className="flex-1 pr-2 border-r border-white/5">
+                          <Text className="text-[#86EFAC] font-extrabold text-[11px] mb-2" numberOfLines={1}>
+                            {homeLineupData.teamName}
                           </Text>
+                          {homeLineupData.subs.map((s: any, idx: number) => (
+                            <View key={idx} className="flex-row items-center gap-2 my-1">
+                              <View className="w-5 h-5 rounded-full bg-white/10 items-center justify-center">
+                                <Text className="text-white font-bold text-[9px]">{s.shirtNumber || s.number || "-"}</Text>
+                              </View>
+                              <Text className="text-gray-300 text-xs font-semibold flex-1" numberOfLines={1}>
+                                {s.name || s.player?.name}
+                              </Text>
+                            </View>
+                          ))}
                         </View>
-                      ))}
-                    </View>
 
-                    <View className="flex-row justify-around my-2">
-                      {awayStarters.slice(0, 4).map((p: any, i: number) => (
-                        <View key={i} className="items-center">
-                          <View className="w-9 h-9 rounded-full bg-white/10 border border-white/50 items-center justify-center">
-                            <Text className="text-white font-black text-xs">{p.number || p.shirtNumber || p.player?.number || i+1}</Text>
-                          </View>
-                          <Text className="text-white font-bold text-[9px] mt-1 text-center max-w-[65px]" numberOfLines={1}>
-                            {p.name || p.player?.name}
+                        {/* Away Subs */}
+                        <View className="flex-1 pl-2">
+                          <Text className="text-white font-extrabold text-[11px] mb-2 text-right" numberOfLines={1}>
+                            {awayLineupData.teamName}
                           </Text>
+                          {awayLineupData.subs.map((s: any, idx: number) => (
+                            <View key={idx} className="flex-row items-center gap-2 my-1 justify-end">
+                              <Text className="text-gray-300 text-xs font-semibold flex-1 text-right" numberOfLines={1}>
+                                {s.name || s.player?.name}
+                              </Text>
+                              <View className="w-5 h-5 rounded-full bg-white/10 items-center justify-center">
+                                <Text className="text-white font-bold text-[9px]">{s.shirtNumber || s.number || "-"}</Text>
+                              </View>
+                            </View>
+                          ))}
                         </View>
-                      ))}
+                      </View>
                     </View>
-
-                    <Text className="text-gray-300 text-[10px] font-black uppercase text-center mt-2">
-                      {awayLineupData.teamName} ({awayLineupData.formation})
-                    </Text>
-                  </View>
+                  )}
                 </View>
               )}
             </View>

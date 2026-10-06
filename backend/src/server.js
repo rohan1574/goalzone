@@ -1286,6 +1286,7 @@ function parseFixtureStats(apiResponse) {
 
   const homeTeamStats = responseList[0]?.statistics || [];
   const awayTeamStats = responseList[1]?.statistics || [];
+  if (homeTeamStats.length === 0 && awayTeamStats.length === 0) return [];
 
   const targetStats = [
     { key: "Shots on Goal", name: "Shots on Target" },
