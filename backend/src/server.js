@@ -431,6 +431,7 @@ app.get("/football-dashboard", async (req, res) => {
     return res.json(cached);
   }
 
+  try {
     // 2. Fixtures by date
     const formattedDate = `${dateQuery.substring(0, 4)}-${dateQuery.substring(4, 6)}-${dateQuery.substring(6, 8)}`;
     const fixturesCacheKey = `fixtures_date_${dateQuery}`;
