@@ -996,7 +996,7 @@ app.get("/football-get-hometeam-lineup", async (req, res) => {
   }
 
   if (!/^\d+$/.test(eventid)) {
-    return res.json({ lineup: null });
+    return res.json(getMockLineup(eventid, "home"));
   }
 
   const cacheKey = `lineup_home_${eventid}`;
@@ -1026,7 +1026,7 @@ app.get("/football-get-awayteam-lineup", async (req, res) => {
   }
 
   if (!/^\d+$/.test(eventid)) {
-    return res.json({ lineup: null });
+    return res.json(getMockLineup(eventid, "away"));
   }
 
   const cacheKey = `lineup_away_${eventid}`;
@@ -1252,7 +1252,18 @@ app.get("/football-get-news", async (req, res) => {
 // 8. MATCH STATISTICS & PREDICTIONS
 // ==========================================
 function getMockStats(eventid) {
-  return [];
+  return [
+    { name: "Shots on Target", home: "5", away: "2", homePct: 71, awayPct: 29 },
+    { name: "Shots off Target", home: "10", away: "5", homePct: 67, awayPct: 33 },
+    { name: "Blocked Shots", home: "2", away: "3", homePct: 40, awayPct: 60 },
+    { name: "Possession (%)", home: "51%", away: "49%", homePct: 51, awayPct: 49 },
+    { name: "Corner Kicks", home: "4", away: "5", homePct: 44, awayPct: 56 },
+    { name: "Offsides", home: "5", away: "1", homePct: 83, awayPct: 17 },
+    { name: "Fouls", home: "14", away: "19", homePct: 42, awayPct: 58 },
+    { name: "Goalkeeper Saves", home: "2", away: "4", homePct: 33, awayPct: 67 },
+    { name: "Yellow Cards", home: "1", away: "3", homePct: 25, awayPct: 75 },
+    { name: "Red Cards", home: "0", away: "0", homePct: 50, awayPct: 50 },
+  ];
 }
 
 function parseFixtureStats(apiResponse) {
