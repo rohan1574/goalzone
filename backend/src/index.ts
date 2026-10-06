@@ -342,12 +342,21 @@ const translateLineup = (apiResponse: any, side: 'home' | 'away') => {
   });
 
   return {
+    teamName: apiLineup.team.name,
+    formation: apiLineup.formation || 'N/A',
+    starters: mappedStarters,
+    startXI: mappedStarters,
+    subs: mappedSubs,
+    substitutes: mappedSubs,
     lineup: {
       id: apiLineup.team.id,
       name: apiLineup.team.name,
+      teamName: apiLineup.team.name,
       formation: apiLineup.formation || 'N/A',
       starters: mappedStarters,
-      subs: mappedSubs
+      startXI: mappedStarters,
+      subs: mappedSubs,
+      substitutes: mappedSubs,
     }
   };
 };

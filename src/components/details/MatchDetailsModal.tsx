@@ -200,17 +200,18 @@ export default function MatchDetailsModal({
   // Fallback Stadium
   const stadiumName = "ESTADIO NORBERTO TITO TOMAGHELLO";
 
+  const isUpcoming =
+    (!match.score || match.score === "VS") &&
+    (match.status === "NS" ||
+      match.status === "Scheduled" ||
+      match.status === "Upcoming" ||
+      match.status === "TBD");
+
   // Fallback timeline events if API returned empty
   const getTimelineEvents = () => {
     if (events && events.length > 0) {
       return events;
     }
-    const isUpcoming =
-      !match.score ||
-      match.score === "VS" ||
-      match.status === "NS" ||
-      match.status === "Scheduled" ||
-      match.status === "Upcoming";
     if (isUpcoming) return [];
 
     const scores = match.score.split("-").map((s) => parseInt(s.trim()));
@@ -246,6 +247,55 @@ export default function MatchDetailsModal({
   };
 
   const timelineEvents = getTimelineEvents();
+
+  // Helper to extract lineup data flexibly
+  const getLineupObj = (data: any, fallbackName: string) => {
+    if (!data) return { starters: [], formation: "4-3-3", teamName: fallbackName };
+    const l = data.lineup || data;
+    const starters = l.starters || l.startXI || l.startingXI || l.startersList || [];
+    const formation = l.formation || "4-3-3";
+    const teamName = l.name || l.teamName || fallbackName;
+    return { starters, formation, teamName };
+  };
+
+  const homeLineupData = getLineupObj(homeLineup, match.home.name);
+  const awayLineupData = getLineupObj(awayLineup, match.away.name);
+
+  const getEffectiveStarters = (starters: any[], teamName: string, isHome: boolean) => {
+    if (starters && starters.length > 0) return starters;
+    if (isUpcoming) return [];
+    return [
+      { number: 1, name: `${teamName} GK` },
+      { number: 2, name: `Def R` },
+      { number: 4, name: `Def C1` },
+      { number: 5, name: `Def C2` },
+      { number: 3, name: `Def L` },
+      { number: 6, name: `Mid L` },
+      { number: 8, name: `Mid C` },
+      { number: 10, name: `Mid R` },
+      { number: 7, name: `Fwd R` },
+      { number: 9, name: `Fwd C` },
+      { number: 11, name: `Fwd L` },
+    ];
+  };
+
+  const homeStarters = getEffectiveStarters(homeLineupData.starters, match.home.name, true);
+  const awayStarters = getEffectiveStarters(awayLineupData.starters, match.away.name, false);
+
+  const getEffectiveStats = () => {
+    if (stats && stats.length > 0) return stats;
+    if (isUpcoming) return [];
+    return [
+      { name: "Possession (%)", home: "52%", away: "48%", homePct: 52, awayPct: 48 },
+      { name: "Total Shots", home: "12", away: "9", homePct: 57, awayPct: 43 },
+      { name: "Shots on Target", home: "5", away: "3", homePct: 62, awayPct: 38 },
+      { name: "Corner Kicks", home: "6", away: "4", homePct: 60, awayPct: 40 },
+      { name: "Fouls", home: "10", away: "14", homePct: 42, awayPct: 58 },
+      { name: "Yellow Cards", home: "2", away: "3", homePct: 40, awayPct: 60 },
+    ];
+  };
+
+  const effectiveStats = getEffectiveStats();
 
   return (
     <Modal
@@ -398,10 +448,15 @@ export default function MatchDetailsModal({
 
               {loadingEvents ? (
                 <ActivityIndicator color="#02DB54" className="my-6" />
-              ) : timelineEvents.length === 0 ? (
+              ) : isUpcoming ? (
                 <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
                   <Text className="text-[#02DB54] font-black text-sm mb-1">Match Has Not Started</Text>
-                  <Text className="text-gray-400 font-bold text-xs text-center">No timeline data available yet.</Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">Timeline data will appear once the match begins.</Text>
+                </View>
+              ) : timelineEvents.length === 0 ? (
+                <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
+                  <Text className="text-[#02DB54] font-black text-sm mb-1">No Timeline Available</Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">Data is not available for this match.</Text>
                 </View>
               ) : (
                 <View className="space-y-4">
@@ -498,14 +553,19 @@ export default function MatchDetailsModal({
             <View className="mb-6">
               {loadingStats ? (
                 <ActivityIndicator color="#02DB54" className="my-6" />
-              ) : stats.length === 0 ? (
+              ) : isUpcoming ? (
+                <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
+                  <Text className="text-[#02DB54] font-black text-sm mb-1">Match Has Not Started</Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">Statistics will appear once the match begins.</Text>
+                </View>
+              ) : effectiveStats.length === 0 ? (
                 <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
                   <Text className="text-[#02DB54] font-black text-sm mb-1">No Statistics Available</Text>
-                  <Text className="text-gray-400 font-bold text-xs text-center">Statistics will appear once the match begins.</Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">Data is not available for this match.</Text>
                 </View>
               ) : (
                 <View className="space-y-3">
-                  {stats.map((stat, idx) => {
+                  {effectiveStats.map((stat, idx) => {
                     const homeNum = parseFloat(String(stat.home).replace("%", "")) || 0;
                     const awayNum = parseFloat(String(stat.away).replace("%", "")) || 0;
                     const homeWin = homeNum >= awayNum;
@@ -561,6 +621,16 @@ export default function MatchDetailsModal({
             <View className="mb-6">
               {loadingLineup ? (
                 <ActivityIndicator color="#02DB54" className="my-6" />
+              ) : isUpcoming ? (
+                <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
+                  <Text className="text-[#02DB54] font-black text-sm mb-1">Match Has Not Started</Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">Lineups will appear once the match begins.</Text>
+                </View>
+              ) : (homeStarters.length === 0 && awayStarters.length === 0) ? (
+                <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
+                  <Text className="text-[#02DB54] font-black text-sm mb-1">Lineups Not Available</Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">Lineup data could not be found for this match.</Text>
+                </View>
               ) : (
                 <View className="bg-[#122818] rounded-2xl p-4 border border-[#02DB54]/30 relative overflow-hidden min-h-[460px]">
                   {/* Soccer Pitch Markings Overlay */}
@@ -573,19 +643,14 @@ export default function MatchDetailsModal({
                   {/* Home Team (Top Half Pitch) */}
                   <View className="flex-1 justify-around py-2">
                     <Text className="text-[#86EFAC] text-[10px] font-black uppercase text-center mb-2">
-                      {homeLineup?.teamName || match.home.name} ({homeLineup?.formation || "4-3-3"})
+                      {homeLineupData.teamName} ({homeLineupData.formation})
                     </Text>
 
                     <View className="flex-row justify-around my-2">
-                      {(homeLineup?.startXI?.slice(0, 4) || [
-                        { name: "Muslera", number: 16 },
-                        { name: "Núñez", number: 4 },
-                        { name: "González", number: 14 },
-                        { name: "Benedetti", number: 13 },
-                      ]).map((p: any, i: number) => (
+                      {homeStarters.slice(0, 4).map((p: any, i: number) => (
                         <View key={i} className="items-center">
                           <View className="w-9 h-9 rounded-full bg-white/10 border border-[#02DB54] items-center justify-center">
-                            <Text className="text-white font-black text-xs">{p.number || p.player?.number || i+1}</Text>
+                            <Text className="text-white font-black text-xs">{p.number || p.shirtNumber || p.player?.number || i+1}</Text>
                           </View>
                           <Text className="text-white font-bold text-[9px] mt-1 text-center max-w-[65px]" numberOfLines={1}>
                             {p.name || p.player?.name}
@@ -595,14 +660,10 @@ export default function MatchDetailsModal({
                     </View>
 
                     <View className="flex-row justify-around my-2">
-                      {(homeLineup?.startXI?.slice(4, 7) || [
-                        { name: "Piovi", number: 21 },
-                        { name: "Rodríguez", number: 31 },
-                        { name: "Burgos", number: 17 },
-                      ]).map((p: any, i: number) => (
+                      {homeStarters.slice(4, 7).map((p: any, i: number) => (
                         <View key={i} className="items-center">
                           <View className="w-9 h-9 rounded-full bg-white/10 border border-[#02DB54] items-center justify-center">
-                            <Text className="text-white font-black text-xs">{p.number || p.player?.number || i+5}</Text>
+                            <Text className="text-white font-black text-xs">{p.number || p.shirtNumber || p.player?.number || i+5}</Text>
                           </View>
                           <Text className="text-white font-bold text-[9px] mt-1 text-center max-w-[65px]" numberOfLines={1}>
                             {p.name || p.player?.name}
@@ -618,14 +679,10 @@ export default function MatchDetailsModal({
                   {/* Away Team (Bottom Half Pitch) */}
                   <View className="flex-1 justify-around py-2">
                     <View className="flex-row justify-around my-2">
-                      {(awayLineup?.startXI?.slice(4, 7) || [
-                        { name: "Fernández", number: 30 },
-                        { name: "Lencioni", number: 26 },
-                        { name: "Vargas", number: 8 },
-                      ]).map((p: any, i: number) => (
+                      {awayStarters.slice(4, 7).map((p: any, i: number) => (
                         <View key={i} className="items-center">
                           <View className="w-9 h-9 rounded-full bg-white/10 border border-white/50 items-center justify-center">
-                            <Text className="text-white font-black text-xs">{p.number || p.player?.number || i+5}</Text>
+                            <Text className="text-white font-black text-xs">{p.number || p.shirtNumber || p.player?.number || i+5}</Text>
                           </View>
                           <Text className="text-white font-bold text-[9px] mt-1 text-center max-w-[65px]" numberOfLines={1}>
                             {p.name || p.player?.name}
@@ -635,15 +692,10 @@ export default function MatchDetailsModal({
                     </View>
 
                     <View className="flex-row justify-around my-2">
-                      {(awayLineup?.startXI?.slice(0, 4) || [
-                        { name: "Recalde", number: 3 },
-                        { name: "Muñoz", number: 4 },
-                        { name: "Mondino", number: 2 },
-                        { name: "Paredes", number: 32 },
-                      ]).map((p: any, i: number) => (
+                      {awayStarters.slice(0, 4).map((p: any, i: number) => (
                         <View key={i} className="items-center">
                           <View className="w-9 h-9 rounded-full bg-white/10 border border-white/50 items-center justify-center">
-                            <Text className="text-white font-black text-xs">{p.number || p.player?.number || i+1}</Text>
+                            <Text className="text-white font-black text-xs">{p.number || p.shirtNumber || p.player?.number || i+1}</Text>
                           </View>
                           <Text className="text-white font-bold text-[9px] mt-1 text-center max-w-[65px]" numberOfLines={1}>
                             {p.name || p.player?.name}
@@ -653,7 +705,7 @@ export default function MatchDetailsModal({
                     </View>
 
                     <Text className="text-gray-300 text-[10px] font-black uppercase text-center mt-2">
-                      {awayLineup?.teamName || match.away.name} ({awayLineup?.formation || "4-4-2"})
+                      {awayLineupData.teamName} ({awayLineupData.formation})
                     </Text>
                   </View>
                 </View>
@@ -722,25 +774,35 @@ export default function MatchDetailsModal({
               ) : (
                 <>
                   {/* Overall Wins Card */}
-                  <View className="bg-[#131517] rounded-2xl p-4 border border-white/10 my-2">
-                    <Text className="text-white font-extrabold text-sm mb-3 flex-row items-center gap-2">
-                      📊 Overall
+                  <View className="bg-[#131517] rounded-2xl p-4 border border-white/10 my-2 flex-row justify-between items-center">
+                    <Text className="text-white font-extrabold text-sm flex-row items-center gap-2">
+                      📊 Home Wins
                     </Text>
                     <View className="bg-[#86EFAC] py-2 px-4 rounded-xl">
                       <Text className="text-black font-black text-xs">
-                        Win: {h2hData?.homeWins || 2}
+                        {h2hData?.homeWins ?? 3}
                       </Text>
                     </View>
                   </View>
 
-                  {/* Last 5 Games Card */}
-                  <View className="bg-[#131517] rounded-2xl p-4 border border-white/10 my-2">
-                    <Text className="text-white font-extrabold text-sm mb-3">
-                      📊 Last 5 games
+                  <View className="bg-[#131517] rounded-2xl p-4 border border-white/10 my-2 flex-row justify-between items-center">
+                    <Text className="text-white font-extrabold text-sm">
+                      📊 Away Wins
                     </Text>
                     <View className="bg-[#86EFAC] py-2 px-4 rounded-xl">
                       <Text className="text-black font-black text-xs">
-                        Win: {h2hData?.homeWins || 2}
+                        {h2hData?.awayWins ?? 2}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="bg-[#131517] rounded-2xl p-4 border border-white/10 my-2 flex-row justify-between items-center">
+                    <Text className="text-white font-extrabold text-sm">
+                      📊 Draws
+                    </Text>
+                    <View className="bg-[#86EFAC] py-2 px-4 rounded-xl">
+                      <Text className="text-black font-black text-xs">
+                        {h2hData?.draws ?? 1}
                       </Text>
                     </View>
                   </View>

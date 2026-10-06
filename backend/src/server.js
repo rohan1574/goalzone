@@ -63,7 +63,12 @@ async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
     }
 
     const mappedData = mapper(response.data);
-    cache.set(cacheKey, mappedData, ttlSeconds);
+    const isEmpty =
+      !mappedData ||
+      (Array.isArray(mappedData) && mappedData.length === 0) ||
+      (mappedData && mappedData.lineup === null);
+    const effectiveTtl = isEmpty ? Math.min(ttlSeconds, 30) : ttlSeconds;
+    cache.set(cacheKey, mappedData, effectiveTtl);
     return mappedData;
   } catch (err) {
     console.error(
@@ -814,12 +819,21 @@ const translateLineup = (apiResponse, side) => {
   });
 
   return {
+    teamName: apiLineup.team.name,
+    formation: apiLineup.formation || "N/A",
+    starters: mappedStarters,
+    startXI: mappedStarters,
+    subs: mappedSubs,
+    substitutes: mappedSubs,
     lineup: {
       id: apiLineup.team.id,
       name: apiLineup.team.name,
+      teamName: apiLineup.team.name,
       formation: apiLineup.formation || "N/A",
       starters: mappedStarters,
+      startXI: mappedStarters,
       subs: mappedSubs,
+      substitutes: mappedSubs,
     },
   };
 };
