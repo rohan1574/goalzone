@@ -883,6 +883,32 @@ export const fetchFixturePredictions = async (eventid: string | number) => {
   }
 };
 
+export const fetchFixtureEvents = async (eventid: string | number) => {
+  if (!eventid) return [];
+  try {
+    const response = await api.get("/football-get-match-events", {
+      params: { eventid },
+    });
+    return response.data || [];
+  } catch (error) {
+    console.error("Error fetching match events:", error);
+    return [];
+  }
+};
+
+export const fetchFixtureH2H = async (homeId: string | number, awayId: string | number) => {
+  if (!homeId || !awayId) return null;
+  try {
+    const response = await api.get("/football-get-h2h", {
+      params: { homeId, awayId },
+    });
+    return response.data || null;
+  } catch (error) {
+    console.error("Error fetching H2H:", error);
+    return null;
+  }
+};
+
 export const fetchLeagueFixtures = async (leagueid: string | number) => {
   if (!leagueid) return [];
   const CACHE_KEY = `@goalzone_api_cache_league_fixtures_${leagueid}`;

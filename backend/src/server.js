@@ -1253,12 +1253,16 @@ app.get("/football-get-news", async (req, res) => {
 // ==========================================
 function getMockStats(eventid) {
   return [
-    { name: "Possession", home: "50%", away: "50%", homePct: 50, awayPct: 50 },
-    { name: "Shots", home: "10", away: "10", homePct: 50, awayPct: 50 },
-    { name: "Shots on Target", home: "4", away: "4", homePct: 50, awayPct: 50 },
-    { name: "Fouls", home: "12", away: "12", homePct: 50, awayPct: 50 },
-    { name: "Corner Kicks", home: "5", away: "5", homePct: 50, awayPct: 50 },
-    { name: "Yellow Cards", home: "2", away: "2", homePct: 50, awayPct: 50 },
+    { name: "Shots on Target", home: "5", away: "2", homePct: 71, awayPct: 29 },
+    { name: "Shots off Target", home: "10", away: "5", homePct: 67, awayPct: 33 },
+    { name: "Blocked Shots", home: "2", away: "3", homePct: 40, awayPct: 60 },
+    { name: "Possession (%)", home: "51%", away: "49%", homePct: 51, awayPct: 49 },
+    { name: "Corner Kicks", home: "4", away: "5", homePct: 44, awayPct: 56 },
+    { name: "Offsides", home: "5", away: "1", homePct: 83, awayPct: 17 },
+    { name: "Fouls", home: "14", away: "19", homePct: 42, awayPct: 58 },
+    { name: "Goalkeeper Saves", home: "2", away: "4", homePct: 33, awayPct: 67 },
+    { name: "Yellow Cards", home: "1", away: "3", homePct: 25, awayPct: 75 },
+    { name: "Red Cards", home: "0", away: "0", homePct: 50, awayPct: 50 },
   ];
 }
 
@@ -1270,12 +1274,16 @@ function parseFixtureStats(apiResponse) {
   const awayTeamStats = responseList[1]?.statistics || [];
 
   const targetStats = [
-    { key: "Ball Possession", name: "Possession" },
-    { key: "Total Shots", name: "Shots" },
     { key: "Shots on Goal", name: "Shots on Target" },
-    { key: "Fouls", name: "Fouls" },
+    { key: "Shots off Goal", name: "Shots off Target" },
+    { key: "Blocked Shots", name: "Blocked Shots" },
+    { key: "Ball Possession", name: "Possession (%)" },
     { key: "Corner Kicks", name: "Corner Kicks" },
+    { key: "Offsides", name: "Offsides" },
+    { key: "Fouls", name: "Fouls" },
+    { key: "Goalkeeper Saves", name: "Goalkeeper Saves" },
     { key: "Yellow Cards", name: "Yellow Cards" },
+    { key: "Red Cards", name: "Red Cards" },
   ];
 
   return targetStats.map((target) => {
@@ -1329,7 +1337,7 @@ app.get("/football-get-match-statistics", async (req, res) => {
       cacheKey,
       "/fixtures/statistics",
       { fixture: eventid },
-      90, // 90s TTL: balances real-time feel vs API quota usage
+      90,
       (apiResponse) => {
         return parseFixtureStats(apiResponse);
       },
@@ -1338,6 +1346,126 @@ app.get("/football-get-match-statistics", async (req, res) => {
   } catch (err) {
     res.status(500).json({
       error: "Failed to fetch match statistics",
+      message: err.message,
+    });
+  }
+});
+
+// ==========================================
+// 8.1 FIXTURE EVENTS (MATCH TIMELINE)
+// ==========================================
+function parseFixtureEvents(apiResponse) {
+  const list = apiResponse?.response || [];
+  return list.map((item, idx) => ({
+    id: `${item.team?.id}-${item.time?.elapsed}-${idx}`,
+    type: item.type === "Goal" ? "goal" :
+          item.type === "subst" ? "subst" :
+          item.type === "Card" ? "card" : item.type.toLowerCase(),
+    detail: item.detail || "",
+    minute: item.time?.extra ? `${item.time.elapsed}+${item.time.extra}'` : `${item.time?.elapsed}'`,
+    elapsed: item.time?.elapsed || 0,
+    teamId: item.team?.id,
+    teamName: item.team?.name || "",
+    teamLogo: item.team?.logo || "",
+    player: item.player?.name || "Player",
+    assist: item.assist?.name || null
+  }));
+}
+
+app.get("/football-get-match-events", async (req, res) => {
+  const eventid = req.query.eventid;
+  if (!eventid) {
+    return res.status(400).json({ error: "Missing eventid parameter" });
+  }
+
+  const cacheKey = `events_fixture_${eventid}`;
+  try {
+    const data = await fetchAndCache(
+      cacheKey,
+      "/fixtures/events",
+      { fixture: eventid },
+      300,
+      (apiResponse) => parseFixtureEvents(apiResponse)
+    );
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to fetch match events",
+      message: err.message,
+    });
+  }
+});
+
+// ==========================================
+// 8.2 HEAD TO HEAD (H2H)
+// ==========================================
+function parseH2H(apiResponse, homeId, awayId) {
+  const list = apiResponse?.response || [];
+  let homeWins = 0;
+  let awayWins = 0;
+  let draws = 0;
+
+  const matches = list.map((item) => {
+    const isHome = String(item.teams?.home?.id) === String(homeId);
+    const homeScore = item.goals?.home ?? 0;
+    const awayScore = item.goals?.away ?? 0;
+
+    if (homeScore > awayScore) {
+      if (isHome) homeWins++; else awayWins++;
+    } else if (awayScore > homeScore) {
+      if (isHome) awayWins++; else homeWins++;
+    } else {
+      draws++;
+    }
+
+    return {
+      id: String(item.fixture?.id),
+      date: item.fixture?.date ? new Date(item.fixture.date).toLocaleDateString() : '',
+      league: item.league?.name || '',
+      home: {
+        id: item.teams?.home?.id,
+        name: item.teams?.home?.name,
+        logo: item.teams?.home?.logo,
+        score: homeScore
+      },
+      away: {
+        id: item.teams?.away?.id,
+        name: item.teams?.away?.name,
+        logo: item.teams?.away?.logo,
+        score: awayScore
+      }
+    };
+  });
+
+  return {
+    totalMatches: list.length,
+    homeWins,
+    awayWins,
+    draws,
+    matches: matches.slice(0, 5)
+  };
+}
+
+app.get("/football-get-h2h", async (req, res) => {
+  const { homeId, awayId } = req.query;
+  if (!homeId || !awayId) {
+    return res.status(400).json({ error: "Missing homeId or awayId parameter" });
+  }
+
+  const h2hParam = `${homeId}-${awayId}`;
+  const cacheKey = `h2h_${h2hParam}`;
+  try {
+    const data = await fetchAndCache(
+      cacheKey,
+      "/fixtures/headtohead",
+      { h2h: h2hParam, last: 10 },
+      86400,
+      (apiResponse) => parseH2H(apiResponse, homeId, awayId)
+    );
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to fetch H2H data",
       message: err.message,
     });
   }
