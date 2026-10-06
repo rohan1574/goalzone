@@ -40,11 +40,172 @@ interface Match {
   status: string;
 }
 
-interface MatchDetailsModalProps {
-  visible: boolean;
-  match: Match | null;
-  onClose: () => void;
-}
+// Helper to render individual player card on the pitch with player image & shirt number badge
+const PlayerCard = ({ player, isHome }: { player: any; isHome: boolean }) => {
+  const [imgError, setImgError] = useState(false);
+  const playerId = player.id || player.player?.id;
+  const photoUrl = player.photo || (playerId ? `https://media.api-sports.io/football/players/${playerId}.png` : null);
+  const number = player.shirtNumber || player.number || player.player?.number || "";
+  const fullName = player.name || player.player?.name || "";
+  const nameParts = fullName.trim().split(" ");
+  const shortName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : fullName;
+
+  return (
+    <View className="items-center my-1" style={{ width: 60 }}>
+      <View className="relative items-center justify-center">
+        {photoUrl && !imgError ? (
+          <Image
+            source={{ uri: photoUrl }}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              borderWidth: 1.5,
+              borderColor: isHome ? "#02DB54" : "#60A5FA",
+              backgroundColor: "#1E293B",
+            }}
+            onError={() => setImgError(true)}
+            resizeMode="cover"
+          />
+        ) : (
+          <View
+            className="w-9 h-9 rounded-full items-center justify-center bg-black/70"
+            style={{ borderWidth: 1.5, borderColor: isHome ? "#02DB54" : "#60A5FA" }}
+          >
+            <Text className="text-white font-black text-xs">{number || "?"}</Text>
+          </View>
+        )}
+        {photoUrl && !imgError && number ? (
+          <View
+            className="absolute -bottom-1 -right-1 px-1 rounded-full border border-black min-w-[15px] items-center justify-center"
+            style={{ backgroundColor: isHome ? "#02DB54" : "#3B82F6" }}
+          >
+            <Text className="text-black font-black text-[8px]">{number}</Text>
+          </View>
+        ) : null}
+      </View>
+      <Text
+        className="text-white font-extrabold text-[9px] mt-1 text-center"
+        numberOfLines={1}
+        style={{ maxWidth: 60 }}
+      >
+        {shortName}
+      </Text>
+    </View>
+  );
+};
+
+// Helper to render substitute bench player row with image
+const SubPlayerRow = ({ player, isHome }: { player: any; isHome: boolean }) => {
+  const [imgError, setImgError] = useState(false);
+  const playerId = player.id || player.player?.id;
+  const photoUrl = player.photo || (playerId ? `https://media.api-sports.io/football/players/${playerId}.png` : null);
+  const number = player.shirtNumber || player.number || player.player?.number || "-";
+  const name = player.name || player.player?.name || "";
+
+  return (
+    <View className={`flex-row items-center gap-2 my-1 ${isHome ? "justify-start" : "justify-end"}`}>
+      {isHome && (
+        <View className="relative">
+          {photoUrl && !imgError ? (
+            <Image
+              source={{ uri: photoUrl }}
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 11,
+                borderWidth: 1,
+                borderColor: "#02DB54",
+                backgroundColor: "#1E293B",
+              }}
+              onError={() => setImgError(true)}
+              resizeMode="cover"
+            />
+          ) : (
+            <View className="w-5 h-5 rounded-full bg-white/10 items-center justify-center">
+              <Text className="text-white font-bold text-[9px]">{number}</Text>
+            </View>
+          )}
+        </View>
+      )}
+      <Text className={`text-gray-300 text-xs font-semibold flex-1 ${isHome ? "text-left" : "text-right"}`} numberOfLines={1}>
+        {name}
+      </Text>
+      {!isHome && (
+        <View className="relative">
+          {photoUrl && !imgError ? (
+            <Image
+              source={{ uri: photoUrl }}
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 11,
+                borderWidth: 1,
+                borderColor: "#60A5FA",
+                backgroundColor: "#1E293B",
+              }}
+              onError={() => setImgError(true)}
+              resizeMode="cover"
+            />
+          ) : (
+            <View className="w-5 h-5 rounded-full bg-white/10 items-center justify-center">
+              <Text className="text-white font-bold text-[9px]">{number}</Text>
+            </View>
+          )}
+        </View>
+      )}
+    </View>
+  );
+};
+
+// Helper to group starters by formation (3-4-2-1, 4-2-3-1, 4-3-3, 4-4-2, 5-3-2, etc.)
+const getFormationRows = (starters: any[], formationStr: string) => {
+  if (!starters || starters.length === 0) return [];
+
+  // 1. Try grouping by `row` or `grid` if present from API
+  const hasGridRows = starters.some((p) => p.row || (p.grid && String(p.grid).includes(":")));
+  if (hasGridRows) {
+    const rowMap: { [key: number]: any[] } = {};
+    starters.forEach((p) => {
+      let r = p.row;
+      if (!r && p.grid) {
+        const parts = String(p.grid).split(":");
+        r = parseInt(parts[0], 10) || 1;
+      }
+      if (!r) r = 1;
+      if (!rowMap[r]) rowMap[r] = [];
+      rowMap[r].push(p);
+    });
+    const sortedKeys = Object.keys(rowMap).map(Number).sort((a, b) => a - b);
+    return sortedKeys.map((k) => rowMap[k]);
+  }
+
+  // 2. Try parsing formation string (e.g., "3-4-2-1", "4-2-3-1", "4-3-3", "4-4-2", "3-5-2")
+  if (formationStr && typeof formationStr === "string" && formationStr.includes("-")) {
+    const parts = formationStr.split("-").map((n) => parseInt(n.trim(), 10) || 0).filter((n) => n > 0);
+    const counts = [1, ...parts]; // Row 0 is GK (1)
+    const sum = counts.reduce((a, b) => a + b, 0);
+
+    if (sum === starters.length) {
+      const rows: any[][] = [];
+      let idx = 0;
+      for (const c of counts) {
+        rows.push(starters.slice(idx, idx + c));
+        idx += c;
+      }
+      return rows;
+    }
+  }
+
+  // 3. Fallback: split starters into 4 default rows (GK + 3 outfield rows)
+  const gk = starters.slice(0, 1);
+  const rest = starters.slice(1);
+  if (rest.length === 10) {
+    return [gk, rest.slice(0, 4), rest.slice(4, 7), rest.slice(7, 10)];
+  }
+
+  return [gk, rest];
+};
 
 export default function MatchDetailsModal({
   visible,
@@ -596,57 +757,55 @@ export default function MatchDetailsModal({
               ) : (
                 <View>
                   {/* Soccer Pitch Container */}
-                  <View className="bg-[#122818] rounded-2xl p-4 border border-[#02DB54]/30 relative overflow-hidden min-h-[480px]">
+                  <View className="bg-[#0F2314] rounded-2xl p-3 border border-[#02DB54]/30 relative overflow-hidden min-h-[540px] flex-col justify-between">
                     {/* Soccer Pitch Markings Overlay */}
                     <Svg height="100%" width="100%" style={{ position: "absolute" }}>
-                      <Rect x="5%" y="3%" width="90%" height="94%" fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
-                      <SvgLine x1="5%" y1="50%" x2="95%" y2="50%" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
-                      <Circle cx="50%" cy="50%" r="40" fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
+                      <Rect x="4%" y="2%" width="92%" height="96%" fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.2} />
+                      {/* Penalty box top */}
+                      <Rect x="25%" y="2%" width="50%" height="15%" fill="none" stroke="#FFFFFF" strokeWidth="1.2" opacity={0.2} />
+                      {/* Penalty box bottom */}
+                      <Rect x="25%" y="83%" width="50%" height="15%" fill="none" stroke="#FFFFFF" strokeWidth="1.2" opacity={0.2} />
+                      {/* Center line */}
+                      <SvgLine x1="4%" y1="50%" x2="96%" y2="50%" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
+                      {/* Center circle */}
+                      <Circle cx="50%" cy="50%" r="42" fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
                     </Svg>
 
-                    {/* Home Team (Top Half Pitch - All Starters) */}
-                    <View className="flex-1 py-2">
-                      <Text className="text-[#86EFAC] text-[10px] font-black uppercase text-center mb-3">
+                    {/* Home Team (Top Half Pitch) */}
+                    <View className="flex-1 justify-around py-2">
+                      <Text className="text-[#86EFAC] text-[11px] font-black uppercase text-center mb-2">
                         {homeLineupData.teamName} ({homeLineupData.formation})
                       </Text>
 
-                      <View className="flex-row flex-wrap justify-around items-center">
-                        {homeStarters.map((p: any, i: number) => (
-                          <View key={i} className="items-center mx-1 my-1.5" style={{ width: 62 }}>
-                            <View className="w-8 h-8 rounded-full bg-black/60 border border-[#02DB54] items-center justify-center">
-                              <Text className="text-white font-black text-[11px]">
-                                {p.number || p.shirtNumber || p.player?.number || i + 1}
-                              </Text>
-                            </View>
-                            <Text className="text-white font-bold text-[9px] mt-1 text-center" numberOfLines={1}>
-                              {p.name || p.player?.name}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
+                      {getFormationRows(homeStarters, homeLineupData.formation).map((row: any[], rIdx: number) => (
+                        <View key={`h-row-${rIdx}`} className="flex-row justify-around items-center px-1 my-1">
+                          {row.map((p: any, pIdx: number) => (
+                            <PlayerCard key={`h-p-${p.id || pIdx}`} player={p} isHome={true} />
+                          ))}
+                        </View>
+                      ))}
                     </View>
 
-                    {/* Pitch Divider Line */}
-                    <View className="h-[1px] bg-white/20 my-4" />
-
-                    {/* Away Team (Bottom Half Pitch - All Starters) */}
-                    <View className="flex-1 py-2">
-                      <View className="flex-row flex-wrap justify-around items-center">
-                        {awayStarters.map((p: any, i: number) => (
-                          <View key={i} className="items-center mx-1 my-1.5" style={{ width: 62 }}>
-                            <View className="w-8 h-8 rounded-full bg-black/60 border border-white/60 items-center justify-center">
-                              <Text className="text-white font-black text-[11px]">
-                                {p.number || p.shirtNumber || p.player?.number || i + 1}
-                              </Text>
-                            </View>
-                            <Text className="text-white font-bold text-[9px] mt-1 text-center" numberOfLines={1}>
-                              {p.name || p.player?.name}
-                            </Text>
-                          </View>
-                        ))}
+                    {/* Center Pitch Divider Line with Icon */}
+                    <View className="flex-row items-center justify-center my-2">
+                      <View className="flex-1 h-[1px] bg-white/20" />
+                      <View className="w-5 h-5 rounded-full bg-[#02DB54]/20 border border-[#02DB54]/50 items-center justify-center mx-2">
+                        <Text className="text-[9px]">⚽</Text>
                       </View>
+                      <View className="flex-1 h-[1px] bg-white/20" />
+                    </View>
 
-                      <Text className="text-gray-300 text-[10px] font-black uppercase text-center mt-3">
+                    {/* Away Team (Bottom Half Pitch - Flipped so Attack faces Center) */}
+                    <View className="flex-1 justify-around py-2">
+                      {getFormationRows(awayStarters, awayLineupData.formation).slice().reverse().map((row: any[], rIdx: number) => (
+                        <View key={`a-row-${rIdx}`} className="flex-row justify-around items-center px-1 my-1">
+                          {row.map((p: any, pIdx: number) => (
+                            <PlayerCard key={`a-p-${p.id || pIdx}`} player={p} isHome={false} />
+                          ))}
+                        </View>
+                      ))}
+
+                      <Text className="text-[#93C5FD] text-[11px] font-black uppercase text-center mt-2">
                         {awayLineupData.teamName} ({awayLineupData.formation})
                       </Text>
                     </View>
@@ -665,31 +824,17 @@ export default function MatchDetailsModal({
                             {homeLineupData.teamName}
                           </Text>
                           {homeLineupData.subs.map((s: any, idx: number) => (
-                            <View key={idx} className="flex-row items-center gap-2 my-1">
-                              <View className="w-5 h-5 rounded-full bg-white/10 items-center justify-center">
-                                <Text className="text-white font-bold text-[9px]">{s.shirtNumber || s.number || "-"}</Text>
-                              </View>
-                              <Text className="text-gray-300 text-xs font-semibold flex-1" numberOfLines={1}>
-                                {s.name || s.player?.name}
-                              </Text>
-                            </View>
+                            <SubPlayerRow key={idx} player={s} isHome={true} />
                           ))}
                         </View>
 
                         {/* Away Subs */}
                         <View className="flex-1 pl-2">
-                          <Text className="text-white font-extrabold text-[11px] mb-2 text-right" numberOfLines={1}>
+                          <Text className="text-[#93C5FD] font-extrabold text-[11px] mb-2 text-right" numberOfLines={1}>
                             {awayLineupData.teamName}
                           </Text>
                           {awayLineupData.subs.map((s: any, idx: number) => (
-                            <View key={idx} className="flex-row items-center gap-2 my-1 justify-end">
-                              <Text className="text-gray-300 text-xs font-semibold flex-1 text-right" numberOfLines={1}>
-                                {s.name || s.player?.name}
-                              </Text>
-                              <View className="w-5 h-5 rounded-full bg-white/10 items-center justify-center">
-                                <Text className="text-white font-bold text-[9px]">{s.shirtNumber || s.number || "-"}</Text>
-                              </View>
-                            </View>
+                            <SubPlayerRow key={idx} player={s} isHome={false} />
                           ))}
                         </View>
                       </View>

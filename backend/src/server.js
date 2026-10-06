@@ -805,6 +805,11 @@ const translateLineup = (apiResponse, side) => {
       id: p.id,
       name: p.name,
       shirtNumber: String(p.number || ""),
+      grid: p.grid || null,
+      row,
+      col,
+      pos: p.pos || null,
+      photo: p.photo || (p.id ? `https://media.api-sports.io/football/players/${p.id}.png` : null),
       verticalLayout: { x, y },
     };
   });
@@ -815,6 +820,8 @@ const translateLineup = (apiResponse, side) => {
       id: p.id,
       name: p.name,
       shirtNumber: String(p.number || ""),
+      pos: p.pos || null,
+      photo: p.photo || (p.id ? `https://media.api-sports.io/football/players/${p.id}.png` : null),
     };
   });
 
