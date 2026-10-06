@@ -479,13 +479,20 @@ export default function ExploreScreen() {
               ? aShort
               : aName.substring(0, 3).toUpperCase();
 
+          const matchStatus = m.status || (getMatchStatus(m) === "Live" ? "Live" : "NS");
+          const matchScore = m.score || getMatchScore(m).display || "VS";
+          const matchMinute = m.minute || (matchStatus === "FT" ? "FT" : matchStatus === "NS" ? "NS" : "Live");
+
           return {
             id: getMatchEventId(m) || Math.random().toString(),
-            status: getMatchStatus(m) === "Live" ? "Live" : "NS",
+            status: matchStatus,
+            score: matchScore,
+            minute: matchMinute,
             time:
               getMatchValue(m, ["time", "status.time", "date"]) || "19:00",
             date: formatDateString(selectedDate),
             leagueId: getMatchLeagueId(m),
+            league: m.league || "Match",
             home: {
               id:
                 m.home?.id ||

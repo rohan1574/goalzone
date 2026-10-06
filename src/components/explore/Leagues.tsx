@@ -6,9 +6,11 @@ interface LeagueMatch {
   id: string;
   status: string;
   time: string;
+  score?: string;
+  minute?: string;
   date?: string;
-  home: { name: string; logo: string };
-  away: { name: string; logo: string };
+  home: { id?: string | number; name: string; logo: string };
+  away: { id?: string | number; name: string; logo: string };
 }
 
 interface LeagueGroup {
@@ -68,9 +70,9 @@ export default function Leagues({
                     short: match.away.name.substring(0, 3).toUpperCase(),
                     logo: match.away.logo,
                   },
-                  score: match.time || "VS",
-                  minute: match.status || "Upcoming",
-                  status: match.status || "Upcoming",
+                  score: match.score || (match.status === "FT" || match.status === "Live" ? match.time : "VS"),
+                  minute: match.minute || match.status || "NS",
+                  status: match.status || "NS",
                 });
               }
             };
@@ -86,12 +88,12 @@ export default function Leagues({
                 <View className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#02DB54] rounded-l-3xl shadow-lg shadow-[#02DB54]" />
 
                 {/* Left column: Match times / info */}
-                <View className="w-[18%] pl-2 justify-center">
+                <View className="w-[20%] pl-2 justify-center">
                   <Text className="text-gray-400 text-xs font-bold tracking-wider mb-1">
                     {match.status}
                   </Text>
-                  <Text className="text-white font-black text-sm tracking-tight mb-0.5">
-                    {match.time}
+                  <Text className="text-[#02DB54] font-black text-sm tracking-tight mb-0.5">
+                    {match.score && match.score !== "VS" ? match.score : match.time}
                   </Text>
                   {match.date && (
                     <Text className="text-gray-500 text-[10px] font-semibold">
