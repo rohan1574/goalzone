@@ -409,22 +409,27 @@ app.get("/football-get-popular-teams", (req, res) => {
 // ==========================================
 app.get("/football-dashboard", async (req, res) => {
   const dateQuery = req.query.date || new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  
+  // 1. Get latest live matches from liveScoreManager / shared cache
+  let live = [];
+  const liveScoreData = getCachedLiveScores();
+  if (liveScoreData && Array.isArray(liveScoreData.matches) && liveScoreData.matches.length > 0) {
+    live = liveScoreData.matches;
+  } else {
+    const fallback = cache.get("current_live_matches_fallback");
+    if (Array.isArray(fallback) && fallback.length > 0) {
+      live = fallback;
+    }
+  }
+
   const cacheKey = `dashboard_aggregated_${dateQuery}`;
   const cached = cache.get(cacheKey);
   if (cached) {
-    res.setHeader("Cache-Control", "public, max-age=30");
+    // Dynamic live injection ensures live matches are never stale in cluster mode
+    cached.live = live;
+    res.setHeader("Cache-Control", "public, max-age=15");
     return res.json(cached);
   }
-
-  try {
-    // 1. Live matches from cache or fallback
-    let live = [];
-    const liveScoreData = getCachedLiveScores();
-    if (liveScoreData && Array.isArray(liveScoreData.matches) && liveScoreData.matches.length > 0) {
-      live = liveScoreData.matches;
-    } else {
-      live = cache.get("current_live_matches_fallback") || [];
-    }
 
     // 2. Fixtures by date
     const formattedDate = `${dateQuery.substring(0, 4)}-${dateQuery.substring(4, 6)}-${dateQuery.substring(6, 8)}`;

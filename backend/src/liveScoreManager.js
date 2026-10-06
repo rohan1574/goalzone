@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { getMessaging } = require('./firebase');
+const { cache } = require('./cache');
 
 // Configuration & Environment Variables
 const rawBaseUrl = process.env.THIRD_PARTY_API_URL || process.env.APISPORTS_URL || 'https://v3.football.api-sports.io';
@@ -17,13 +18,11 @@ const apiClient = axios.create({
 });
 
 // ==========================================
-// 1. IN-MEMORY CACHE (ATOMIC OVERWRITE)
+// 1. IN-MEMORY & DISK-BACKED CACHE
 // ==========================================
 /**
  * Global cache object.
  * MUST ALWAYS BE REPLACED WITH A NEW OBJECT REFERENCE ON FETCH.
- * Never use .push() or mutate nested arrays directly to ensure V8 Garbage Collector 
- * can clean up old memory allocations cleanly.
  */
 let cachedLiveScores = Object.freeze({
   lastUpdated: null,
@@ -33,9 +32,16 @@ let cachedLiveScores = Object.freeze({
 
 /**
  * Reader function for API route endpoint (/api/live-scores)
- * O(1) response time, zero third-party API hits from client requests.
+ * Shared across PM2 cluster instances via disk fallback.
  */
 function getCachedLiveScores() {
+  if (cachedLiveScores && Array.isArray(cachedLiveScores.matches) && cachedLiveScores.matches.length > 0) {
+    return cachedLiveScores;
+  }
+  const diskData = cache.get('live_scores_global');
+  if (diskData && Array.isArray(diskData.matches)) {
+    return diskData;
+  }
   return cachedLiveScores;
 }
 
@@ -230,6 +236,8 @@ async function fetchAndProcessLiveScores() {
       count: normalizedMatches.length,
       matches: normalizedMatches
     });
+
+    cache.set('live_scores_global', cachedLiveScores, 120);
 
     console.log(`[Poll Engine] Success. Matches active: ${normalizedMatches.length}`);
     return normalizedMatches.length;
