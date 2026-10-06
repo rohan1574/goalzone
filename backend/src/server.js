@@ -1,7 +1,9 @@
+// MUST be first — loads .env before any module reads process.env
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const dotenv = require("dotenv");
 const { initFirebase } = require("./firebase");
 const {
   getCachedLiveScores,
@@ -10,8 +12,6 @@ const {
 } = require("./liveScoreManager");
 const { cache } = require("./cache");
 const { startCacheWarmer, stopCacheWarmer } = require("./cacheWarmer");
-
-dotenv.config();
 
 // Initialize Firebase Admin SDK
 initFirebase();
