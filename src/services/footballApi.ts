@@ -717,9 +717,12 @@ export const fetchHomeTeamLineup = async (eventid: string | number) => {
     if (cachedTime && cachedData) {
       const parsedTime = parseInt(cachedTime, 10);
       const now = Date.now();
-      if (now - parsedTime < 300000) {
+      const parsed = JSON.parse(cachedData);
+      // Only serve cache if it has real lineup data (not null/empty)
+      const hasData = parsed && (parsed.starters?.length > 0 || parsed.startXI?.length > 0 || parsed.lineup?.starters?.length > 0);
+      if (hasData && now - parsedTime < 300000) {
         console.log(`[Cache] Using cached home lineup for event ${eventid}.`);
-        return JSON.parse(cachedData);
+        return parsed;
       }
     }
   } catch (err) {
@@ -734,12 +737,16 @@ export const fetchHomeTeamLineup = async (eventid: string | number) => {
       params: { eventid },
     });
     const freshData = unwrapApiResponse(response.data);
+    const hasData = freshData && (freshData.starters?.length > 0 || freshData.startXI?.length > 0 || freshData.lineup?.starters?.length > 0);
 
-    try {
-      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
-      await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-    } catch (err) {
-      console.warn("Error saving home lineup cache:", err);
+    // Only cache if real data exists
+    if (hasData) {
+      try {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
+        await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+      } catch (err) {
+        console.warn("Error saving home lineup cache:", err);
+      }
     }
 
     return freshData;
@@ -761,9 +768,12 @@ export const fetchAwayTeamLineup = async (eventid: string | number) => {
     if (cachedTime && cachedData) {
       const parsedTime = parseInt(cachedTime, 10);
       const now = Date.now();
-      if (now - parsedTime < 300000) {
+      const parsed = JSON.parse(cachedData);
+      // Only serve cache if it has real lineup data (not null/empty)
+      const hasData = parsed && (parsed.starters?.length > 0 || parsed.startXI?.length > 0 || parsed.lineup?.starters?.length > 0);
+      if (hasData && now - parsedTime < 300000) {
         console.log(`[Cache] Using cached away lineup for event ${eventid}.`);
-        return JSON.parse(cachedData);
+        return parsed;
       }
     }
   } catch (err) {
@@ -778,12 +788,16 @@ export const fetchAwayTeamLineup = async (eventid: string | number) => {
       params: { eventid },
     });
     const freshData = unwrapApiResponse(response.data);
+    const hasData = freshData && (freshData.starters?.length > 0 || freshData.startXI?.length > 0 || freshData.lineup?.starters?.length > 0);
 
-    try {
-      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
-      await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-    } catch (err) {
-      console.warn("Error saving away lineup cache:", err);
+    // Only cache if real data exists
+    if (hasData) {
+      try {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
+        await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+      } catch (err) {
+        console.warn("Error saving away lineup cache:", err);
+      }
     }
 
     return freshData;
@@ -805,10 +819,11 @@ export const fetchFixtureStatistics = async (eventid: string | number) => {
     if (cachedTime && cachedData) {
       const parsedTime = parseInt(cachedTime, 10);
       const now = Date.now();
-      // Cache stats for 1 minute (60,000 ms) for live/recent games
-      if (now - parsedTime < 60000) {
+      const parsed = JSON.parse(cachedData);
+      // Only serve cache if it has real stats (non-empty array)
+      if (Array.isArray(parsed) && parsed.length > 0 && now - parsedTime < 60000) {
         console.log(`[Cache] Using cached statistics for event ${eventid}.`);
-        return JSON.parse(cachedData);
+        return parsed;
       }
     }
   } catch (err) {
@@ -824,11 +839,14 @@ export const fetchFixtureStatistics = async (eventid: string | number) => {
     });
     const freshData = response.data || [];
 
-    try {
-      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
-      await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-    } catch (err) {
-      console.warn("Error saving statistics cache:", err);
+    // Only cache non-empty stats
+    if (Array.isArray(freshData) && freshData.length > 0) {
+      try {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
+        await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+      } catch (err) {
+        console.warn("Error saving statistics cache:", err);
+      }
     }
 
     return freshData;
