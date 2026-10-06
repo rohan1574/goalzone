@@ -561,6 +561,11 @@ export default function MatchDetailsModal({
             <View className="mb-6">
               {loadingLineup ? (
                 <ActivityIndicator color="#02DB54" className="my-6" />
+              ) : (!homeLineup?.startXI || homeLineup.startXI.length === 0) ? (
+                <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
+                  <Text className="text-[#02DB54] font-black text-sm mb-1">Lineups Not Announced</Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">Team lineups will be updated closer to kick-off.</Text>
+                </View>
               ) : (
                 <View className="bg-[#122818] rounded-2xl p-4 border border-[#02DB54]/30 relative overflow-hidden min-h-[460px]">
                   {/* Soccer Pitch Markings Overlay */}
@@ -577,12 +582,7 @@ export default function MatchDetailsModal({
                     </Text>
 
                     <View className="flex-row justify-around my-2">
-                      {(homeLineup?.startXI?.slice(0, 4) || [
-                        { name: "Muslera", number: 16 },
-                        { name: "Núñez", number: 4 },
-                        { name: "González", number: 14 },
-                        { name: "Benedetti", number: 13 },
-                      ]).map((p: any, i: number) => (
+                      {homeLineup.startXI.slice(0, 4).map((p: any, i: number) => (
                         <View key={i} className="items-center">
                           <View className="w-9 h-9 rounded-full bg-white/10 border border-[#02DB54] items-center justify-center">
                             <Text className="text-white font-black text-xs">{p.number || p.player?.number || i+1}</Text>
@@ -595,11 +595,7 @@ export default function MatchDetailsModal({
                     </View>
 
                     <View className="flex-row justify-around my-2">
-                      {(homeLineup?.startXI?.slice(4, 7) || [
-                        { name: "Piovi", number: 21 },
-                        { name: "Rodríguez", number: 31 },
-                        { name: "Burgos", number: 17 },
-                      ]).map((p: any, i: number) => (
+                      {homeLineup.startXI.slice(4, 7).map((p: any, i: number) => (
                         <View key={i} className="items-center">
                           <View className="w-9 h-9 rounded-full bg-white/10 border border-[#02DB54] items-center justify-center">
                             <Text className="text-white font-black text-xs">{p.number || p.player?.number || i+5}</Text>
@@ -618,11 +614,7 @@ export default function MatchDetailsModal({
                   {/* Away Team (Bottom Half Pitch) */}
                   <View className="flex-1 justify-around py-2">
                     <View className="flex-row justify-around my-2">
-                      {(awayLineup?.startXI?.slice(4, 7) || [
-                        { name: "Fernández", number: 30 },
-                        { name: "Lencioni", number: 26 },
-                        { name: "Vargas", number: 8 },
-                      ]).map((p: any, i: number) => (
+                      {(awayLineup?.startXI || homeLineup.startXI).slice(4, 7).map((p: any, i: number) => (
                         <View key={i} className="items-center">
                           <View className="w-9 h-9 rounded-full bg-white/10 border border-white/50 items-center justify-center">
                             <Text className="text-white font-black text-xs">{p.number || p.player?.number || i+5}</Text>
@@ -635,12 +627,7 @@ export default function MatchDetailsModal({
                     </View>
 
                     <View className="flex-row justify-around my-2">
-                      {(awayLineup?.startXI?.slice(0, 4) || [
-                        { name: "Recalde", number: 3 },
-                        { name: "Muñoz", number: 4 },
-                        { name: "Mondino", number: 2 },
-                        { name: "Paredes", number: 32 },
-                      ]).map((p: any, i: number) => (
+                      {(awayLineup?.startXI || homeLineup.startXI).slice(0, 4).map((p: any, i: number) => (
                         <View key={i} className="items-center">
                           <View className="w-9 h-9 rounded-full bg-white/10 border border-white/50 items-center justify-center">
                             <Text className="text-white font-black text-xs">{p.number || p.player?.number || i+1}</Text>
