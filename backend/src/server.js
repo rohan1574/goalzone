@@ -1282,7 +1282,7 @@ function getMockStats(eventid) {
 
 function parseFixtureStats(apiResponse) {
   const responseList = apiResponse.response || [];
-  if (responseList.length === 0) return getMockStats("generic");
+  if (responseList.length === 0) return [];
 
   const homeTeamStats = responseList[0]?.statistics || [];
   const awayTeamStats = responseList[1]?.statistics || [];

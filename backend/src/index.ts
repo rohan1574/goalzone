@@ -708,7 +708,7 @@ function getMockStats(eventid: string) {
 // Helper to translate fixture stats from api-football format
 function parseFixtureStats(apiResponse: any) {
   const responseList = apiResponse.response || [];
-  if (responseList.length === 0) return getMockStats("generic"); // Fallback if no stats available from API
+  if (responseList.length === 0) return [];
 
   const homeTeamStats = responseList[0]?.statistics || [];
   const awayTeamStats = responseList[1]?.statistics || [];

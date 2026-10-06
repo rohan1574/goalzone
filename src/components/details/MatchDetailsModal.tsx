@@ -248,54 +248,22 @@ export default function MatchDetailsModal({
 
   const timelineEvents = getTimelineEvents();
 
-  // Helper to extract lineup data flexibly
+  // Helper to extract lineup data flexibly (no demo fallback)
   const getLineupObj = (data: any, fallbackName: string) => {
-    if (!data) return { starters: [], formation: "4-3-3", teamName: fallbackName };
+    if (!data) return { starters: [], formation: "", teamName: fallbackName };
     const l = data.lineup || data;
     const starters = l.starters || l.startXI || l.startingXI || l.startersList || [];
-    const formation = l.formation || "4-3-3";
+    const formation = l.formation || "";
     const teamName = l.name || l.teamName || fallbackName;
     return { starters, formation, teamName };
   };
 
   const homeLineupData = getLineupObj(homeLineup, match.home.name);
   const awayLineupData = getLineupObj(awayLineup, match.away.name);
-
-  const getEffectiveStarters = (starters: any[], teamName: string, isHome: boolean) => {
-    if (starters && starters.length > 0) return starters;
-    if (isUpcoming) return [];
-    return [
-      { number: 1, name: `${teamName} GK` },
-      { number: 2, name: `Def R` },
-      { number: 4, name: `Def C1` },
-      { number: 5, name: `Def C2` },
-      { number: 3, name: `Def L` },
-      { number: 6, name: `Mid L` },
-      { number: 8, name: `Mid C` },
-      { number: 10, name: `Mid R` },
-      { number: 7, name: `Fwd R` },
-      { number: 9, name: `Fwd C` },
-      { number: 11, name: `Fwd L` },
-    ];
-  };
-
-  const homeStarters = getEffectiveStarters(homeLineupData.starters, match.home.name, true);
-  const awayStarters = getEffectiveStarters(awayLineupData.starters, match.away.name, false);
-
-  const getEffectiveStats = () => {
-    if (stats && stats.length > 0) return stats;
-    if (isUpcoming) return [];
-    return [
-      { name: "Possession (%)", home: "52%", away: "48%", homePct: 52, awayPct: 48 },
-      { name: "Total Shots", home: "12", away: "9", homePct: 57, awayPct: 43 },
-      { name: "Shots on Target", home: "5", away: "3", homePct: 62, awayPct: 38 },
-      { name: "Corner Kicks", home: "6", away: "4", homePct: 60, awayPct: 40 },
-      { name: "Fouls", home: "10", away: "14", homePct: 42, awayPct: 58 },
-      { name: "Yellow Cards", home: "2", away: "3", homePct: 40, awayPct: 60 },
-    ];
-  };
-
-  const effectiveStats = getEffectiveStats();
+  const homeStarters = homeLineupData.starters;
+  const awayStarters = awayLineupData.starters;
+  // Use actual API stats only — no demo fallback
+  const effectiveStats = stats;
 
   return (
     <Modal
