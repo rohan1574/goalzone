@@ -9,6 +9,7 @@ const {
   stopLiveScorePolling,
 } = require("./liveScoreManager");
 const { cache } = require("./cache");
+const { startCacheWarmer, stopCacheWarmer } = require("./cacheWarmer");
 
 dotenv.config();
 
@@ -1322,7 +1323,7 @@ app.get("/football-get-match-statistics", async (req, res) => {
       cacheKey,
       "/fixtures/statistics",
       { fixture: eventid },
-      60,
+      90, // 90s TTL: balances real-time feel vs API quota usage
       (apiResponse) => {
         return parseFixtureStats(apiResponse);
       },
@@ -1406,6 +1407,21 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Admin: manually trigger a full cache warm cycle
+app.post("/admin/warm", async (req, res) => {
+  const { runWarmCycle } = require("./cacheWarmer");
+  res.json({ status: "warming", message: "Cache warm cycle triggered in background." });
+  // Run after response is sent so client isn't blocked
+  setImmediate(async () => {
+    try {
+      await runWarmCycle();
+      console.log("[Admin] Manual warm cycle completed.");
+    } catch (err) {
+      console.error("[Admin] Manual warm cycle failed:", err.message);
+    }
+  });
+});
+
 // Start Express server
 const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`====================================================`);
@@ -1417,12 +1433,16 @@ const server = app.listen(PORT, "0.0.0.0", () => {
 
   // Start dynamic polling loop in background
   startLiveScorePolling();
+
+  // Start background cache warmer (pre-fetches popular data proactively)
+  startCacheWarmer();
 });
 
 // Graceful Shutdown Handler
 function gracefulShutdown(signal) {
   console.log(`\n[Server] Received ${signal}. Shutting down gracefully...`);
   stopLiveScorePolling();
+  stopCacheWarmer();
 
   server.close(() => {
     console.log("[Server] Closed all connections. Process exiting.");
