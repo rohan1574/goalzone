@@ -123,16 +123,42 @@ function normalizeApiResponse(rawResponse) {
   const list = rawResponse?.response || rawResponse?.data || rawResponse || [];
   if (!Array.isArray(list)) return [];
 
-  return list.map((item) => ({
-    id: String(item.fixture?.id || item.id),
-    league: item.league?.name || item.leagueName || 'Unknown League',
-    homeTeam: item.teams?.home?.name || item.homeTeam || 'Home Team',
-    awayTeam: item.teams?.away?.name || item.awayTeam || 'Away Team',
-    homeScore: Number(item.goals?.home ?? item.homeScore ?? 0),
-    awayScore: Number(item.goals?.away ?? item.awayScore ?? 0),
-    minute: item.fixture?.status?.elapsed ? `${item.fixture.status.elapsed}'` : (item.status || 'LIVE'),
-    status: item.fixture?.status?.short || item.status || 'LIVE'
-  }));
+  return list.map((item) => {
+    const homeName = item.teams?.home?.name || item.homeTeam || 'Home Team';
+    const awayName = item.teams?.away?.name || item.awayTeam || 'Away Team';
+    const homeScore = Number(item.goals?.home ?? item.homeScore ?? 0);
+    const awayScore = Number(item.goals?.away ?? item.awayScore ?? 0);
+    const homeLogo = item.teams?.home?.logo || item.homeLogo || '';
+    const awayLogo = item.teams?.away?.logo || item.awayLogo || '';
+    const homeCode = item.teams?.home?.code || (homeName ? homeName.substring(0, 3).toUpperCase() : 'HOM');
+    const awayCode = item.teams?.away?.code || (awayName ? awayName.substring(0, 3).toUpperCase() : 'AWY');
+
+    return {
+      id: String(item.fixture?.id || item.id),
+      league: item.league?.name || item.leagueName || 'Unknown League',
+      leagueId: String(item.league?.id || ''),
+      leagueLogo: item.league?.logo || '',
+      home: {
+        id: item.teams?.home?.id,
+        name: homeName,
+        short: homeCode,
+        logo: homeLogo,
+      },
+      away: {
+        id: item.teams?.away?.id,
+        name: awayName,
+        short: awayCode,
+        logo: awayLogo,
+      },
+      homeTeam: homeName,
+      awayTeam: awayName,
+      homeScore: homeScore,
+      awayScore: awayScore,
+      score: `${homeScore} - ${awayScore}`,
+      minute: item.fixture?.status?.elapsed ? `${item.fixture.status.elapsed}'` : (item.status || 'LIVE'),
+      status: item.fixture?.status?.short || item.status || 'LIVE'
+    };
+  });
 }
 
 // ==========================================
