@@ -206,26 +206,36 @@ export const getMatchEventId = (match: any) =>
   );
 
 export const formatLocalMatchTime = (match: any, defaultTime = "19:00"): string => {
-  const rawDate =
-    match?.date ||
-    match?.fixture?.date ||
-    match?.timestamp ||
-    match?.fixture?.timestamp;
+  if (!match) return defaultTime;
 
-  if (rawDate) {
+  // Prioritize full ISO date strings and numeric timestamps over date-only strings
+  const candidate =
+    match?.timestamp ||
+    match?.fixture?.timestamp ||
+    (typeof match?.rawDate === "string" && match.rawDate.includes("T") ? match.rawDate : null) ||
+    (typeof match?.fixture?.date === "string" && match.fixture.date.includes("T") ? match.fixture.date : null) ||
+    (typeof match?.date === "string" && match.date.includes("T") ? match.date : null) ||
+    match?.rawDate ||
+    match?.fixture?.date ||
+    (typeof match?.date === "number" ? match.date : null);
+
+  if (candidate) {
     try {
-      let dateObj: Date;
-      if (typeof rawDate === "number") {
-        dateObj = new Date(rawDate < 10000000000 ? rawDate * 1000 : rawDate);
-      } else {
-        dateObj = new Date(rawDate);
+      let dateObj: Date | null = null;
+      if (typeof candidate === "number") {
+        dateObj = new Date(candidate < 10000000000 ? candidate * 1000 : candidate);
+      } else if (typeof candidate === "string" && candidate.includes("T")) {
+        dateObj = new Date(candidate);
       }
-      if (!isNaN(dateObj.getTime())) {
-        return dateObj.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        });
+
+      if (dateObj && !isNaN(dateObj.getTime())) {
+        let hours = dateObj.getHours();
+        const minutes = dateObj.getMinutes();
+        const ampm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 becomes 12
+        const minutesStr = minutes < 10 ? `0${minutes}` : `${minutes}`;
+        return `${hours}:${minutesStr} ${ampm}`;
       }
     } catch (e) {
       console.warn("Error parsing match local time:", e);

@@ -570,6 +570,8 @@ app.get("/football-get-fixtures-by-league", async (req, res) => {
             status: item.fixture.status.short || "NS",
             time,
             date,
+            rawDate: item.fixture.date,
+            timestamp: item.fixture.timestamp,
             home: {
               id: item.teams.home.id,
               name: item.teams.home.name,
@@ -628,6 +630,8 @@ app.get("/football-get-fixtures-by-team", async (req, res) => {
             status: item.fixture.status.short || "NS",
             time,
             date,
+            rawDate: item.fixture.date,
+            timestamp: item.fixture.timestamp,
             isHome,
             opponent: opponent.name,
             opponentLogo: opponent.logo,

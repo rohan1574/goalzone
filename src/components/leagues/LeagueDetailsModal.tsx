@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Bell } from "lucide-react-native";
-import { fetchLeagueStandings, fetchLeagueFixtures } from "../../services/footballApi";
+import { fetchLeagueStandings, fetchLeagueFixtures, formatLocalMatchTime } from "../../services/footballApi";
 
 export interface League {
   id: string;
@@ -276,7 +276,7 @@ export default function LeagueDetailsModal({
 
           const status = m.status || m.fixture?.status?.short || "NS";
           const score = m.score || (m.goals ? `${m.goals.home ?? 0} - ${m.goals.away ?? 0}` : (status === "FT" || status === "Live" ? m.time : "VS"));
-          const time = m.time || m.fixture?.time || "00:00";
+          const time = formatLocalMatchTime(m, m.time || "00:00");
           const date = m.date || m.fixture?.date || "";
           const minute = m.minute || status;
 
