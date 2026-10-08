@@ -63,7 +63,7 @@ export default function Leagues({
           {/* League Header Title Accordion */}
           <View className="flex-row items-center justify-between mb-3.5">
             <View className="flex-row items-center gap-2.5">
-              <Image source={{ uri: league.leagueLogo }} className="w-6 h-6 rounded-full" />
+              <Image source={{ uri: league.leagueLogo }} className="w-6 h-6 rounded-full" resizeMethod="resize" />
               <Text className="text-white font-extrabold text-base">
                 {league.leagueName}
               </Text>
@@ -132,7 +132,7 @@ export default function Leagues({
                 <View className="flex-1 px-4 gap-3">
                   {/* Home Row */}
                   <View className="flex-row items-center gap-3">
-                    <Image source={{ uri: match.home.logo }} className="w-6 h-6" />
+                    <Image source={{ uri: match.home.logo }} className="w-6 h-6" resizeMethod="resize" />
                     <Text
                       className="text-white font-extrabold text-[14px] tracking-wide"
                       numberOfLines={1}
@@ -142,7 +142,7 @@ export default function Leagues({
                   </View>
                   {/* Away Row */}
                   <View className="flex-row items-center gap-3">
-                    <Image source={{ uri: match.away.logo }} className="w-6 h-6" />
+                    <Image source={{ uri: match.away.logo }} className="w-6 h-6" resizeMethod="resize" />
                     <Text
                       className="text-white font-extrabold text-[14px] tracking-wide"
                       numberOfLines={1}
