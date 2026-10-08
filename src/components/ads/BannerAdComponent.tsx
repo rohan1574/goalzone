@@ -6,7 +6,7 @@ import { BannerAd, BannerAdSize, TestIds } from "react-native-google-mobile-ads"
 const adUnitId = __DEV__
   ? TestIds.BANNER
   : Platform.select({
-      android: "ca-app-pub-9215418195647603/7486528721", // Real Android Banner Ad Unit ID
+      android: "ca-app-pub-9215418195647603/3355683778", // Real Android Banner Ad Unit ID
       ios: "ca-app-pub-3940256099942544/2934735716",     // Real iOS Banner Ad Unit ID goes here
       default: TestIds.BANNER,
     });

@@ -27,6 +27,11 @@ interface Team {
   short: string;
   logo: string;
 }
+interface MatchDetailsModalProps {
+  visible: boolean;
+  match: Match | null;
+  onClose: () => void;
+}
 
 interface Match {
   id: string;
