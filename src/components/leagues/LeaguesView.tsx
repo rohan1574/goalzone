@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   ScrollView,
   View,
@@ -6,8 +6,9 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
-import { Search, Star, ChevronDown, ChevronUp } from "lucide-react-native";
+import { Search, Star, ChevronDown, ChevronUp, X } from "lucide-react-native";
 import Svg, { Path } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LeagueDetailsModal, { League } from "./LeagueDetailsModal";
@@ -15,38 +16,22 @@ import LeagueDetailsModal, { League } from "./LeagueDetailsModal";
 const STORAGE_KEY = "@goalzone_favorite_leagues";
 
 const getCategoryForLeague = (name: string, country?: string) => {
-  if (country && country !== "Unknown") return country;
+  if (country && country !== "Unknown" && country !== "International") return country;
   const lower = name.toLowerCase();
-  if (lower.includes("premier") || lower.includes("fa cup") || lower.includes("efl") || lower.includes("championship")) return "England";
-  if (lower.includes("la liga") || lower.includes("copa del rey") || lower.includes("santander")) return "Spain";
-  if (lower.includes("serie a") || lower.includes("coppa italia")) return "Italy";
-  if (lower.includes("bundesliga") || lower.includes("dfb")) return "Germany";
-  if (lower.includes("ligue 1") || lower.includes("coupe de france")) return "France";
-  if (lower.includes("mls") || lower.includes("major league")) return "USA";
-  if (lower.includes("saudi") || lower.includes("pro league")) return "Saudi Arabia";
-  return "International Tournaments";
+  if (lower.includes("champions league") || lower.includes("europa league") || lower.includes("conference league")) return "UEFA";
+  if (lower.includes("world cup") || lower.includes("nations league") || lower.includes("olympic")) return "International";
+  return country || "International";
 };
-
-const ALL_LEAGUES: League[] = [
-  { id: "39", name: "Premier League", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png", category: "England" },
-  { id: "140", name: "La Liga", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/87.png", category: "Spain" },
-  { id: "135", name: "Serie A", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/55.png", category: "Italy" },
-  { id: "78", name: "Bundesliga", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/54.png", category: "Germany" },
-  { id: "61", name: "Ligue 1", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/53.png", category: "France" },
-  { id: "253", name: "MLS", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/130.png", category: "USA" },
-  { id: "307", name: "Saudi Pro League", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/307.png", category: "Saudi Arabia" },
-  { id: "2", name: "UEFA Champions League", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/42.png", category: "International Tournaments" },
-  { id: "3", name: "UEFA Europa League", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/82.png", category: "International Tournaments" },
-  { id: "13", name: "Copa Libertadores", logo: "https://images.fotmob.com/image_resources/logo/leaguelogo/44.png", category: "International Tournaments" },
-];
 
 interface LeaguesViewProps {
   apiLeagues?: any[];
 }
 
 export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
-  const [favorites, setFavorites] = useState<string[]>(["39", "140"]); // Default Premier League & La Liga
-  const [loading, setLoading] = useState(false); // false = render immediately with defaults, update after AsyncStorage loads
+  const [favorites, setFavorites] = useState<string[]>(["39", "140"]);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   // Expandable state managers
   const [favSectionExpanded, setFavSectionExpanded] = useState(true);
@@ -57,24 +42,28 @@ export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
   const [detailsVisible, setDetailsVisible] = useState(false);
 
-  // Parse leagues dynamically from API data if available
-  const leaguesList = React.useMemo(() => {
-    if (apiLeagues && apiLeagues.length > 0) {
-      return apiLeagues.map((item: any) => {
-        const id = String(item.id || item.leagueId || item.league_id || Math.random().toString());
-        const name = item.name || item.leagueName || item.league_name || "League";
-        const logo = item.logo || item.leagueLogo || item.logoUrl || `https://images.fotmob.com/image_resources/logo/leaguelogo/${id}.png`;
-        const country = getCategoryForLeague(name, item.country || item.countryName || item.region);
-        return {
-          id,
-          name,
-          logo,
-          category: country,
-        };
-      });
-    }
-    return ALL_LEAGUES;
+  // Parse leagues from API data — no hardcoded fallback
+  const leaguesList = useMemo(() => {
+    if (!apiLeagues || apiLeagues.length === 0) return [];
+    return apiLeagues.map((item: any) => {
+      const id = String(item.id || item.leagueId || item.league_id || "");
+      const name = item.name || item.leagueName || item.league_name || "League";
+      const logo = item.logo || item.leagueLogo || item.logoUrl || `https://media.api-sports.io/football/leagues/${id}.png`;
+      const country = getCategoryForLeague(name, item.country || item.countryName || item.region);
+      return { id, name, logo, category: country };
+    });
   }, [apiLeagues]);
+
+  // Filtered list based on search
+  const filteredLeagues = useMemo(() => {
+    if (!searchQuery.trim()) return leaguesList;
+    const q = searchQuery.toLowerCase();
+    return leaguesList.filter(
+      (l) => l.name.toLowerCase().includes(q) || l.category.toLowerCase().includes(q)
+    );
+  }, [leaguesList, searchQuery]);
+
+
 
   useEffect(() => {
     loadFavorites();
@@ -115,27 +104,43 @@ export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
     }));
   };
 
-  // Group all leagues by category
-  const categories = Array.from(new Set(leaguesList.map((l) => l.category)));
-  const favoriteLeaguesList = leaguesList.filter((l) => favorites.includes(l.id));
+  // Group filtered leagues by category
+  const categories = Array.from(new Set(filteredLeagues.map((l) => l.category))).sort();
+  const favoriteLeaguesList = filteredLeagues.filter((l) => favorites.includes(l.id));
 
-  if (loading) {
+  // Show spinner while waiting for API leagues to load
+  if (loading || ((!apiLeagues || apiLeagues.length === 0) && leaguesList.length === 0)) {
     return (
       <View className="flex-1 bg-[#0D0E0F] items-center justify-center">
         <ActivityIndicator size="large" color="#02DB54" />
+        <Text className="text-gray-400 text-xs mt-3">Loading leagues...</Text>
       </View>
     );
   }
 
   return (
     <View className="flex-1 bg-[#0D0E0F]">
-      {/* Search Header */}
-      <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-[#ffffff05]">
-        <Text className="text-white text-22 font-black tracking-[1.5px]">LEAGUES</Text>
-        <View className="flex-row items-center gap-3">
-          {/* <TouchableOpacity className="p-2 rounded-full bg-white/5">
-            <Search size={18} color="#ECEDEE" />
-          </TouchableOpacity> */}
+      {/* Header */}
+      <View className="px-4 py-3 border-b border-[#ffffff05]">
+        <View className="flex-row items-center justify-between mb-2">
+          <Text className="text-white text-[18px] font-black tracking-[1.5px]">LEAGUES</Text>
+          <Text className="text-[#02DB54] text-xs font-bold">{leaguesList.length} leagues</Text>
+        </View>
+        {/* Search Bar */}
+        <View className="flex-row items-center bg-[#131415] rounded-2xl px-3 border border-white/5 h-9">
+          <Search size={14} color="#9BA1A6" />
+          <TextInput
+            placeholder="Search leagues or country..."
+            placeholderTextColor="#9BA1A6"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            className="flex-1 text-white text-xs ml-2"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <X size={14} color="#9BA1A6" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -144,31 +149,12 @@ export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
         contentContainerStyle={{ paddingBottom: 150 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Meta Sponsor Promo Banner */}
-        {/* <TouchableOpacity className="bg-[#131415] rounded-3xl p-3 border border-white/5 mb-6 relative overflow-hidden" activeOpacity={0.9}>
-          <View className="absolute left-3 top-3 bg-[#02DB54] px-1.5 py-0.5 rounded z-10">
-            <Text className="text-black text-[8px] font-black uppercase">Ad</Text>
+        {/* No results state */}
+        {searchQuery.length > 0 && filteredLeagues.length === 0 && (
+          <View className="items-center py-10">
+            <Text className="text-gray-400 text-sm font-bold">No leagues found for "{searchQuery}"</Text>
           </View>
-          
-          <View className="flex-row items-center mt-3 mb-2">
-            <Image
-              source={{ uri: "https://images.fotmob.com/image_resources/logo/leaguelogo/world_cup.png" }}
-              className="w-12 h-12 rounded-xl"
-            />
-            <View className="flex-1 ml-3 mr-2">
-              <Text className="text-white text-sm font-black mb-1" numberOfLines={1}>
-                বন্ধ রবি সিম খুলুন এবার
-              </Text>
-              <Text className="text-gray-400 text-[10px] font-bold" numberOfLines={1}>
-                বন্ধ সিম চালু করলেই পাচ্ছেন মিনিট ও ডাটার অফার...
-              </Text>
-            </View>
-            <View className="bg-[#7CFC00] rounded-2xl px-3 py-2 justify-center items-center">
-              <Text className="text-black text-[10px] font-black text-center">অ্যাপ ব্যবহার করুন</Text>
-            </View>
-          </View>
-          <Text className="text-[#545A60] text-[8px] font-bold text-right mt-1">Ads served by Meta</Text>
-        </TouchableOpacity> */}
+        )}
 
         {/* SECTION 1: Favorite Leagues */}
         <View className="mb-5">
