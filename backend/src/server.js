@@ -517,6 +517,7 @@ app.get("/football-get-matches-by-date", async (req, res) => {
       { date: formattedDate },
       1800,
       (apiResponse) => {
+        const list = apiResponse.response || [];
         return list.map((item) => {
           const statusShort = item.fixture.status.short || "NS";
           const isNotStarted =
