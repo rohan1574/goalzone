@@ -134,9 +134,10 @@ export default function ExploreScreen() {
   const [apiData, setApiData] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState<TabType>("explore");
-  // Lazy mount: track which tabs have been visited (mounted) at least once
-  // Once mounted, stays mounted forever for instant switching
-  const [mountedTabs, setMountedTabs] = useState<Set<TabType>>(new Set(["explore"]));
+  // Pre-mount all tabs so switching between tabs is 100% instant from the first tap
+  const [mountedTabs, setMountedTabs] = useState<Set<TabType>>(
+    new Set(["explore", "leagues", "highlight", "teams", "prediction"])
+  );
   const [activeNotifications, setActiveNotifications] = useState<{
     [key: string]: boolean;
   }>({
