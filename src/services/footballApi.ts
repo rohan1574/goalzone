@@ -380,6 +380,15 @@ export const getTeamLogo = (match: any, side: "home" | "away") => {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+export const fetchLiveMatches = async (): Promise<any[]> => {
+  try {
+    const res = await api.get("/football-current-live");
+    return findArray(res.data);
+  } catch (err) {
+    return [];
+  }
+};
+
 export const loadFootballDashboard = async (forceRefresh = false) => {
   const MEM_KEY = "@goalzone_mem_dashboard";
   const CACHE_KEY = "@goalzone_api_cache_dashboard_v2";

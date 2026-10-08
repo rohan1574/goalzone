@@ -4,6 +4,7 @@ import { Dimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     fetchFixturesByDate,
+    fetchLiveMatches,
     prefetchAdjacentDates,
     formatLocalMatchTime,
     getMatchLocalDateStr,
@@ -321,6 +322,67 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     loadData(false);
+  }, []);
+
+  // Real-time live score auto-update without manual refresh (polls every 15s silently)
+  useEffect(() => {
+    const livePollInterval = setInterval(async () => {
+      try {
+        const freshLive = await fetchLiveMatches();
+        if (freshLive && Array.isArray(freshLive) && freshLive.length > 0) {
+          // 1. Update dashboard live matches silently
+          setApiData((prev: any) => (prev ? { ...prev, live: freshLive } : prev));
+
+          // 2. If a match is currently open in MatchDetailsModal, update its score & minute
+          setSelectedMatch((prevSelected: any) => {
+            if (!prevSelected) return null;
+            const updated = freshLive.find(
+              (m: any) => String(getMatchEventId(m) || m.id) === String(prevSelected.id)
+            );
+            if (updated) {
+              return {
+                ...prevSelected,
+                score: updated.score || getMatchScore(updated).display || prevSelected.score,
+                minute: updated.minute || getMatchStatus(updated) || prevSelected.minute,
+                status: updated.status || prevSelected.status,
+              };
+            }
+            return prevSelected;
+          });
+
+          // 3. Update matching live fixtures in dateFixtures list
+          setDateFixtures((prevFixtures: any[]) => {
+            if (!prevFixtures || prevFixtures.length === 0) return prevFixtures;
+            let hasChanged = false;
+            const next = prevFixtures.map((m: any) => {
+              const mId = String(getMatchEventId(m) || m.id);
+              const liveMatch = freshLive.find(
+                (lm: any) => String(getMatchEventId(lm) || lm.id) === mId
+              );
+              if (liveMatch) {
+                const newScore = liveMatch.score || getMatchScore(liveMatch).display || m.score;
+                const newMinute = liveMatch.minute || getMatchStatus(liveMatch) || m.minute;
+                if (m.score !== newScore || m.minute !== newMinute) {
+                  hasChanged = true;
+                  return {
+                    ...m,
+                    score: newScore,
+                    minute: newMinute,
+                    status: "Live",
+                  };
+                }
+              }
+              return m;
+            });
+            return hasChanged ? next : prevFixtures;
+          });
+        }
+      } catch (err) {
+        // Silent background fail
+      }
+    }, 15000);
+
+    return () => clearInterval(livePollInterval);
   }, []);
 
   const handleRefresh = () => {
