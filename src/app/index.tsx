@@ -4,6 +4,7 @@ import { Dimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     fetchFixturesByDate,
+    prefetchAdjacentDates,
     formatLocalMatchTime,
     getMatchLocalDateStr,
     getMatchEventId,
@@ -291,6 +292,7 @@ export default function ExploreScreen() {
     };
 
     loadFixtures();
+    prefetchAdjacentDates(selectedDate);
   }, [selectedDate, isToday, apiData?.fixtures]);
 
   const loadData = async (force = false) => {
@@ -304,6 +306,7 @@ export default function ExploreScreen() {
       });
       if (res && res.data) {
         setApiData(res.data);
+        prefetchAdjacentDates(new Date());
       }
     } catch (e) {
       console.warn(

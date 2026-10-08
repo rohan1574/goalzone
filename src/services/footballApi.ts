@@ -561,6 +561,19 @@ export const fetchFixturesByDate = async (dateString: string) => {
   }
 };
 
+export const prefetchAdjacentDates = (baseDate: Date = new Date()) => {
+  const offsets = [-2, -1, 1, 2, 3];
+  offsets.forEach((offset) => {
+    const d = new Date(baseDate);
+    d.setDate(baseDate.getDate() + offset);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const yyyymmdd = `${year}${month}${day}`;
+    fetchFixturesByDate(yyyymmdd).catch(() => {});
+  });
+};
+
 const unwrapApiResponse = (data: any) =>
   data?.response || data?.data || data || {};
 

@@ -99,11 +99,18 @@ function sleep(ms) {
  * TTL: 30 minutes (1800s)
  */
 async function warmFixturesByDate() {
-  const dates = [getTodayStr(), getTomorrowStr()];
+  const dates = [];
+  for (let i = 0; i <= 3; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    dates.push(d.toISOString().split('T')[0]);
+  }
+
+  const tz = 'Asia/Dhaka';
 
   for (const dateStr of dates) {
     const compact = getDateCompact(dateStr);
-    const cacheKey = `fixtures_date_${compact}`;
+    const cacheKey = `fixtures_date_${compact}_${tz.replace(/\//g, '_')}`;
 
     if (cache.get(cacheKey) !== null) {
       console.log(`[CacheWarmer] fixtures ${dateStr} already cached, skipping.`);
@@ -111,7 +118,7 @@ async function warmFixturesByDate() {
     }
 
     console.log(`[CacheWarmer] Pre-fetching fixtures for ${dateStr}...`);
-    const data = await safeApiCall('/fixtures', { date: dateStr });
+    const data = await safeApiCall('/fixtures', { date: dateStr, timezone: tz });
     if (data) {
       const mapped = (data.response || []).map(mapFixture);
       cache.set(cacheKey, mapped, 1800);
