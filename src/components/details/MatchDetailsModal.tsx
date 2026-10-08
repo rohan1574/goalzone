@@ -20,6 +20,7 @@ import {
   fetchFixtureH2H,
 } from "../../services/footballApi";
 import BannerAdComponent from "../ads/BannerAdComponent";
+import LiveMatchClock from "../common/LiveMatchClock";
 
 interface Team {
   id?: string | number;
@@ -491,9 +492,11 @@ export default function MatchDetailsModal({
                   {match.score}
                 </Text>
                 <View className="bg-black/50 px-3 py-1 rounded-full mt-2">
-                  <Text className="text-[#02DB54] text-[11px] font-black uppercase">
-                    {match.minute || match.status}
-                  </Text>
+                  <LiveMatchClock
+                    minute={match.minute}
+                    status={match.status}
+                    textClass="text-[#02DB54] text-[11px] font-black uppercase"
+                  />
                 </View>
               </View>
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, ActivityIndicator } from "react-native";
 import { ChevronDown, Bell } from "lucide-react-native";
+import LiveMatchClock from "../common/LiveMatchClock";
 
 interface LeagueMatch {
   id: string;
@@ -112,9 +113,15 @@ export default function Leagues({
 
                 {/* Left column: Match times / info */}
                 <View className="w-[20%] pl-2 justify-center">
-                  <Text className="text-gray-400 text-xs font-bold tracking-wider mb-1">
-                    {match.status}
-                  </Text>
+                  {match.status === "Live" ? (
+                    <View className="mb-1 items-start">
+                      <LiveMatchClock minute={match.minute} status={match.status} />
+                    </View>
+                  ) : (
+                    <Text className="text-gray-400 text-xs font-bold tracking-wider mb-1">
+                      {match.status}
+                    </Text>
+                  )}
                   <Text className="text-[#02DB54] font-black text-sm tracking-tight mb-0.5">
                     {match.score && match.score !== "VS" ? match.score : match.time}
                   </Text>

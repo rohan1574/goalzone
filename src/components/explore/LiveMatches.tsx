@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 import Svg, { Rect, Circle, Line, Polygon, Path } from "react-native-svg";
+import LiveMatchClock from "../common/LiveMatchClock";
 
 interface Team {
   name: string;
@@ -113,10 +114,8 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
                   <Text className="text-white text-xl font-extrabold tracking-tight">
                     {match.score}
                   </Text>
-                  <View className="bg-black/60 px-2 py-0.5 rounded-full mt-1">
-                    <Text className="text-[#02DB54] text-[10px] font-bold">
-                      {match.minute}
-                    </Text>
+                  <View className="bg-black/60 px-2.5 py-0.5 rounded-full mt-1">
+                    <LiveMatchClock minute={match.minute} status={match.status} />
                   </View>
                 </View>
 
