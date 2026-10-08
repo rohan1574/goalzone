@@ -138,66 +138,32 @@ app.get("/football-current-live", (req, res) => {
 });
 
 // ==========================================
-// 2. ALL LEAGUES (dynamic from API-Football)
+// 2. POPULAR LEAGUES (curated top leagues)
 // ==========================================
-app.get("/football-popular-leagues", async (req, res) => {
-  const currentYear = new Date().getFullYear();
-  const cacheKey = `all_leagues_${currentYear}`;
+const popularLeagues = [
+  // ── The Big Five ──
+  { leagueId: "39",  leagueName: "Premier League",      country: "England",  leagueLogo: "https://media.api-sports.io/football/leagues/39.png" },
+  { leagueId: "140", leagueName: "La Liga",              country: "Spain",    leagueLogo: "https://media.api-sports.io/football/leagues/140.png" },
+  { leagueId: "135", leagueName: "Serie A",              country: "Italy",    leagueLogo: "https://media.api-sports.io/football/leagues/135.png" },
+  { leagueId: "78",  leagueName: "Bundesliga",           country: "Germany",  leagueLogo: "https://media.api-sports.io/football/leagues/78.png" },
+  { leagueId: "61",  leagueName: "Ligue 1",              country: "France",   leagueLogo: "https://media.api-sports.io/football/leagues/61.png" },
+  // ── Europe ──
+  { leagueId: "88",  leagueName: "Eredivisie",           country: "Netherlands", leagueLogo: "https://media.api-sports.io/football/leagues/88.png" },
+  { leagueId: "94",  leagueName: "Primeira Liga",        country: "Portugal", leagueLogo: "https://media.api-sports.io/football/leagues/94.png" },
+  { leagueId: "2",   leagueName: "UEFA Champions League",country: "UEFA",     leagueLogo: "https://media.api-sports.io/football/leagues/2.png" },
+  { leagueId: "3",   leagueName: "UEFA Europa League",   country: "UEFA",     leagueLogo: "https://media.api-sports.io/football/leagues/3.png" },
+  { leagueId: "848", leagueName: "UEFA Conference League",country: "UEFA",    leagueLogo: "https://media.api-sports.io/football/leagues/848.png" },
+  // ── Americas ──
+  { leagueId: "71",  leagueName: "Brasileirão Série A",  country: "Brazil",   leagueLogo: "https://media.api-sports.io/football/leagues/71.png" },
+  { leagueId: "128", leagueName: "Liga Profesional",     country: "Argentina",leagueLogo: "https://media.api-sports.io/football/leagues/128.png" },
+  { leagueId: "253", leagueName: "MLS",                  country: "USA",      leagueLogo: "https://media.api-sports.io/football/leagues/253.png" },
+  { leagueId: "13",  leagueName: "Copa Libertadores",    country: "South America", leagueLogo: "https://media.api-sports.io/football/leagues/13.png" },
+  // ── Middle East & Asia ──
+  { leagueId: "307", leagueName: "Saudi Pro League",     country: "Saudi Arabia", leagueLogo: "https://media.api-sports.io/football/leagues/307.png" },
+];
 
-  // Try cache first (6 hour TTL)
-  const cached = cache.get(cacheKey);
-  if (cached !== null) {
-    return res.json(cached);
-  }
-
-  try {
-    console.log(`[API] Fetching all leagues for season ${currentYear}...`);
-    const response = await api.get("/leagues", {
-      params: { season: currentYear, current: "true" },
-    });
-
-    const list = response.data?.response || [];
-    const mapped = list
-      .filter((item) => item.league && item.country)
-      .map((item) => ({
-        leagueId: String(item.league.id),
-        leagueName: item.league.name,
-        country: item.country.name || "International",
-        leagueLogo: item.league.logo || "",
-      }))
-      .sort((a, b) => a.leagueName.localeCompare(b.leagueName));
-
-    cache.set(cacheKey, mapped, 21600); // 6 hours
-    return res.json(mapped);
-  } catch (err) {
-    console.error("[API] Failed to fetch all leagues:", err.message);
-    // Fallback to previous year if current year has no data yet
-    try {
-      const fallbackYear = currentYear - 1;
-      const fallbackKey = `all_leagues_${fallbackYear}`;
-      const fallbackCached = cache.get(fallbackKey);
-      if (fallbackCached !== null) {
-        return res.json(fallbackCached);
-      }
-      const fallbackRes = await api.get("/leagues", {
-        params: { season: fallbackYear, current: "true" },
-      });
-      const fallbackList = fallbackRes.data?.response || [];
-      const fallbackMapped = fallbackList
-        .filter((item) => item.league && item.country)
-        .map((item) => ({
-          leagueId: String(item.league.id),
-          leagueName: item.league.name,
-          country: item.country.name || "International",
-          leagueLogo: item.league.logo || "",
-        }))
-        .sort((a, b) => a.leagueName.localeCompare(b.leagueName));
-      cache.set(fallbackKey, fallbackMapped, 21600);
-      return res.json(fallbackMapped);
-    } catch (fallbackErr) {
-      return res.status(500).json({ error: "Failed to fetch leagues" });
-    }
-  }
+app.get("/football-popular-leagues", (req, res) => {
+  res.json(popularLeagues);
 });
 
 const popularTeams = [

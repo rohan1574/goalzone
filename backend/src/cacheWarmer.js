@@ -18,7 +18,7 @@ const api = axios.create({
 });
 
 // Popular league IDs to pre-warm
-const POPULAR_LEAGUE_IDS = ['39', '140', '135', '78', '61', '2', '3', '71'];
+const POPULAR_LEAGUE_IDS = ['39', '140', '135', '78', '61', '88', '94', '2', '3', '848', '71', '128', '253', '13', '307'];
 
 // ==========================================
 // HELPERS
