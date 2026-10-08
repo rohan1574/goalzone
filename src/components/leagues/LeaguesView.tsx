@@ -24,12 +24,13 @@ const getCategoryForLeague = (name: string, country?: string) => {
 
 interface LeaguesViewProps {
   apiLeagues?: any[];
+  onPressDetails?: (match: any) => void;
 }
 
 interface LeagueItem { id: string; name: string; logo: string; category: string; }
 interface Section { title: string; isFav?: boolean; data: LeagueItem[]; }
 
-export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
+export default function LeaguesView({ apiLeagues, onPressDetails }: LeaguesViewProps) {
   const [favorites, setFavorites] = useState<string[]>(["39", "140"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
@@ -195,6 +196,7 @@ export default function LeaguesView({ apiLeagues }: LeaguesViewProps) {
         visible={detailsVisible}
         league={selectedLeague}
         onClose={() => setDetailsVisible(false)}
+        onPressDetails={onPressDetails}
       />
     </View>
   );

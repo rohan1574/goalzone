@@ -4,6 +4,7 @@ import { Dimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     fetchFixturesByDate,
+    formatLocalMatchTime,
     getMatchEventId,
     getMatchLeague,
     getMatchLeagueId,
@@ -510,10 +511,7 @@ export default function ExploreScreen() {
         status: matchStatus,
         score: matchScore,
         minute: matchMinute,
-        time:
-          m.time ||
-          getMatchValue(m, ["time", "status.time"]) ||
-          "19:00",
+        time: formatLocalMatchTime(m),
         date: formatDateString(selectedDate),
         leagueId: lId,
         league: lName,
@@ -698,7 +696,19 @@ export default function ExploreScreen() {
       {/* Leagues: Lazy mount on first visit, then persist */}
       {mountedTabs.has("leagues") && (
         <View style={{ flex: 1, display: activeTab === "leagues" ? "flex" : "none" }}>
-          <LeaguesView apiLeagues={apiData?.leagues} />
+          <LeaguesView
+            apiLeagues={apiData?.leagues}
+            onPressDetails={(match: any) => {
+              pendingMatchRef.current = match;
+              if (interstitialLoaded) {
+                interstitialAd.show();
+              } else {
+                setSelectedMatch(match);
+                setDetailsVisible(true);
+                pendingMatchRef.current = null;
+              }
+            }}
+          />
         </View>
       )}
 

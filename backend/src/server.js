@@ -523,6 +523,8 @@ app.get("/football-get-matches-by-date", async (req, res) => {
               ? `${item.fixture.status.elapsed}'`
               : statusShort,
             status: statusShort,
+            date: item.fixture.date,
+            timestamp: item.fixture.timestamp,
           };
         });
       },

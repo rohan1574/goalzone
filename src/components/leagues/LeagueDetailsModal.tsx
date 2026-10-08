@@ -23,12 +23,14 @@ interface LeagueDetailsModalProps {
   visible: boolean;
   league: League | null;
   onClose: () => void;
+  onPressDetails?: (match: any) => void;
 }
 
 export default function LeagueDetailsModal({
   visible,
   league,
   onClose,
+  onPressDetails,
 }: LeagueDetailsModalProps) {
   const [activeTab, setActiveTab] = useState<"fixtures" | "table">("fixtures");
   const [activeNotifications, setActiveNotifications] = useState<{ [key: string]: boolean }>({});
@@ -259,7 +261,37 @@ export default function LeagueDetailsModal({
     try {
       const rawData = await fetchLeagueFixtures(league.id);
       if (rawData && rawData.length > 0) {
-        setApiFixtures(rawData);
+        const mapped = rawData.map((m: any, idx: number) => {
+          const id = String(m.id || m.fixture?.id || m.event_id || `fix-${idx}`);
+          const hObj = m.home || m.teams?.home || m.homeTeam || {};
+          const aObj = m.away || m.teams?.away || m.awayTeam || {};
+
+          const hName = hObj.name || hObj.teamName || "Home";
+          const hId = hObj.id || hObj.teamId;
+          const hLogo = hObj.logo || hObj.teamLogo || hObj.logoUrl || (hId ? `https://media.api-sports.io/football/teams/${hId}.png` : "");
+
+          const aName = aObj.name || aObj.teamName || "Away";
+          const aId = aObj.id || aObj.teamId;
+          const aLogo = aObj.logo || aObj.teamLogo || aObj.logoUrl || (aId ? `https://media.api-sports.io/football/teams/${aId}.png` : "");
+
+          const status = m.status || m.fixture?.status?.short || "NS";
+          const score = m.score || (m.goals ? `${m.goals.home ?? 0} - ${m.goals.away ?? 0}` : (status === "FT" || status === "Live" ? m.time : "VS"));
+          const time = m.time || m.fixture?.time || "00:00";
+          const date = m.date || m.fixture?.date || "";
+          const minute = m.minute || status;
+
+          return {
+            id,
+            status,
+            score,
+            minute,
+            time,
+            date,
+            home: { id: hId, name: hName, logo: hLogo, short: hName.substring(0, 3).toUpperCase() },
+            away: { id: aId, name: aName, logo: aLogo, short: aName.substring(0, 3).toUpperCase() },
+          };
+        });
+        setApiFixtures(mapped);
       } else {
         setApiFixtures([]);
       }
@@ -378,8 +410,41 @@ export default function LeagueDetailsModal({
               ) : (
                 fixturesData.map((match) => {
                   const isNotified = activeNotifications[match.id];
+                  const handleCardPress = () => {
+                    if (onPressDetails && league) {
+                      const hName = match.home?.name || "Home";
+                      const aName = match.away?.name || "Away";
+                      onPressDetails({
+                        id: String(match.id),
+                        league: league.name,
+                        leagueId: league.id,
+                        leagueLogo: league.logo,
+                        home: {
+                          id: match.home?.id,
+                          name: hName,
+                          short: match.home?.short || hName.substring(0, 3).toUpperCase(),
+                          logo: match.home?.logo || "",
+                        },
+                        away: {
+                          id: match.away?.id,
+                          name: aName,
+                          short: match.away?.short || aName.substring(0, 3).toUpperCase(),
+                          logo: match.away?.logo || "",
+                        },
+                        score: match.score || (match.status === "FT" || match.status === "Live" ? match.time : "VS"),
+                        minute: match.minute || match.status || "NS",
+                        status: match.status || "NS",
+                      });
+                    }
+                  };
+
                   return (
-                    <View key={match.id} className="relative bg-[#131415] rounded-3xl px-4 py-4.5 border border-white/5 overflow-hidden flex-row items-center justify-between">
+                    <TouchableOpacity
+                      key={match.id}
+                      activeOpacity={0.7}
+                      onPress={handleCardPress}
+                      className="relative bg-[#131415] rounded-3xl px-4 py-4.5 border border-white/5 overflow-hidden flex-row items-center justify-between"
+                    >
                       {/* Left glow accent indicator */}
                       <View className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#02DB54] rounded-l-3xl" />
 
@@ -419,7 +484,10 @@ export default function LeagueDetailsModal({
 
                       {/* Bell Notification Button */}
                       <TouchableOpacity
-                        onPress={() => toggleNotification(match.id)}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          toggleNotification(match.id);
+                        }}
                         className={`p-2.5 rounded-full ${
                           isNotified ? "bg-[#02DB54]/15" : "bg-white/5"
                         }`}
@@ -430,7 +498,7 @@ export default function LeagueDetailsModal({
                           fill={isNotified ? "#02DB54" : "none"}
                         />
                       </TouchableOpacity>
-                    </View>
+                    </TouchableOpacity>
                   );
                 })
               )}

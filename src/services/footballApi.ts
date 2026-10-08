@@ -205,6 +205,40 @@ export const getMatchEventId = (match: any) =>
     "",
   );
 
+export const formatLocalMatchTime = (match: any, defaultTime = "19:00"): string => {
+  const rawDate =
+    match?.date ||
+    match?.fixture?.date ||
+    match?.timestamp ||
+    match?.fixture?.timestamp;
+
+  if (rawDate) {
+    try {
+      let dateObj: Date;
+      if (typeof rawDate === "number") {
+        dateObj = new Date(rawDate < 10000000000 ? rawDate * 1000 : rawDate);
+      } else {
+        dateObj = new Date(rawDate);
+      }
+      if (!isNaN(dateObj.getTime())) {
+        return dateObj.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      }
+    } catch (e) {
+      console.warn("Error parsing match local time:", e);
+    }
+  }
+
+  if (match?.time && typeof match.time === "string" && !match.time.includes("T")) {
+    return match.time;
+  }
+
+  return defaultTime;
+};
+
 export const findArray = (value: any): any[] => {
   if (Array.isArray(value)) return value;
   if (!value || typeof value !== "object") return [];
