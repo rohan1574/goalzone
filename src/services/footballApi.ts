@@ -249,6 +249,51 @@ export const formatLocalMatchTime = (match: any, defaultTime = "19:00"): string 
   return defaultTime;
 };
 
+export const getMatchLocalDateStr = (match: any, fallbackDate?: Date): string => {
+  if (!match && !fallbackDate) return "";
+
+  const candidate =
+    match?.timestamp ||
+    match?.fixture?.timestamp ||
+    (typeof match?.rawDate === "string" && match.rawDate.includes("T") ? match.rawDate : null) ||
+    (typeof match?.fixture?.date === "string" && match.fixture.date.includes("T") ? match.fixture.date : null) ||
+    (typeof match?.date === "string" && match.date.includes("T") ? match.date : null) ||
+    match?.rawDate ||
+    match?.fixture?.date ||
+    (typeof match?.date === "number" ? match.date : null);
+
+  if (candidate) {
+    try {
+      let dateObj: Date | null = null;
+      if (typeof candidate === "number") {
+        dateObj = new Date(candidate < 10000000000 ? candidate * 1000 : candidate);
+      } else if (typeof candidate === "string" && candidate.includes("T")) {
+        dateObj = new Date(candidate);
+      }
+
+      if (dateObj && !isNaN(dateObj.getTime())) {
+        const day = dateObj.getDate();
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const month = months[dateObj.getMonth()];
+        const year = dateObj.getFullYear();
+        return `${day} ${month} ${year}`;
+      }
+    } catch (e) {
+      console.warn("Error parsing match local date:", e);
+    }
+  }
+
+  if (fallbackDate) {
+    const day = fallbackDate.getDate();
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = months[fallbackDate.getMonth()];
+    const year = fallbackDate.getFullYear();
+    return `${day} ${month} ${year}`;
+  }
+
+  return "";
+};
+
 export const findArray = (value: any): any[] => {
   if (Array.isArray(value)) return value;
   if (!value || typeof value !== "object") return [];
@@ -494,8 +539,9 @@ export const fetchFixturesByDate = async (dateString: string) => {
     `[API] Fetching fresh fixtures for date ${dateString} from API...`,
   );
   try {
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Dhaka";
     const response = await api.get("/football-get-matches-by-date", {
-      params: { date: dateString },
+      params: { date: dateString, timezone: userTimezone },
     });
     const freshData = findArray(response.data);
 

@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
     fetchFixturesByDate,
     formatLocalMatchTime,
+    getMatchLocalDateStr,
     getMatchEventId,
     getMatchLeague,
     getMatchLeagueId,
@@ -512,7 +513,9 @@ export default function ExploreScreen() {
         score: matchScore,
         minute: matchMinute,
         time: formatLocalMatchTime(m),
-        date: formatDateString(selectedDate),
+        date: getMatchLocalDateStr(m, selectedDate),
+        rawDate: m.rawDate || m.date || m.fixture?.date,
+        timestamp: m.timestamp || m.fixture?.timestamp,
         leagueId: lId,
         league: lName,
         home: {

@@ -469,6 +469,7 @@ app.get("/football-dashboard", async (req, res) => {
 // ==========================================
 app.get("/football-get-matches-by-date", async (req, res) => {
   const dateQuery = req.query.date;
+  const timezone = req.query.timezone || "Asia/Dhaka";
   if (!dateQuery || dateQuery.length !== 8) {
     return res
       .status(400)
@@ -476,13 +477,13 @@ app.get("/football-get-matches-by-date", async (req, res) => {
   }
 
   const formattedDate = `${dateQuery.substring(0, 4)}-${dateQuery.substring(4, 6)}-${dateQuery.substring(6, 8)}`;
-  const cacheKey = `fixtures_date_${dateQuery}`;
+  const cacheKey = `fixtures_date_${dateQuery}_${timezone.replace(/\//g, "_")}`;
 
   try {
     const data = await fetchAndCache(
       cacheKey,
       "/fixtures",
-      { date: formattedDate },
+      { date: formattedDate, timezone },
       1800,
       (apiResponse) => {
         const list = apiResponse.response || [];
