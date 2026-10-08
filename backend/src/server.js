@@ -211,6 +211,13 @@ const popularLeagues = [
     leagueLogo:
       "https://images.fotmob.com/image_resources/logo/leaguelogo/44.png",
   },
+  {
+    leagueId: "71",
+    leagueName: "Campeonato Brasileiro Série A",
+    country: "Brazil",
+    leagueLogo:
+      "https://images.fotmob.com/image_resources/logo/leaguelogo/325.png",
+  },
 ];
 
 app.get("/football-popular-leagues", (req, res) => {
