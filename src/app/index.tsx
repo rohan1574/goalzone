@@ -439,88 +439,149 @@ export default function ExploreScreen() {
 
   const leaguesList = React.useMemo(() => {
     if (!dateFixtures || dateFixtures.length === 0) {
-      return MOCK_LEAGUES.map((l) => ({
-        ...l,
-        matches: l.matches.map((m) => ({ ...m, leagueId: "47" })),
-      }));
+      return [];
     }
 
-    // Limit to top 50 matches so ScrollView doesn't lag/freeze
-    return [
+    // Group dateFixtures by league name / id
+    const groupedMap = new Map<
+      string,
       {
-        leagueId: "popular",
-        leagueName: isToday
-          ? "Today's Matches"
-          : `Matches on ${formatDateString(selectedDate)}`,
-        leagueLogo:
-          "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png",
-        matches: dateFixtures.slice(0, 50).map((m: any) => {
-          const hName =
-            getMatchValue(m, ["home.name", "homeTeam.name"]) || "TBD";
-          const hShort = getMatchValue(m, [
-            "home.shortName",
-            "home.code",
-            "homeTeam.code",
-          ]);
-          const hShortStr =
-            hShort && hShort !== "TBD"
-              ? hShort
-              : hName.substring(0, 3).toUpperCase();
+        leagueId: string;
+        leagueName: string;
+        leagueLogo: string;
+        matches: any[];
+      }
+    >();
 
-          const aName =
-            getMatchValue(m, ["away.name", "awayTeam.name"]) || "TBD";
-          const aShort = getMatchValue(m, [
-            "away.shortName",
-            "away.code",
-            "awayTeam.code",
-          ]);
-          const aShortStr =
-            aShort && aShort !== "TBD"
-              ? aShort
-              : aName.substring(0, 3).toUpperCase();
+    dateFixtures.forEach((m: any) => {
+      const lName =
+        m.league ||
+        getMatchLeague(m) ||
+        getMatchValue(m, ["league.name", "league"]) ||
+        "Other League";
+      const lId = String(
+        m.leagueId ||
+          getMatchLeagueId(m) ||
+          getMatchValue(m, ["league.id", "leagueId"]) ||
+          lName,
+      );
+      const lLogo =
+        m.leagueLogo ||
+        getMatchValue(m, ["league.logo", "leagueLogo"]) ||
+        "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png";
 
-          const matchStatus = m.status || (getMatchStatus(m) === "Live" ? "Live" : "NS");
-          const matchScore = m.score || getMatchScore(m).display || "VS";
-          const matchMinute = m.minute || (matchStatus === "FT" ? "FT" : matchStatus === "NS" ? "NS" : "Live");
+      const hName =
+        getMatchValue(m, ["home.name", "homeTeam.name"]) || "TBD";
+      const hShort = getMatchValue(m, [
+        "home.shortName",
+        "home.code",
+        "homeTeam.code",
+      ]);
+      const hShortStr =
+        hShort && hShort !== "TBD"
+          ? hShort
+          : hName.substring(0, 3).toUpperCase();
 
-          return {
-            id: getMatchEventId(m) || Math.random().toString(),
-            status: matchStatus,
-            score: matchScore,
-            minute: matchMinute,
-            time:
-              getMatchValue(m, ["time", "status.time", "date"]) || "19:00",
-            date: formatDateString(selectedDate),
-            leagueId: getMatchLeagueId(m),
-            league: m.league || "Match",
-            home: {
-              id:
-                m.home?.id ||
-                getMatchValue(m, [
-                  "home.id",
-                  "homeTeam.id",
-                  "teams.home.id",
-                ]),
-              name: hName,
-              short: hShortStr,
-              logo: getTeamLogo(m, "home"),
-            },
-            away: {
-              id:
-                m.away?.id ||
-                getMatchValue(m, [
-                  "away.id",
-                  "awayTeam.id",
-                  "teams.away.id",
-                ]),
-              name: aName,
-              short: aShortStr,
-              logo: getTeamLogo(m, "away"),
-            },
-          };
-        }),
-      },
+      const aName =
+        getMatchValue(m, ["away.name", "awayTeam.name"]) || "TBD";
+      const aShort = getMatchValue(m, [
+        "away.shortName",
+        "away.code",
+        "awayTeam.code",
+      ]);
+      const aShortStr =
+        aShort && aShort !== "TBD"
+          ? aShort
+          : aName.substring(0, 3).toUpperCase();
+
+      const matchStatus =
+        m.status || (getMatchStatus(m) === "Live" ? "Live" : "NS");
+      const matchScore = m.score || getMatchScore(m).display || "VS";
+      const matchMinute =
+        m.minute ||
+        (matchStatus === "FT"
+          ? "FT"
+          : matchStatus === "NS"
+            ? "NS"
+            : "Live");
+
+      const matchItem = {
+        id: getMatchEventId(m) || Math.random().toString(),
+        status: matchStatus,
+        score: matchScore,
+        minute: matchMinute,
+        time:
+          m.time ||
+          getMatchValue(m, ["time", "status.time"]) ||
+          "19:00",
+        date: formatDateString(selectedDate),
+        leagueId: lId,
+        league: lName,
+        home: {
+          id:
+            m.home?.id ||
+            getMatchValue(m, ["home.id", "homeTeam.id", "teams.home.id"]),
+          name: hName,
+          short: hShortStr,
+          logo: getTeamLogo(m, "home"),
+        },
+        away: {
+          id:
+            m.away?.id ||
+            getMatchValue(m, ["away.id", "awayTeam.id", "teams.away.id"]),
+          name: aName,
+          short: aShortStr,
+          logo: getTeamLogo(m, "away"),
+        },
+      };
+
+      if (!groupedMap.has(lId)) {
+        groupedMap.set(lId, {
+          leagueId: lId,
+          leagueName: lName,
+          leagueLogo: lLogo,
+          matches: [],
+        });
+      }
+      groupedMap.get(lId)!.matches.push(matchItem);
+    });
+
+    const result = Array.from(groupedMap.values());
+
+    // Priority ordering for major leagues so top leagues appear first
+    const PRIORITY_LEAGUES = [
+      "Premier League",
+      "La Liga",
+      "Serie A",
+      "Bundesliga",
+      "Ligue 1",
+      "Brasileirão Série A",
+      "Serie A - Betano",
+      "Saudi Pro League",
+      "Major League Soccer",
+      "MLS",
+      "UEFA Champions League",
+      "UEFA Europa League",
+      "Liga Profesional",
+      "Eredivisie",
+      "Primeira Liga",
     ];
+
+    result.sort((a, b) => {
+      const idxA = PRIORITY_LEAGUES.findIndex((name) =>
+        a.leagueName.toLowerCase().includes(name.toLowerCase()),
+      );
+      const idxB = PRIORITY_LEAGUES.findIndex((name) =>
+        b.leagueName.toLowerCase().includes(name.toLowerCase()),
+      );
+
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.leagueName.localeCompare(b.leagueName);
+    });
+
+    return result;
   }, [dateFixtures, isToday, selectedDate]);
 
   const filteredLiveMatches = React.useMemo(() => {
@@ -618,6 +679,7 @@ export default function ExploreScreen() {
           activeNotifications={activeNotifications}
           onToggleNotification={toggleNotification}
           width={width}
+          loadingFixtures={loadingFixtures}
           onPressDetails={(match: any) => {
             pendingMatchRef.current = match;
             if (interstitialLoaded) {

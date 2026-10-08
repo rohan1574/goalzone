@@ -46,6 +46,7 @@ interface ExploreViewProps {
   onToggleNotification: (id: string) => void;
   width: number;
   onPressDetails: (match: Match) => void;
+  loadingFixtures?: boolean;
 }
 
 export default function ExploreView({
@@ -57,6 +58,7 @@ export default function ExploreView({
   onToggleNotification,
   width,
   onPressDetails,
+  loadingFixtures,
 }: ExploreViewProps) {
   return (
     <ScrollView
@@ -82,6 +84,7 @@ export default function ExploreView({
         activeNotifications={activeNotifications}
         onToggleNotification={onToggleNotification}
         onPressDetails={onPressDetails}
+        loadingFixtures={loadingFixtures}
       />
     </ScrollView>
   );

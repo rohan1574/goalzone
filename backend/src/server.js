@@ -399,33 +399,52 @@ app.get("/football-dashboard", async (req, res) => {
         1800,
         (apiResponse) => {
           const list = apiResponse.response || [];
-          return list.map((item) => ({
-            id: String(item.fixture.id),
-            league: item.league.name,
-            leagueId: String(item.league.id),
-            leagueLogo: item.league.logo,
-            home: {
-              id: item.teams.home.id,
-              name: item.teams.home.name,
-              short:
-                item.teams.home.code ||
-                item.teams.home.name.substring(0, 3).toUpperCase(),
-              logo: item.teams.home.logo,
-            },
-            away: {
-              id: item.teams.away.id,
-              name: item.teams.away.name,
-              short:
-                item.teams.away.code ||
-                item.teams.away.name.substring(0, 3).toUpperCase(),
-            logo: item.teams.away.logo,
-            },
-            score: `${item.goals.home ?? 0} - ${item.goals.away ?? 0}`,
-            minute: item.fixture.status.elapsed
-              ? `${item.fixture.status.elapsed}'`
-              : item.fixture.status.short,
-            status: item.fixture.status.short,
-          }));
+          return list.map((item) => {
+            const statusShort = item.fixture.status.short || "NS";
+            const isNotStarted =
+              statusShort === "NS" ||
+              statusShort === "TBD" ||
+              statusShort === "PST" ||
+              statusShort === "CANC";
+            const score = isNotStarted
+              ? "VS"
+              : `${item.goals.home ?? 0} - ${item.goals.away ?? 0}`;
+            const fixtureDate = item.fixture.date ? new Date(item.fixture.date) : null;
+            const time = fixtureDate
+              ? fixtureDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              : "19:00";
+
+            return {
+              id: String(item.fixture.id),
+              league: item.league.name,
+              leagueId: String(item.league.id),
+              leagueLogo: item.league.logo,
+              leagueCountry: item.league.country,
+              home: {
+                id: item.teams.home.id,
+                name: item.teams.home.name,
+                short:
+                  item.teams.home.code ||
+                  item.teams.home.name.substring(0, 3).toUpperCase(),
+                logo: item.teams.home.logo,
+              },
+              away: {
+                id: item.teams.away.id,
+                name: item.teams.away.name,
+                short:
+                  item.teams.away.code ||
+                  item.teams.away.name.substring(0, 3).toUpperCase(),
+                logo: item.teams.away.logo,
+              },
+              score,
+              minute: item.fixture.status.elapsed
+                ? `${item.fixture.status.elapsed}'`
+                : statusShort,
+              status: statusShort,
+              time,
+              date: item.fixture.date,
+            };
+          });
         },
       );
     }

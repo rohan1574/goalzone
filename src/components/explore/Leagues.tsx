@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Image, TouchableOpacity } from "react-native";
+import { View, Text, Image, TouchableOpacity, ActivityIndicator } from "react-native";
 import { ChevronDown, Bell } from "lucide-react-native";
 
 interface LeagueMatch {
@@ -25,6 +25,7 @@ interface LeaguesProps {
   activeNotifications: { [key: string]: boolean };
   onToggleNotification: (id: string) => void;
   onPressDetails?: (match: any) => void;
+  loadingFixtures?: boolean;
 }
 
 export default function Leagues({
@@ -32,7 +33,29 @@ export default function Leagues({
   activeNotifications,
   onToggleNotification,
   onPressDetails,
+  loadingFixtures,
 }: LeaguesProps) {
+  if (loadingFixtures) {
+    return (
+      <View className="mt-8 px-4 items-center justify-center py-12">
+        <ActivityIndicator size="large" color="#02DB54" />
+        <Text className="text-gray-400 font-semibold text-xs mt-3">
+          Loading fixtures for date...
+        </Text>
+      </View>
+    );
+  }
+
+  if (!leaguesList || leaguesList.length === 0) {
+    return (
+      <View className="mt-8 px-4 items-center justify-center py-12 bg-[#131415] rounded-3xl mx-4 border border-white/5">
+        <Text className="text-gray-400 font-bold text-sm">
+          No matches found for this date.
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View className="mt-6 px-4 mb-24 bg-[#0D0E0F]">
       {leaguesList.map((league) => (
