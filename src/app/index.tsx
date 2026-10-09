@@ -16,7 +16,21 @@ import {
     getMatchValue,
     getTeamLogo,
     loadFootballDashboard,
+    getFromMemoryCache,
+    getAllCachedFixtures,
+    warmupFixturesCache,
 } from "../services/footballApi";
+
+import * as Notifications from "expo-notifications";
+
+// Configure local notification behavior
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 // Component imports for tabs
 import {
@@ -128,6 +142,64 @@ const MOCK_LEAGUES = [
   },
 ];
 
+const extractTeamName = (obj: any): string => {
+  if (typeof obj === "string" && obj.trim().length > 0) return obj.trim();
+  if (obj && typeof obj === "object") {
+    if (typeof obj.name === "string" && obj.name.trim().length > 0) return obj.name.trim();
+    if (typeof obj.title === "string" && obj.title.trim().length > 0) return obj.title.trim();
+    if (typeof obj.shortName === "string" && obj.shortName.trim().length > 0) return obj.shortName.trim();
+  }
+  return "";
+};
+
+const getHomeTeamName = (m: any): string => {
+  const name1 = extractTeamName(m?.home || m?.homeTeam || m?.teams?.home);
+  if (name1) return name1;
+
+  const explicit = getMatchValue(
+    m,
+    [
+      "homeName",
+      "home_name",
+      "homeTeamName",
+      "home_team_name",
+      "home.name",
+      "homeTeam.name",
+      "teams.home.name",
+      "home.title",
+      "homeTeam.title",
+      "home.shortName",
+    ],
+    ""
+  );
+  if (explicit && explicit !== "TBD") return explicit;
+  return "TBD";
+};
+
+const getAwayTeamName = (m: any): string => {
+  const name1 = extractTeamName(m?.away || m?.awayTeam || m?.teams?.away);
+  if (name1) return name1;
+
+  const explicit = getMatchValue(
+    m,
+    [
+      "awayName",
+      "away_name",
+      "awayTeamName",
+      "away_team_name",
+      "away.name",
+      "awayTeam.name",
+      "teams.away.name",
+      "away.title",
+      "awayTeam.title",
+      "away.shortName",
+    ],
+    ""
+  );
+  if (explicit && explicit !== "TBD") return explicit;
+  return "TBD";
+};
+
 export default function ExploreScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -148,9 +220,17 @@ export default function ExploreScreen() {
   const [dateFixtures, setDateFixtures] = useState<any[]>([]);
   const [loadingFixtures, setLoadingFixtures] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 60);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
   const [isOnboardingCompleted, setIsOnboardingCompleted] =
     useState<boolean>(false);
-  const [interstitialLoaded, setInterstitialLoaded] = useState(false);
+  const interstitialLoadedRef = React.useRef(false);
   const pendingMatchRef = React.useRef<any>(null);
   const pendingTabRef = React.useRef<TabType | null>(null);
   const pendingShowMainRef = React.useRef<boolean>(false);
@@ -163,7 +243,7 @@ export default function ExploreScreen() {
       AdEventType.LOADED,
       () => {
         console.log("Interstitial ad loaded");
-        setInterstitialLoaded(true);
+        interstitialLoadedRef.current = true;
       },
     );
 
@@ -171,7 +251,7 @@ export default function ExploreScreen() {
       AdEventType.CLOSED,
       () => {
         console.log("Interstitial ad closed");
-        setInterstitialLoaded(false);
+        interstitialLoadedRef.current = false;
 
         // Check if this ad was shown from SplashScreen transition
         const comingFromSplash = pendingShowMainRef.current;
@@ -212,7 +292,7 @@ export default function ExploreScreen() {
       AdEventType.ERROR,
       (error) => {
         console.warn("Interstitial ad failed to load:", error);
-        setInterstitialLoaded(false);
+        interstitialLoadedRef.current = false;
         // If ad fails, still go to main app
         if (pendingShowMainRef.current) {
           pendingShowMainRef.current = false;
@@ -247,7 +327,7 @@ export default function ExploreScreen() {
   }, []);
 
   // Handle navbar tab press: instant switch, no ads on tab navigation
-  const handleTabPress = (tab: TabType) => {
+  const handleTabPress = React.useCallback((tab: TabType) => {
     // Lazy mount: first time visiting this tab, mount it
     setMountedTabs((prev) => {
       if (prev.has(tab)) return prev;
@@ -257,7 +337,7 @@ export default function ExploreScreen() {
     });
     // Switch instantly, no interstitial ad
     setActiveTab(tab);
-  };
+  }, []);
 
   const getYYYYMMDD = (date: Date) => {
     const year = date.getFullYear();
@@ -273,17 +353,31 @@ export default function ExploreScreen() {
     selectedDate.getFullYear() === today.getFullYear();
 
   useEffect(() => {
-    if (isToday) {
-      if (apiData?.fixtures) {
-        setDateFixtures(apiData.fixtures);
-      }
+    const yyyymmdd = getYYYYMMDD(selectedDate);
+    const MEM_KEY = `@goalzone_mem_fixtures_${yyyymmdd}`;
+    const cachedMem = getFromMemoryCache(MEM_KEY);
+
+    if (cachedMem) {
+      // Instant 0ms response from memory cache — no spinner, zero flicker
+      setDateFixtures(cachedMem);
+      setLoadingFixtures(false);
+      prefetchAdjacentDates(selectedDate);
       return;
     }
 
+    if (isToday && apiData?.fixtures && apiData.fixtures.length > 0) {
+      setDateFixtures(apiData.fixtures);
+      setLoadingFixtures(false);
+      prefetchAdjacentDates(selectedDate);
+      return;
+    }
+
+    // Uncached date: clear previous matches immediately so old matches don't linger
+    setDateFixtures([]);
+    setLoadingFixtures(true);
+
     const loadFixtures = async () => {
-      setLoadingFixtures(true);
       try {
-        const yyyymmdd = getYYYYMMDD(selectedDate);
         const data = await fetchFixturesByDate(yyyymmdd);
         setDateFixtures(data || []);
       } catch (err) {
@@ -322,6 +416,9 @@ export default function ExploreScreen() {
   };
 
   useEffect(() => {
+    warmupFixturesCache().then(() => {
+      prefetchAdjacentDates(new Date());
+    });
     loadData(false);
   }, []);
 
@@ -386,29 +483,71 @@ export default function ExploreScreen() {
     return () => clearInterval(livePollInterval);
   }, []);
 
-  const handleRefresh = () => {
+  const handleRefresh = React.useCallback(() => {
     setRefreshing(true);
     loadData(true);
-  };
+  }, []);
 
-  const handlePrevDate = () => {
-    const nextDate = new Date(selectedDate);
-    nextDate.setDate(selectedDate.getDate() - 1);
-    setSelectedDate(nextDate);
-  };
+  const handlePrevDate = React.useCallback(() => {
+    setSelectedDate((prevDate) => {
+      const nextDate = new Date(prevDate);
+      nextDate.setDate(prevDate.getDate() - 1);
+      return nextDate;
+    });
+  }, []);
 
-  const handleNextDate = () => {
-    const nextDate = new Date(selectedDate);
-    nextDate.setDate(selectedDate.getDate() + 1);
-    setSelectedDate(nextDate);
-  };
+  const handleNextDate = React.useCallback(() => {
+    setSelectedDate((prevDate) => {
+      const nextDate = new Date(prevDate);
+      nextDate.setDate(prevDate.getDate() + 1);
+      return nextDate;
+    });
+  }, []);
 
-  const toggleNotification = (matchId: string) => {
-    setActiveNotifications((prev) => ({
-      ...prev,
-      [matchId]: !prev[matchId],
-    }));
-  };
+  const toggleNotification = React.useCallback(
+    (matchId: string, matchName?: string) => {
+      setActiveNotifications((prev) => {
+        const isCurrentlyActive = !!prev[matchId];
+        const nextState = !isCurrentlyActive;
+
+        if (nextState) {
+          Notifications.requestPermissionsAsync()
+            .then(({ status }) => {
+              if (status === "granted") {
+                Notifications.scheduleNotificationAsync({
+                  content: {
+                    title: "🔔 Match Notification Enabled",
+                    body: matchName
+                      ? `Alerts enabled for ${matchName}`
+                      : "You will receive notifications for this match.",
+                    sound: true,
+                  },
+                  trigger: null,
+                }).catch(() => {});
+              }
+            })
+            .catch(() => {});
+        }
+
+        return {
+          ...prev,
+          [matchId]: nextState,
+        };
+      });
+    },
+    [],
+  );
+
+  const handlePressDetails = React.useCallback((match: any) => {
+    pendingMatchRef.current = match;
+    if (interstitialLoadedRef.current) {
+      interstitialAd.show();
+    } else {
+      setSelectedMatch(match);
+      setDetailsVisible(true);
+      pendingMatchRef.current = null;
+    }
+  }, []);
 
   const formatDateString = (date: Date) => {
     const day = date.getDate();
@@ -438,22 +577,12 @@ export default function ExploreScreen() {
   // Process data from API or fall back to mock data (useMemo + slice to prevent UI thread lag)
   const liveMatches = React.useMemo(() => {
     if (!apiData?.live || apiData.live.length === 0) {
-      return MOCK_LIVE_MATCHES.map((m) => ({
-        ...m,
-        leagueId: m.id.includes("mls") ? "130" : "87",
-      }));
+      return [];
     }
 
     // Limit to top 25 live matches to prevent UI freezing
-    return apiData.live.slice(0, 25).map((m: any) => {
-      const hName =
-        m.home?.name ||
-        getMatchValue(m, [
-          "home.name",
-          "homeTeam.name",
-          "teams.home.name",
-        ]) ||
-        "TBD";
+    return apiData.live.slice(0, 25).map((m: any, idx: number) => {
+      const hName = getHomeTeamName(m);
       const hShort =
         m.home?.short ||
         getMatchValue(m, ["home.shortName", "home.code", "homeTeam.code"]);
@@ -462,14 +591,7 @@ export default function ExploreScreen() {
           ? hShort
           : hName.substring(0, 3).toUpperCase();
 
-      const aName =
-        m.away?.name ||
-        getMatchValue(m, [
-          "away.name",
-          "awayTeam.name",
-          "teams.away.name",
-        ]) ||
-        "TBD";
+      const aName = getAwayTeamName(m);
       const aShort =
         m.away?.short ||
         getMatchValue(m, ["away.shortName", "away.code", "awayTeam.code"]);
@@ -479,7 +601,7 @@ export default function ExploreScreen() {
           : aName.substring(0, 3).toUpperCase();
 
       return {
-        id: getMatchEventId(m) || Math.random().toString(),
+        id: getMatchEventId(m) || `${hName}-${aName}-${idx}`,
         league: m.league || getMatchLeague(m),
         leagueId: getMatchLeagueId(m),
         home: {
@@ -521,84 +643,66 @@ export default function ExploreScreen() {
       }
     >();
 
-    dateFixtures.forEach((m: any) => {
+    const defaultDateStr = getMatchLocalDateStr(null, selectedDate);
+
+    dateFixtures.forEach((m: any, idx: number) => {
       const lName =
         m.league ||
-        getMatchLeague(m) ||
-        getMatchValue(m, ["league.name", "league"]) ||
+        m.leagueName ||
+        m.league?.name ||
+        m.competition?.name ||
         "Other League";
       const lId = String(
         m.leagueId ||
-          getMatchLeagueId(m) ||
-          getMatchValue(m, ["league.id", "leagueId"]) ||
+          m.league?.id ||
+          m.competition?.id ||
           lName,
       );
       const lLogo =
         m.leagueLogo ||
-        getMatchValue(m, ["league.logo", "leagueLogo"]) ||
+        m.league?.logo ||
+        m.league?.image ||
         "https://images.fotmob.com/image_resources/logo/leaguelogo/47.png";
 
-      const hName =
-        getMatchValue(m, ["home.name", "homeTeam.name"]) || "TBD";
-      const hShort = getMatchValue(m, [
-        "home.shortName",
-        "home.code",
-        "homeTeam.code",
-      ]);
-      const hShortStr =
-        hShort && hShort !== "TBD"
-          ? hShort
-          : hName.substring(0, 3).toUpperCase();
+      const hObj = m.home || m.homeTeam || m.teams?.home || {};
+      const aObj = m.away || m.awayTeam || m.teams?.away || {};
 
-      const aName =
-        getMatchValue(m, ["away.name", "awayTeam.name"]) || "TBD";
-      const aShort = getMatchValue(m, [
-        "away.shortName",
-        "away.code",
-        "awayTeam.code",
-      ]);
-      const aShortStr =
-        aShort && aShort !== "TBD"
-          ? aShort
-          : aName.substring(0, 3).toUpperCase();
+      const hName = getHomeTeamName(m);
+      const aName = getAwayTeamName(m);
+
+      const hShortStr = (hObj.shortName || hObj.code || hName.substring(0, 3)).toUpperCase();
+      const aShortStr = (aObj.shortName || aObj.code || aName.substring(0, 3)).toUpperCase();
+
+      const hLogo = hObj.logo || hObj.image || (hObj.id ? `https://images.fotmob.com/image_resources/logo/teamlogo/${hObj.id}.png` : "");
+      const aLogo = aObj.logo || aObj.image || (aObj.id ? `https://images.fotmob.com/image_resources/logo/teamlogo/${aObj.id}.png` : "");
 
       const matchStatus =
-        m.status || (getMatchStatus(m) === "Live" ? "Live" : "NS");
-      const matchScore = m.score || getMatchScore(m).display || "VS";
-      const matchMinute =
-        m.minute ||
-        (matchStatus === "FT"
-          ? "FT"
-          : matchStatus === "NS"
-            ? "NS"
-            : "Live");
+        m.status || (m.minute === "Live" || m.statusType === "live" ? "Live" : "NS");
+      const matchScore = m.score || (m.homeScore !== undefined && m.awayScore !== undefined ? `${m.homeScore} - ${m.awayScore}` : "VS");
+      const matchMinute = m.minute || (matchStatus === "FT" ? "FT" : matchStatus === "NS" ? "NS" : "Live");
 
       const matchItem = {
-        id: getMatchEventId(m) || Math.random().toString(),
+        id: getMatchEventId(m) || `${lId}-${hName}-${aName}-${idx}`,
         status: matchStatus,
         score: matchScore,
         minute: matchMinute,
         time: formatLocalMatchTime(m),
-        date: getMatchLocalDateStr(m, selectedDate),
+        date: defaultDateStr,
         rawDate: m.rawDate || m.date || m.fixture?.date,
         timestamp: m.timestamp || m.fixture?.timestamp,
         leagueId: lId,
         league: lName,
         home: {
-          id:
-            m.home?.id ||
-            getMatchValue(m, ["home.id", "homeTeam.id", "teams.home.id"]),
+          id: hObj.id || "",
           name: hName,
           short: hShortStr,
-          logo: getTeamLogo(m, "home"),
+          logo: hLogo,
         },
         away: {
-          id:
-            m.away?.id ||
-            getMatchValue(m, ["away.id", "awayTeam.id", "teams.away.id"]),
+          id: aObj.id || "",
           name: aName,
           short: aShortStr,
-          logo: getTeamLogo(m, "away"),
+          logo: aLogo,
         },
       };
 
@@ -652,30 +756,92 @@ export default function ExploreScreen() {
   }, [dateFixtures, isToday, selectedDate]);
 
   const filteredLiveMatches = React.useMemo(() => {
-    if (!searchQuery) return liveMatches;
-    const q = searchQuery.toLowerCase();
-    return liveMatches.filter(
-      (m: any) =>
-        m.home.name.toLowerCase().includes(q) ||
-        m.away.name.toLowerCase().includes(q) ||
-        m.league.toLowerCase().includes(q),
-    );
-  }, [searchQuery, liveMatches]);
+    if (!debouncedSearchQuery || !debouncedSearchQuery.trim()) return liveMatches;
+    const q = debouncedSearchQuery.toLowerCase().trim();
+    return liveMatches
+      .filter((m: any) => {
+        const hName = (m.home?.name || "").toLowerCase();
+        const hShort = (m.home?.short || "").toLowerCase();
+        const aName = (m.away?.name || "").toLowerCase();
+        const aShort = (m.away?.short || "").toLowerCase();
+        const lName = (m.league || "").toLowerCase();
+        return (
+          hName.includes(q) ||
+          hShort.includes(q) ||
+          aName.includes(q) ||
+          aShort.includes(q) ||
+          lName.includes(q)
+        );
+      })
+      .sort((a: any, b: any) => {
+        const aExact =
+          (a.home?.name || "").toLowerCase() === q ||
+          (a.away?.name || "").toLowerCase() === q ||
+          (a.home?.short || "").toLowerCase() === q ||
+          (a.away?.short || "").toLowerCase() === q;
+        const bExact =
+          (b.home?.name || "").toLowerCase() === q ||
+          (b.away?.name || "").toLowerCase() === q ||
+          (b.home?.short || "").toLowerCase() === q ||
+          (b.away?.short || "").toLowerCase() === q;
+
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+        return 0;
+      });
+  }, [debouncedSearchQuery, liveMatches]);
 
   const filteredLeaguesList = React.useMemo(() => {
-    if (!searchQuery) return leaguesList;
-    const q = searchQuery.toLowerCase();
-    return leaguesList
-      .map((league: any) => {
-        const filteredMatches = league.matches.filter(
-          (m: any) =>
-            m.home.name.toLowerCase().includes(q) ||
-            m.away.name.toLowerCase().includes(q),
-        );
-        return { ...league, matches: filteredMatches };
-      })
-      .filter((league: any) => league.matches.length > 0);
-  }, [searchQuery, leaguesList]);
+    if (!debouncedSearchQuery || !debouncedSearchQuery.trim()) return leaguesList;
+    const q = debouncedSearchQuery.toLowerCase().trim();
+
+    try {
+      const matchedGroups: any[] = [];
+      // Strictly limit search to the 15 leagues of the selected date ONLY
+      const activeDate15Leagues = leaguesList.slice(0, 15);
+
+      activeDate15Leagues.forEach((group: any) => {
+        if (!group || !group.matches) return;
+        const lName = (group.leagueName || "").toLowerCase();
+        const lMatch = lName.includes(q);
+
+        const matchingMatches = group.matches.filter((m: any) => {
+          if (!m) return false;
+          const hName = (m.home?.name || "").toLowerCase();
+          const aName = (m.away?.name || "").toLowerCase();
+          const hShort = (m.home?.short || "").toLowerCase();
+          const aShort = (m.away?.short || "").toLowerCase();
+
+          return lMatch || hName.includes(q) || aName.includes(q) || hShort.includes(q) || aShort.includes(q);
+        });
+
+        if (matchingMatches.length > 0) {
+          // Score league relevance so exact team matches jump to the top
+          let score = 10;
+          matchingMatches.forEach((m: any) => {
+            const hName = (m.home?.name || "").toLowerCase();
+            const aName = (m.away?.name || "").toLowerCase();
+            if (hName === q || aName === q) score = 100;
+            else if (hName.startsWith(q) || aName.startsWith(q)) score = Math.max(score, 70);
+          });
+
+          matchedGroups.push({
+            league: {
+              ...group,
+              matches: matchingMatches,
+            },
+            score,
+          });
+        }
+      });
+
+      matchedGroups.sort((a, b) => b.score - a.score);
+      return matchedGroups.map((g) => g.league);
+    } catch (err) {
+      console.warn("Search filter error:", err);
+      return leaguesList;
+    }
+  }, [debouncedSearchQuery, leaguesList]);
 
   if (!isOnboardingCompleted) {
     return (
@@ -685,7 +851,7 @@ export default function ExploreScreen() {
           pendingMatchRef.current = null;
           pendingTabRef.current = null;
 
-          if (interstitialLoaded) {
+          if (interstitialLoadedRef.current) {
             // Mark that we're transitioning from splash
             // The CLOSED event will call setIsOnboardingCompleted(true)
             pendingShowMainRef.current = true;
@@ -747,18 +913,8 @@ export default function ExploreScreen() {
           onToggleNotification={toggleNotification}
           width={width}
           loadingFixtures={loadingFixtures}
-          onPressDetails={(match: any) => {
-            pendingMatchRef.current = match;
-            if (interstitialLoaded) {
-              // Show interstitial ad; modal opens after ad is dismissed (via CLOSED event)
-              interstitialAd.show();
-            } else {
-              // Ad not ready yet, open modal directly
-              setSelectedMatch(match);
-              setDetailsVisible(true);
-              pendingMatchRef.current = null;
-            }
-          }}
+          onPressDetails={handlePressDetails}
+          searchQuery={searchQuery}
         />
       </View>
 
@@ -767,16 +923,7 @@ export default function ExploreScreen() {
         <View style={{ flex: 1, display: activeTab === "leagues" ? "flex" : "none" }}>
           <LeaguesView
             apiLeagues={apiData?.leagues}
-            onPressDetails={(match: any) => {
-              pendingMatchRef.current = match;
-              if (interstitialLoaded) {
-                interstitialAd.show();
-              } else {
-                setSelectedMatch(match);
-                setDetailsVisible(true);
-                pendingMatchRef.current = null;
-              }
-            }}
+            onPressDetails={handlePressDetails}
           />
         </View>
       )}

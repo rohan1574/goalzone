@@ -17,8 +17,8 @@ const api = axios.create({
   },
 });
 
-// Popular league IDs to pre-warm
-const POPULAR_LEAGUE_IDS = ['39', '140', '135', '78', '61', '88', '94', '2', '3', '848', '71', '128', '253', '13', '307'];
+// Top curated league IDs to pre-warm (Big 5, Champions League, Europa League, Brasileirão, Saudi Pro League, MLS)
+const POPULAR_LEAGUE_IDS = ['39', '140', '135', '78', '61', '2', '3', '71', '307', '253'];
 
 // ==========================================
 // HELPERS
@@ -96,7 +96,7 @@ function sleep(ms) {
 
 /**
  * Pre-fetches today's and tomorrow's fixtures.
- * TTL: 30 minutes (1800s)
+ * TTL: 3000s (50 min) — always exceeds warm cycle (45 min) to prevent cache gaps
  */
 async function warmFixturesByDate() {
   const dates = [];
@@ -121,7 +121,7 @@ async function warmFixturesByDate() {
     const data = await safeApiCall('/fixtures', { date: dateStr, timezone: tz });
     if (data) {
       const mapped = (data.response || []).map(mapFixture);
-      cache.set(cacheKey, mapped, 1800);
+      cache.set(cacheKey, mapped, 3000); // 50 min TTL > 45 min warm cycle — no gap
       console.log(`[CacheWarmer] Cached ${mapped.length} fixtures for ${dateStr}`);
     }
 
@@ -174,7 +174,7 @@ async function warmStandings() {
 
 /**
  * Pre-fetches next 10 fixtures for popular leagues.
- * TTL: 30 minutes (1800s)
+ * TTL: 3000s (50 min) — always exceeds warm cycle (45 min) to prevent cache gaps
  */
 async function warmLeagueFixtures() {
   const todayStr = getTodayStr();
@@ -203,7 +203,7 @@ async function warmLeagueFixtures() {
           away: { id: item.teams.away.id, name: item.teams.away.name, logo: item.teams.away.logo },
         };
       });
-      cache.set(cacheKey, list, 1800);
+      cache.set(cacheKey, list, 3000); // 50 min TTL > 45 min warm cycle — no gap
       console.log(`[CacheWarmer] Cached ${list.length} upcoming fixtures for league=${leagueId}`);
     }
 
@@ -292,8 +292,8 @@ let warmerTimer = null;
 let newsTimer = null;
 let isWarmerRunning = false;
 
-// Full warm cycle: every 25 minutes
-const WARM_INTERVAL_MS = 25 * 60 * 1000;
+// Full warm cycle: every 45 minutes for fast fresh updates
+const WARM_INTERVAL_MS = 45 * 60 * 1000;
 // News refresh: every 5 minutes (no API quota cost)
 const NEWS_INTERVAL_MS = 5 * 60 * 1000;
 

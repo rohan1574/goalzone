@@ -43,10 +43,11 @@ interface ExploreViewProps {
   liveMatches: Match[];
   leaguesList: LeagueGroup[];
   activeNotifications: { [key: string]: boolean };
-  onToggleNotification: (id: string) => void;
+  onToggleNotification: (id: string, matchName?: string) => void;
   width: number;
   onPressDetails: (match: Match) => void;
   loadingFixtures?: boolean;
+  searchQuery?: string;
 }
 
 export default function ExploreView({

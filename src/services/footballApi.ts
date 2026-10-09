@@ -29,6 +29,35 @@ export const setMemoryCache = (key: string, data: any, ttlMs: number) => {
   memoryCache.set(key, { data, expiry: Date.now() + ttlMs });
 };
 
+export const getAllCachedFixtures = (): any[] => {
+  const allFixtures: any[] = [];
+  const seenIds = new Set<string>();
+
+  const addFixture = (m: any) => {
+    if (!m) return;
+    const eventId = String(
+      getMatchEventId(m) ||
+      m.id ||
+      `${m.home?.name || m.homeName || "home"}-${m.away?.name || m.awayName || "away"}-${m.date || m.time}`
+    );
+    if (eventId && !seenIds.has(eventId)) {
+      seenIds.add(eventId);
+      allFixtures.push(m);
+    }
+  };
+
+  for (const [key, value] of memoryCache.entries()) {
+    if (!value || !value.data) continue;
+    if (Array.isArray(value.data)) {
+      value.data.forEach(addFixture);
+    } else if (value.data.fixtures && Array.isArray(value.data.fixtures)) {
+      value.data.fixtures.forEach(addFixture);
+    }
+  }
+
+  return allFixtures;
+};
+
 export const hasFootballApiKey = true;
 
 export const formatFootballDate = (addDays = 0) => {
@@ -515,18 +544,29 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
   return response;
 };
 
+export const getFixturesCacheTTL = (dateString: string): number => {
+  const todayStr = formatFootballDate(0);
+  if (dateString < todayStr) {
+    return 30 * 24 * 60 * 60 * 1000; // 30 days for past dates (match results never change)
+  } else if (dateString > todayStr) {
+    return 6 * 60 * 60 * 1000; // 6 hours for future dates
+  }
+  return 15 * 60 * 1000; // 15 minutes for today
+};
+
 export const fetchFixturesByDate = async (dateString: string) => {
   const MEM_KEY = `@goalzone_mem_fixtures_${dateString}`;
   const CACHE_KEY = `@goalzone_api_cache_fixtures_${dateString}`;
   const CACHE_TIME_KEY = `@goalzone_api_cache_fixtures_time_${dateString}`;
+  const ttl = getFixturesCacheTTL(dateString);
 
-  // 1. In-memory check (instant)
+  // 1. In-memory check (instant 0ms response)
   const memData = getFromMemoryCache(MEM_KEY);
   if (memData) {
     return memData;
   }
 
-  // 2. Persistent storage check (15 minutes TTL)
+  // 2. Persistent storage check
   try {
     const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
     const cachedData = await AsyncStorage.getItem(CACHE_KEY);
@@ -534,9 +574,9 @@ export const fetchFixturesByDate = async (dateString: string) => {
     if (cachedTime && cachedData) {
       const parsedTime = parseInt(cachedTime, 10);
       const now = Date.now();
-      if (now - parsedTime < 900000) { // 15 minutes TTL
+      if (now - parsedTime < ttl) {
         const parsed = JSON.parse(cachedData);
-        setMemoryCache(MEM_KEY, parsed, 900000);
+        setMemoryCache(MEM_KEY, parsed, ttl - (now - parsedTime));
         return parsed;
       }
     }
@@ -548,20 +588,21 @@ export const fetchFixturesByDate = async (dateString: string) => {
     `[API] Fetching fresh fixtures for date ${dateString} from API...`,
   );
   try {
-    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Dhaka";
+    const userTimezone =
+      Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Dhaka";
     const response = await api.get("/football-get-matches-by-date", {
       params: { date: dateString, timezone: userTimezone },
     });
     const freshData = findArray(response.data);
 
-    // Save to memory cache and AsyncStorage
-    setMemoryCache(MEM_KEY, freshData, 900000);
-    try {
-      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
-      await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-    } catch (err) {
-      console.warn("Error saving fixtures cache:", err);
-    }
+    // Save to high-speed memory RAM cache instantly (0ms)
+    setMemoryCache(MEM_KEY, freshData, ttl);
+
+    // Save to persistent storage asynchronously in idle thread (non-blocking)
+    setTimeout(() => {
+      AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData)).catch(() => {});
+      AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString()).catch(() => {});
+    }, 100);
 
     return freshData;
   } catch (error) {
@@ -570,17 +611,63 @@ export const fetchFixturesByDate = async (dateString: string) => {
   }
 };
 
+let prefetchTimer: any = null;
+
 export const prefetchAdjacentDates = (baseDate: Date = new Date()) => {
-  const offsets = [-2, -1, 1, 2, 3];
-  offsets.forEach((offset) => {
-    const d = new Date(baseDate);
-    d.setDate(baseDate.getDate() + offset);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const yyyymmdd = `${year}${month}${day}`;
-    fetchFixturesByDate(yyyymmdd).catch(() => {});
-  });
+  if (prefetchTimer) clearTimeout(prefetchTimer);
+  prefetchTimer = setTimeout(() => {
+    // Lightweight adjacent dates prefetch: yesterday, tomorrow, day after tomorrow
+    const offsets = [-1, 1, 2];
+    offsets.forEach((offset, idx) => {
+      setTimeout(() => {
+        const d = new Date(baseDate);
+        d.setDate(baseDate.getDate() + offset);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const yyyymmdd = `${year}${month}${day}`;
+        if (!getFromMemoryCache(`@goalzone_mem_fixtures_${yyyymmdd}`)) {
+          fetchFixturesByDate(yyyymmdd).catch(() => {});
+        }
+      }, idx * 500);
+    });
+  }, 1000);
+};
+
+export const warmupFixturesCache = async () => {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const fixtureTimeKeys = keys.filter((k) =>
+      k.startsWith("@goalzone_api_cache_fixtures_time_")
+    );
+    const now = Date.now();
+
+    for (const timeKey of fixtureTimeKeys) {
+      const dateString = timeKey.replace(
+        "@goalzone_api_cache_fixtures_time_",
+        ""
+      );
+      const cacheKey = `@goalzone_api_cache_fixtures_${dateString}`;
+      const memKey = `@goalzone_mem_fixtures_${dateString}`;
+
+      if (!getFromMemoryCache(memKey)) {
+        const timeVal = await AsyncStorage.getItem(timeKey);
+        if (timeVal) {
+          const parsedTime = parseInt(timeVal, 10);
+          const ttl = getFixturesCacheTTL(dateString);
+          if (now - parsedTime < ttl) {
+            const dataVal = await AsyncStorage.getItem(cacheKey);
+            if (dataVal) {
+              const parsed = JSON.parse(dataVal);
+              setMemoryCache(memKey, parsed, ttl - (now - parsedTime));
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Warmup fixtures cache error:", err);
+  }
 };
 
 const unwrapApiResponse = (data: any) =>

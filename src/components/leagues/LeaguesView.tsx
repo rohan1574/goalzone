@@ -30,7 +30,7 @@ interface LeaguesViewProps {
 interface LeagueItem { id: string; name: string; logo: string; category: string; }
 interface Section { title: string; isFav?: boolean; data: LeagueItem[]; }
 
-export default function LeaguesView({ apiLeagues, onPressDetails }: LeaguesViewProps) {
+function LeaguesView({ apiLeagues, onPressDetails }: LeaguesViewProps) {
   const [favorites, setFavorites] = useState<string[]>(["39", "140"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
@@ -49,12 +49,11 @@ export default function LeaguesView({ apiLeagues, onPressDetails }: LeaguesViewP
     });
   }, [apiLeagues]);
 
-  // Filtered list based on search
   const filteredLeagues = useMemo(() => {
-    if (!searchQuery.trim()) return leaguesList;
-    const q = searchQuery.toLowerCase();
+    if (!searchQuery || !searchQuery.trim()) return leaguesList;
+    const q = searchQuery.toLowerCase().trim();
     return leaguesList.filter(
-      (l) => l.name.toLowerCase().includes(q) || l.category.toLowerCase().includes(q)
+      (l) => (l.name ? l.name.toLowerCase().includes(q) : false) || (l.category ? l.category.toLowerCase().includes(q) : false)
     );
   }, [leaguesList, searchQuery]);
 
@@ -201,3 +200,5 @@ export default function LeaguesView({ apiLeagues, onPressDetails }: LeaguesViewP
     </View>
   );
 }
+
+export default React.memo(LeaguesView);

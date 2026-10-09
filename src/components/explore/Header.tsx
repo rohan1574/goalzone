@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, Keyboard } from "react-native";
 import { router } from "expo-router";
 import {
   Menu,
@@ -22,7 +22,7 @@ interface HeaderProps {
   onSearchQueryChange: (query: string) => void;
 }
 
-export default function Header({
+function Header({
   selectedDate,
   onPrevDate,
   onNextDate,
@@ -53,6 +53,30 @@ export default function Header({
   };
 
   const [isSearching, setIsSearching] = useState(false);
+  const inputRef = React.useRef<TextInput>(null);
+
+  React.useEffect(() => {
+    if (isSearching) {
+      const timer = setTimeout(() => {
+        try {
+          inputRef.current?.focus();
+        } catch (e) { }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isSearching]);
+
+  const handleOpenSearch = React.useCallback(() => {
+    setIsSearching(true);
+  }, []);
+
+  const handleCloseSearch = React.useCallback(() => {
+    try {
+      Keyboard.dismiss();
+    } catch (e) { }
+    setIsSearching(false);
+    onSearchQueryChange("");
+  }, [onSearchQueryChange]);
 
   const today = new Date();
   const isToday =
@@ -63,54 +87,30 @@ export default function Header({
   return (
     <View>
       {/* Main Header Bar */}
+
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-[#ffffff05] bg-[#0D0E0F] h-[58px]">
-        {isSearching ? (
-          <View className="flex-row items-center flex-1 h-full">
-            <TextInput
-              placeholder="Search teams or leagues..."
-              placeholderTextColor="#9BA1A6"
-              value={searchQuery}
-              onChangeText={onSearchQueryChange}
-              className="flex-1 bg-[#131415] text-white px-4 py-2 rounded-2xl border border-white/5 text-xs h-9 mr-2"
-              autoFocus
-            />
-            <TouchableOpacity 
-              onPress={() => {
-                setIsSearching(false);
-                onSearchQueryChange("");
-              }}
-              className="p-2 bg-white/5 rounded-full"
-            >
-              <X size={16} color="#ECEDEE" />
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            {/* Menu drawer button */}
-            <TouchableOpacity onPress={() => router.push("/settings")} className="p-1">
-              <Menu size={24} color="#ECEDEE" />
-            </TouchableOpacity>
+        {/* Menu drawer button */}
+        <TouchableOpacity
+          onPress={() => router.push("/settings")}
+          className="p-1"
+        >
+          <Menu size={24} color="#ECEDEE" />
+        </TouchableOpacity>
 
-            {/* Brand title */}
-            <Text className="text-xl font-black text-white tracking-widest uppercase">
-              LIVE <Text className="text-[#02DB54]">SCORES</Text>
-            </Text>
+        {/* Brand title */}
+        <Text className="text-xl font-black text-white tracking-widest uppercase">
+          LIVE <Text className="text-[#02DB54]">SCORES</Text>
+        </Text>
 
-            {/* Action icons stack on right */}
-            <View className="flex-row items-center gap-3">
-              <TouchableOpacity 
-                onPress={() => setIsSearching(true)}
-                className="p-1 bg-white/5 rounded-full"
-              >
-                <Search size={18} color="#ECEDEE" />
-              </TouchableOpacity>
-             
-              <TouchableOpacity onPress={onRefresh} className="p-1 bg-white/5 rounded-full">
-                <RotateCw size={18} color="#ECEDEE" />
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
+        {/* Refresh button */}
+        <View className="flex-row items-center">
+          <TouchableOpacity
+            onPress={onRefresh}
+            className="p-1 bg-white/5 rounded-full"
+          >
+            <RotateCw size={18} color="#ECEDEE" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Date Navigation Bar Component */}
@@ -149,3 +149,5 @@ export default function Header({
     </View>
   );
 }
+
+export default React.memo(Header);

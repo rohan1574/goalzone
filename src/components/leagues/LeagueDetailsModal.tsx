@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Bell } from "lucide-react-native";
 import { fetchLeagueStandings, fetchLeagueFixtures, formatLocalMatchTime } from "../../services/footballApi";
+import * as Notifications from "expo-notifications";
 
 export interface League {
   id: string;
@@ -36,11 +37,35 @@ export default function LeagueDetailsModal({
   const [activeNotifications, setActiveNotifications] = useState<{ [key: string]: boolean }>({});
 
 
-  const toggleNotification = (matchId: string) => {
-    setActiveNotifications((prev) => ({
-      ...prev,
-      [matchId]: !prev[matchId],
-    }));
+  const toggleNotification = (matchId: string, matchName?: string) => {
+    setActiveNotifications((prev) => {
+      const isCurrentlyActive = !!prev[matchId];
+      const nextState = !isCurrentlyActive;
+
+      if (nextState) {
+        Notifications.requestPermissionsAsync()
+          .then(({ status }) => {
+            if (status === "granted") {
+              Notifications.scheduleNotificationAsync({
+                content: {
+                  title: "🔔 Match Notification Enabled",
+                  body: matchName
+                    ? `Alerts enabled for ${matchName}`
+                    : "You will receive notifications for this match.",
+                  sound: true,
+                },
+                trigger: null,
+              }).catch(() => {});
+            }
+          })
+          .catch(() => {});
+      }
+
+      return {
+        ...prev,
+        [matchId]: nextState,
+      };
+    });
   };
 
   // Mock data database for fixtures and standings by league ID

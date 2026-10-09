@@ -1,5 +1,5 @@
+import React, { useEffect, useRef, useState } from "react";
 import { Newspaper, Play } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -14,7 +14,7 @@ import { fetchFootballNews } from "../../services/footballApi";
 
 const { width } = Dimensions.get("window");
 
-export default function HighlightView() {
+function HighlightView() {
   const [activeIndex, setActiveIndex] = useState(0);
   const directionRef = useRef(1); // 1 = forward (left-to-right), -1 = backward (right-to-left)
   const scrollViewRef = useRef<ScrollView>(null);
@@ -552,3 +552,5 @@ export default function HighlightView() {
     </View>
   );
 }
+
+export default React.memo(HighlightView);

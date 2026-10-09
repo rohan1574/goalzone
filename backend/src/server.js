@@ -67,7 +67,8 @@ async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
       !mappedData ||
       (Array.isArray(mappedData) && mappedData.length === 0) ||
       (mappedData && mappedData.lineup === null);
-    const effectiveTtl = isEmpty ? Math.min(ttlSeconds, 30) : ttlSeconds;
+    // On empty result: cache for 5 min so we don't spam the API every 30s when no matches are on
+    const effectiveTtl = isEmpty ? Math.min(ttlSeconds, 300) : ttlSeconds;
     cache.set(cacheKey, mappedData, effectiveTtl);
     return mappedData;
   } catch (err) {
@@ -92,14 +93,14 @@ app.get("/football-current-live", (req, res) => {
   const data = getCachedLiveScores();
   res.setHeader("Cache-Control", "public, max-age=15");
 
-  // If cache has matches list, return it
-  if (data && Array.isArray(data.matches) && data.matches.length > 0) {
+  // Always return cached live score matches array if populated (even if [] when 0 live matches)
+  if (data && Array.isArray(data.matches)) {
     return res.json(data.matches);
   }
 
-  // Fallback to fetchAndCache if in-memory poller hasn't populated yet
+  // Fallback only if in-memory poller has never run on cold server startup
   const cacheKey = "current_live_matches_fallback";
-  fetchAndCache(cacheKey, "/fixtures", { live: "all" }, 60, (apiResponse) => {
+  fetchAndCache(cacheKey, "/fixtures", { live: "all" }, 300, (apiResponse) => {
     const list = apiResponse.response || [];
     return list.map((item) => ({
       id: String(item.fixture.id),
@@ -456,7 +457,7 @@ app.get("/football-dashboard", async (req, res) => {
       teams: popularTeams,
     };
 
-    cache.set(cacheKey, payload, 60);
+    cache.set(cacheKey, payload, 1800); // 30 min — matches warm cycle TTL so dashboard is never re-fetched cold
     res.setHeader("Cache-Control", "public, max-age=30");
     res.json(payload);
   } catch (err) {
@@ -484,7 +485,7 @@ app.get("/football-get-matches-by-date", async (req, res) => {
       cacheKey,
       "/fixtures",
       { date: formattedDate, timezone },
-      1800,
+      3000, // 50 min TTL — matches cacheWarmer warm cycle so disk cache is always valid
       (apiResponse) => {
         const list = apiResponse.response || [];
         return list.map((item) => {
@@ -997,6 +998,17 @@ function getMockLineup(eventid, side) {
   }
 }
 
+async function getRawFixtureLineups(eventid) {
+  const cacheKey = `lineup_raw_fixture_${eventid}`;
+  return fetchAndCache(
+    cacheKey,
+    "/fixtures/lineups",
+    { fixture: eventid },
+    86400,
+    (apiResponse) => apiResponse
+  );
+}
+
 app.get("/football-get-hometeam-lineup", async (req, res) => {
   const eventid = req.query.eventid;
   if (!eventid) {
@@ -1007,17 +1019,9 @@ app.get("/football-get-hometeam-lineup", async (req, res) => {
     return res.json(getMockLineup(eventid, "home"));
   }
 
-  const cacheKey = `lineup_home_${eventid}`;
   try {
-    const data = await fetchAndCache(
-      cacheKey,
-      "/fixtures/lineups",
-      { fixture: eventid },
-      86400,
-      (apiResponse) => {
-        return translateLineup(apiResponse, "home");
-      },
-    );
+    const rawData = await getRawFixtureLineups(eventid);
+    const data = translateLineup(rawData, "home");
     res.json(data);
   } catch (err) {
     res.status(500).json({
@@ -1037,17 +1041,9 @@ app.get("/football-get-awayteam-lineup", async (req, res) => {
     return res.json(getMockLineup(eventid, "away"));
   }
 
-  const cacheKey = `lineup_away_${eventid}`;
   try {
-    const data = await fetchAndCache(
-      cacheKey,
-      "/fixtures/lineups",
-      { fixture: eventid },
-      86400,
-      (apiResponse) => {
-        return translateLineup(apiResponse, "away");
-      },
-    );
+    const rawData = await getRawFixtureLineups(eventid);
+    const data = translateLineup(rawData, "away");
     res.json(data);
   } catch (err) {
     res.status(500).json({
@@ -1346,7 +1342,7 @@ app.get("/football-get-match-statistics", async (req, res) => {
       cacheKey,
       "/fixtures/statistics",
       { fixture: eventid },
-      90,
+      300,
       (apiResponse) => {
         return parseFixtureStats(apiResponse);
       },
@@ -1393,7 +1389,7 @@ app.get("/football-get-match-events", async (req, res) => {
       cacheKey,
       "/fixtures/events",
       { fixture: eventid },
-      300,
+      180,
       (apiResponse) => parseFixtureEvents(apiResponse)
     );
     res.json(data);

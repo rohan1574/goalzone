@@ -205,7 +205,7 @@ const mapFixturesToMatches = (data: any[]): MatchData[] => {
   });
 };
 
-export default function PredictionView({ initialFixtures }: PredictionViewProps = {}) {
+function PredictionView({ initialFixtures }: PredictionViewProps = {}) {
   const initialMapped = initialFixtures && initialFixtures.length > 0 ? mapFixturesToMatches(initialFixtures) : MOCK_PREDICTIONS;
   const [matches, setMatches] = useState<MatchData[]>(initialMapped);
   const [activeMatchId, setActiveMatchId] = useState(initialMapped[0]?.id || "pred-1");
@@ -656,3 +656,5 @@ export default function PredictionView({ initialFixtures }: PredictionViewProps 
     </ScrollView>
   );
 }
+
+export default React.memo(PredictionView);

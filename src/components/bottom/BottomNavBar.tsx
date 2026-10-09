@@ -16,7 +16,7 @@ interface BottomNavigationProps {
   setActiveTab: (tab: TabType) => void;
 }
 
-export default function BottomNavBar({
+function BottomNavBar({
   activeTab,
   setActiveTab,
 }: BottomNavigationProps) {
@@ -63,6 +63,8 @@ export default function BottomNavBar({
     </View>
   );
 }
+
+export default React.memo(BottomNavBar);
 
 const styles = StyleSheet.create({
   container: {

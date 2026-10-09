@@ -64,11 +64,11 @@ const previousMatchState = new Map();
  */
 function calculateNextPollInterval(liveMatchCount) {
   if (liveMatchCount === 0) {
-    return 10 * 60 * 1000; // 10 minutes
+    return 3 * 60 * 1000; // 3 minutes when no live matches (~320 req/day)
   } else if (liveMatchCount <= 5) {
-    return 30 * 1000; // 30 seconds
+    return 20 * 1000; // 20 seconds when 1-5 live matches (~1,440 req/day)
   } else {
-    return 20 * 1000; // 20 seconds
+    return 15 * 1000; // 15 seconds when > 5 live matches (~1,920 req/day)
   }
 }
 

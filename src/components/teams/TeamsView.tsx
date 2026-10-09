@@ -52,7 +52,7 @@ interface TeamsViewProps {
   apiLeagues?: any[];
 }
 
-export default function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
+function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
   const [favorites, setFavorites] = useState<string[]>(["8066"]);
   const [loading, setLoading] = useState(false);
   const [countries, setCountries] = useState<any[]>([]);
@@ -457,3 +457,5 @@ export default function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
     </View>
   );
 }
+
+export default React.memo(TeamsView);

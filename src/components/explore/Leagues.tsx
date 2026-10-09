@@ -24,10 +24,137 @@ interface LeagueGroup {
 interface LeaguesProps {
   leaguesList: LeagueGroup[];
   activeNotifications: { [key: string]: boolean };
-  onToggleNotification: (id: string) => void;
+  onToggleNotification: (id: string, matchName?: string) => void;
   onPressDetails?: (match: any) => void;
   loadingFixtures?: boolean;
+  searchQuery?: string;
 }
+
+const MatchCard = React.memo(function MatchCard({
+  match,
+  leagueName,
+  leagueId,
+  leagueLogo,
+  isBellActive,
+  onToggleNotification,
+  onPressDetails,
+}: {
+  match: LeagueMatch;
+  leagueName: string;
+  leagueId: string;
+  leagueLogo: string;
+  isBellActive: boolean;
+  onToggleNotification: (id: string, matchName?: string) => void;
+  onPressDetails?: (match: any) => void;
+}) {
+  const handleCardPress = React.useCallback(() => {
+    if (onPressDetails) {
+      onPressDetails({
+        id: match.id,
+        league: leagueName,
+        leagueId: leagueId,
+        leagueLogo: leagueLogo,
+        home: {
+          id: (match.home as any)?.id,
+          name: match.home.name,
+          short: match.home.name.substring(0, 3).toUpperCase(),
+          logo: match.home.logo,
+        },
+        away: {
+          id: (match.away as any)?.id,
+          name: match.away.name,
+          short: match.away.name.substring(0, 3).toUpperCase(),
+          logo: match.away.logo,
+        },
+        score: match.score || (match.status === "FT" || match.status === "Live" ? match.time : "VS"),
+        minute: match.minute || match.status || "NS",
+        status: match.status || "NS",
+      });
+    }
+  }, [match, leagueName, leagueId, leagueLogo, onPressDetails]);
+
+  const handleBellPress = React.useCallback(
+    (e: any) => {
+      e.stopPropagation();
+      const matchName = `${match.home?.name || 'Home'} vs ${match.away?.name || 'Away'}`;
+      onToggleNotification(match.id, matchName);
+    },
+    [match, onToggleNotification],
+  );
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={handleCardPress}
+      className="relative bg-[#131415] rounded-3xl p-4.5 mb-3 border border-[#ffffff08] overflow-hidden flex-row justify-between items-center"
+    >
+      {/* Glow indicator line on left */}
+      <View className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#02DB54] rounded-l-3xl shadow-lg shadow-[#02DB54]" />
+
+      {/* Left column: Match times / info */}
+      <View className="w-[20%] pl-2 justify-center">
+        {match.status === "Live" ? (
+          <View className="mb-1 items-start">
+            <LiveMatchClock minute={match.minute} status={match.status} />
+          </View>
+        ) : (
+          <Text className="text-gray-400 text-xs font-bold tracking-wider mb-1">
+            {match.status}
+          </Text>
+        )}
+        <Text className="text-[#02DB54] font-black text-sm tracking-tight mb-0.5">
+          {match.score && match.score !== "VS" ? match.score : match.time}
+        </Text>
+        {match.date && (
+          <Text className="text-gray-500 text-[10px] font-semibold">
+            {match.date}
+          </Text>
+        )}
+      </View>
+
+      {/* Divider Line */}
+      <View className="w-[1px] h-10 bg-white/10" />
+
+      {/* Middle column: Team names and logo crests */}
+      <View className="flex-1 px-4 gap-3">
+        {/* Home Row */}
+        <View className="flex-row items-center gap-3">
+          <Image source={{ uri: match.home.logo }} className="w-6 h-6" resizeMethod="resize" />
+          <Text
+            className="text-white font-extrabold text-[14px] tracking-wide"
+            numberOfLines={1}
+          >
+            {match.home.name}
+          </Text>
+        </View>
+        {/* Away Row */}
+        <View className="flex-row items-center gap-3">
+          <Image source={{ uri: match.away.logo }} className="w-6 h-6" resizeMethod="resize" />
+          <Text
+            className="text-white font-extrabold text-[14px] tracking-wide"
+            numberOfLines={1}
+          >
+            {match.away.name}
+          </Text>
+        </View>
+      </View>
+
+      {/* Right column: Notification Bell Icon */}
+      <TouchableOpacity
+        onPress={handleBellPress}
+        className={`p-2.5 rounded-full ${
+          isBellActive ? "bg-[#02DB54]/15" : "bg-white/5"
+        }`}
+      >
+        <Bell
+          size={18}
+          color={isBellActive ? "#02DB54" : "#ECEDEE"}
+          fill={isBellActive ? "#02DB54" : "none"}
+        />
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+});
 
 export default function Leagues({
   leaguesList,
@@ -35,8 +162,16 @@ export default function Leagues({
   onToggleNotification,
   onPressDetails,
   loadingFixtures,
+  searchQuery,
 }: LeaguesProps) {
-  if (loadingFixtures) {
+  const [displayLimit, setDisplayLimit] = React.useState(15);
+
+  // Reset display limit when leaguesList changes (e.g. date changed)
+  React.useEffect(() => {
+    setDisplayLimit(15);
+  }, [leaguesList]);
+
+  if (loadingFixtures && (!leaguesList || leaguesList.length === 0)) {
     return (
       <View className="mt-8 px-4 items-center justify-center py-12">
         <ActivityIndicator size="large" color="#02DB54" />
@@ -50,16 +185,34 @@ export default function Leagues({
   if (!leaguesList || leaguesList.length === 0) {
     return (
       <View className="mt-8 px-4 items-center justify-center py-12 bg-[#131415] rounded-3xl mx-4 border border-white/5">
-        <Text className="text-gray-400 font-bold text-sm">
-          No matches found for this date.
+        <Text className="text-white font-bold text-sm mb-1 text-center">
+          {searchQuery && searchQuery.trim()
+            ? `No matches found for "${searchQuery}"`
+            : "No matches found for this date."}
         </Text>
+        {searchQuery && searchQuery.trim() && (
+          <Text className="text-gray-400 text-xs text-center px-4 mt-1">
+            Try searching another team name, short code (e.g. BAR, RMA, CHE), or change dates.
+          </Text>
+        )}
       </View>
     );
   }
 
+  const visibleLeagues = leaguesList.slice(0, displayLimit);
+  const remainingCount = leaguesList.length - visibleLeagues.length;
+
   return (
     <View className="mt-6 px-4 mb-24 bg-[#0D0E0F]">
-      {leaguesList.map((league) => (
+      {loadingFixtures && (
+        <View className="flex-row items-center justify-center py-2 mb-2 bg-[#131415] rounded-xl border border-white/5">
+          <ActivityIndicator size="small" color="#02DB54" />
+          <Text className="text-gray-400 font-semibold text-xs ml-2">
+            Loading matches for date...
+          </Text>
+        </View>
+      )}
+      {visibleLeagues.map((league) => (
         <View key={league.leagueId} className="mb-6">
           {/* League Header Title Accordion */}
           <View className="flex-row items-center justify-between mb-3.5">
@@ -73,113 +226,33 @@ export default function Leagues({
           </View>
 
           {/* League Match Cards */}
-          {league.matches.map((match) => {
-            const isBellActive = activeNotifications[match.id];
-            const handleCardPress = () => {
-              if (onPressDetails) {
-                onPressDetails({
-                  id: match.id,
-                  league: league.leagueName,
-                  leagueId: league.leagueId,
-                  leagueLogo: league.leagueLogo,
-                  home: {
-                    id: (match.home as any)?.id,
-                    name: match.home.name,
-                    short: match.home.name.substring(0, 3).toUpperCase(),
-                    logo: match.home.logo,
-                  },
-                  away: {
-                    id: (match.away as any)?.id,
-                    name: match.away.name,
-                    short: match.away.name.substring(0, 3).toUpperCase(),
-                    logo: match.away.logo,
-                  },
-                  score: match.score || (match.status === "FT" || match.status === "Live" ? match.time : "VS"),
-                  minute: match.minute || match.status || "NS",
-                  status: match.status || "NS",
-                });
-              }
-            };
-
-            return (
-              <TouchableOpacity
-                key={match.id}
-                activeOpacity={0.7}
-                onPress={handleCardPress}
-                className="relative bg-[#131415] rounded-3xl p-4.5 mb-3 border border-[#ffffff08] overflow-hidden flex-row justify-between items-center"
-              >
-                {/* Glow indicator line on left */}
-                <View className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#02DB54] rounded-l-3xl shadow-lg shadow-[#02DB54]" />
-
-                {/* Left column: Match times / info */}
-                <View className="w-[20%] pl-2 justify-center">
-                  {match.status === "Live" ? (
-                    <View className="mb-1 items-start">
-                      <LiveMatchClock minute={match.minute} status={match.status} />
-                    </View>
-                  ) : (
-                    <Text className="text-gray-400 text-xs font-bold tracking-wider mb-1">
-                      {match.status}
-                    </Text>
-                  )}
-                  <Text className="text-[#02DB54] font-black text-sm tracking-tight mb-0.5">
-                    {match.score && match.score !== "VS" ? match.score : match.time}
-                  </Text>
-                  {match.date && (
-                    <Text className="text-gray-500 text-[10px] font-semibold">
-                      {match.date}
-                    </Text>
-                  )}
-                </View>
-
-                {/* Divider Line */}
-                <View className="w-[1px] h-10 bg-white/10" />
-
-                {/* Middle column: Team names and logo crests */}
-                <View className="flex-1 px-4 gap-3">
-                  {/* Home Row */}
-                  <View className="flex-row items-center gap-3">
-                    <Image source={{ uri: match.home.logo }} className="w-6 h-6" resizeMethod="resize" />
-                    <Text
-                      className="text-white font-extrabold text-[14px] tracking-wide"
-                      numberOfLines={1}
-                    >
-                      {match.home.name}
-                    </Text>
-                  </View>
-                  {/* Away Row */}
-                  <View className="flex-row items-center gap-3">
-                    <Image source={{ uri: match.away.logo }} className="w-6 h-6" resizeMethod="resize" />
-                    <Text
-                      className="text-white font-extrabold text-[14px] tracking-wide"
-                      numberOfLines={1}
-                    >
-                      {match.away.name}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Right column: Notification Bell Icon */}
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    onToggleNotification(match.id);
-                  }}
-                  className={`p-2.5 rounded-full ${
-                    isBellActive ? "bg-[#02DB54]/15" : "bg-white/5"
-                  }`}
-                >
-                  <Bell
-                    size={18}
-                    color={isBellActive ? "#02DB54" : "#ECEDEE"}
-                    fill={isBellActive ? "#02DB54" : "none"}
-                  />
-                </TouchableOpacity>
-              </TouchableOpacity>
-            );
-          })}
+          {league.matches.map((match) => (
+            <MatchCard
+              key={match.id}
+              match={match}
+              leagueName={league.leagueName}
+              leagueId={league.leagueId}
+              leagueLogo={league.leagueLogo}
+              isBellActive={!!activeNotifications[match.id]}
+              onToggleNotification={onToggleNotification}
+              onPressDetails={onPressDetails}
+            />
+          ))}
         </View>
       ))}
+
+      {remainingCount > 0 && (
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setDisplayLimit((prev) => prev + 20)}
+          className="bg-[#131415] py-3.5 px-6 rounded-2xl items-center justify-center flex-row gap-2 border border-white/10 my-4"
+        >
+          <Text className="text-[#02DB54] font-extrabold text-sm">
+            Show More Leagues ({remainingCount} remaining)
+          </Text>
+          <ChevronDown size={18} color="#02DB54" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

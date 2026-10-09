@@ -2,7 +2,7 @@
   "expo": {
     "name": "NJR10 Live",
     "slug": "NJR10Live",
-    "version": "1.0.23",
+    "version": "1.0.26",
     "icon": "./assets/images/icon.png",
     "scheme": "neymar10",
     "userInterfaceStyle": "automatic",
