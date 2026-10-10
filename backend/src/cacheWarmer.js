@@ -266,19 +266,27 @@ async function warmNews() {
 // FULL WARM CYCLE
 // ==========================================
 
-async function runWarmCycle() {
+async function runWarmCycle(isStartup = false) {
+  if (isStartup) {
+    const lastWarm = cache.get('last_full_warm_timestamp');
+    if (lastWarm && Date.now() - lastWarm < 60 * 60 * 1000) {
+      console.log('[CacheWarmer] Cache is already warm (last run <60m ago). Skipping startup burst.');
+      return;
+    }
+  }
+
   console.log(`\n[CacheWarmer] Starting warm cycle at ${new Date().toISOString()}`);
   const start = Date.now();
 
   await warmFixturesByDate();
-  await sleep(500);
+  await sleep(1500);
 
   await warmNews();
-  await sleep(300);
+  await sleep(1000);
 
   await warmLeagueFixtures();
 
-  // NOTE: warmStandings() removed - /standings requires a paid API plan (returns 403 on free)
+  cache.set('last_full_warm_timestamp', Date.now(), 7200);
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
   console.log(`[CacheWarmer] Warm cycle completed in ${elapsed}s\n`);
@@ -293,15 +301,14 @@ let newsTimer = null;
 let isWarmerRunning = false;
 
 // Full warm cycle: every 90 minutes — cache TTL is 50 min so data is still fresh
-// This uses ~700 req/day max (was ~1,400/day at 45-min interval)
 const WARM_INTERVAL_MS = 90 * 60 * 1000;
 // News refresh: every 10 minutes (no API-Sports quota cost — external RSS)
 const NEWS_INTERVAL_MS = 10 * 60 * 1000;
 
-async function warmCycleLoop() {
+async function warmCycleLoop(isStartup = false) {
   if (!isWarmerRunning) return;
-  await runWarmCycle();
-  warmerTimer = setTimeout(warmCycleLoop, WARM_INTERVAL_MS);
+  await runWarmCycle(isStartup);
+  warmerTimer = setTimeout(() => warmCycleLoop(false), WARM_INTERVAL_MS);
 }
 
 async function newsLoop() {
@@ -315,8 +322,8 @@ function startCacheWarmer() {
   isWarmerRunning = true;
   console.log('[CacheWarmer] Background cache warmer started.');
 
-  // Run immediately on startup
-  warmCycleLoop();
+  // Run on startup (checks timestamp to prevent burst)
+  warmCycleLoop(true);
 
   // News refreshes more frequently; offset by 10s to stagger load
   setTimeout(() => { newsLoop(); }, 10000);

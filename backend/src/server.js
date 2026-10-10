@@ -1665,18 +1665,20 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   );
   console.log(`====================================================`);
 
-  // In PM2 cluster mode, multiple instances run simultaneously.
-  // Background tasks (polling + cache warming) must ONLY run on instance 0
-  // to avoid multiplying API quota usage by the number of instances.
-  const instanceId = process.env.NODE_APP_INSTANCE || '0';
-  if (instanceId === '0') {
-    console.log(`[Server] Instance 0: Starting background services...`);
-    // Start dynamic polling loop in background
+  // In PM2 cluster mode, multiple worker instances run simultaneously.
+  // We check process.env.pm_id (standard PM2 process ID) and process.env.NODE_APP_INSTANCE.
+  // Background tasks (live score polling + cache warmer) MUST ONLY run on process 0
+  // to prevent multiplying API requests by the number of PM2 cluster instances.
+  const pmId = process.env.pm_id !== undefined 
+    ? String(process.env.pm_id) 
+    : (process.env.NODE_APP_INSTANCE !== undefined ? String(process.env.NODE_APP_INSTANCE) : '0');
+
+  if (pmId === '0') {
+    console.log(`[Server] Primary Instance (pm_id: 0): Starting background services...`);
     startLiveScorePolling();
-    // Start background cache warmer (pre-fetches popular data proactively)
     startCacheWarmer();
   } else {
-    console.log(`[Server] Instance ${instanceId}: Skipping background services (handled by instance 0).`);
+    console.log(`[Server] Worker Instance (pm_id: ${pmId}): Skipping background services (handled by instance 0).`);
   }
 });
 
