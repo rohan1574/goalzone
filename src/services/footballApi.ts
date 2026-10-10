@@ -482,66 +482,15 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
       return response;
     }
   } catch (aggErr) {
-    console.log("[API] Aggregated dashboard not available, falling back to parallel endpoints.");
+    console.warn("[API] Aggregated dashboard failed:", aggErr);
   }
 
-  // 3. Fallback: Concurrent parallel fetch without artificial rate-limit delays
-  const data: { [key: string]: any[] } = {
-    live: [],
-    leagues: [],
-    fixtures: [],
-    teams: [],
+  // If /football-dashboard fails, return empty data — do NOT fire 4 extra API calls.
+  // The user will just see an empty dashboard and can pull-to-refresh.
+  return {
+    data: { live: [], leagues: [], fixtures: [], teams: [] },
+    hasPartialFailure: true,
   };
-  let hasPartialFailure = false;
-
-  const [liveSettled, leaguesSettled, fixturesSettled, teamsSettled] =
-    await Promise.allSettled([
-      api.get("/football-current-live"),
-      api.get("/football-popular-leagues"),
-      api.get("/football-get-matches-by-date", {
-        params: { date: formatFootballDate(0) },
-      }),
-      api.get("/football-get-popular-teams"),
-    ]);
-
-  if (liveSettled.status === "fulfilled") {
-    data.live = findArray(liveSettled.value.data);
-  } else {
-    hasPartialFailure = true;
-  }
-
-  if (leaguesSettled.status === "fulfilled") {
-    data.leagues = findArray(leaguesSettled.value.data);
-  } else {
-    hasPartialFailure = true;
-  }
-
-  if (fixturesSettled.status === "fulfilled") {
-    data.fixtures = findArray(fixturesSettled.value.data);
-  } else {
-    hasPartialFailure = true;
-  }
-
-  if (teamsSettled.status === "fulfilled") {
-    data.teams = findArray(teamsSettled.value.data);
-  }
-
-  const response = {
-    data,
-    hasPartialFailure,
-  };
-
-  if (data.teams && data.teams.length > 0) {
-    setMemoryCache(MEM_KEY, response, 300000);
-    try {
-      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(response));
-      await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-    } catch (err) {
-      console.warn("Error saving dashboard cache:", err);
-    }
-  }
-
-  return response;
 };
 
 export const getFixturesCacheTTL = (dateString: string): number => {
@@ -611,27 +560,11 @@ export const fetchFixturesByDate = async (dateString: string) => {
   }
 };
 
-let prefetchTimer: any = null;
-
-export const prefetchAdjacentDates = (baseDate: Date = new Date()) => {
-  if (prefetchTimer) clearTimeout(prefetchTimer);
-  prefetchTimer = setTimeout(() => {
-    // Lightweight adjacent dates prefetch: yesterday, tomorrow, day after tomorrow
-    const offsets = [-1, 1, 2];
-    offsets.forEach((offset, idx) => {
-      setTimeout(() => {
-        const d = new Date(baseDate);
-        d.setDate(baseDate.getDate() + offset);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        const yyyymmdd = `${year}${month}${day}`;
-        if (!getFromMemoryCache(`@goalzone_mem_fixtures_${yyyymmdd}`)) {
-          fetchFixturesByDate(yyyymmdd).catch(() => {});
-        }
-      }, idx * 500);
-    });
-  }, 1000);
+// prefetchAdjacentDates is DISABLED to prevent unnecessary API quota consumption.
+// Fixtures are fetched on-demand when the user navigates to a date.
+// The backend caches fixtures, so the first fetch is instant on second visit.
+export const prefetchAdjacentDates = (_baseDate: Date = new Date()) => {
+  // no-op: intentionally disabled
 };
 
 export const warmupFixturesCache = async () => {

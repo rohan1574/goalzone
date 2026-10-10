@@ -361,14 +361,12 @@ export default function ExploreScreen() {
       // Instant 0ms response from memory cache — no spinner, zero flicker
       setDateFixtures(cachedMem);
       setLoadingFixtures(false);
-      prefetchAdjacentDates(selectedDate);
       return;
     }
 
     if (isToday && apiData?.fixtures && apiData.fixtures.length > 0) {
       setDateFixtures(apiData.fixtures);
       setLoadingFixtures(false);
-      prefetchAdjacentDates(selectedDate);
       return;
     }
 
@@ -388,7 +386,6 @@ export default function ExploreScreen() {
     };
 
     loadFixtures();
-    prefetchAdjacentDates(selectedDate);
   }, [selectedDate, isToday, apiData?.fixtures]);
 
   const loadData = async (force = false) => {
@@ -402,7 +399,6 @@ export default function ExploreScreen() {
       });
       if (res && res.data) {
         setApiData(res.data);
-        prefetchAdjacentDates(new Date());
       }
     } catch (e) {
       console.warn(
@@ -416,9 +412,7 @@ export default function ExploreScreen() {
   };
 
   useEffect(() => {
-    warmupFixturesCache().then(() => {
-      prefetchAdjacentDates(new Date());
-    });
+    warmupFixturesCache(); // loads existing AsyncStorage cache into memory, no API calls
     loadData(false);
   }, []);
 
