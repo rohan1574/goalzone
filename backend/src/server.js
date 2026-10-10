@@ -11,7 +11,7 @@ const {
   stopLiveScorePolling,
 } = require("./liveScoreManager");
 const { cache } = require("./cache");
-const { startCacheWarmer, stopCacheWarmer } = require("./cacheWarmer");
+// cacheWarmer is replaced by syncEngine — kept only for the /admin/warm route
 const { apiGet, getQuotaStatus } = require("./apiClient");
 const {
   startSyncEngine,
@@ -1499,7 +1499,6 @@ const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`[Server] Primary Instance (instance: ${pmId}): Starting background services...`);
     startLiveScorePolling();
     startSyncEngine();
-    startCacheWarmer();
   } else {
     console.log(`[Server] Worker Instance (pm_id: ${pmId}): Skipping background services (handled by instance 0).`);
   }
@@ -1510,7 +1509,6 @@ function gracefulShutdown(signal) {
   console.log(`\n[Server] Received ${signal}. Shutting down gracefully...`);
   stopLiveScorePolling();
   stopSyncEngine();
-  stopCacheWarmer();
 
   server.close(() => {
     console.log("[Server] Closed all connections. Process exiting.");
