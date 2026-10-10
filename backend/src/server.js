@@ -528,8 +528,8 @@ function getFixtureTtlByDate(dateQuery) {
 // 3. MATCHES BY DATE
 // ==========================================
 app.get("/football-get-matches-by-date", async (req, res) => {
-  const dateQuery = req.query.date;
-  const timezone = req.query.timezone || "Asia/Dhaka";
+  // Always use Asia/Dhaka timezone for unified caching across all user devices
+  const timezone = "Asia/Dhaka";
   if (!dateQuery || dateQuery.length !== 8) {
     return res
       .status(400)
@@ -537,7 +537,7 @@ app.get("/football-get-matches-by-date", async (req, res) => {
   }
 
   const formattedDate = `${dateQuery.substring(0, 4)}-${dateQuery.substring(4, 6)}-${dateQuery.substring(6, 8)}`;
-  const cacheKey = `fixtures_date_${dateQuery}_${timezone.replace(/\//g, "_")}`;
+  const cacheKey = `fixtures_date_${dateQuery}_Asia_Dhaka`;
   // Smart TTL: past=7 days, today=50 min, future=6 hours
   const ttl = getFixtureTtlByDate(dateQuery);
 
@@ -1646,6 +1646,31 @@ app.get("/admin/quota-status", (req, res) => {
     estimated_total_daily: `~${(quota.used + 700 + 700).toLocaleString()} / 7,500`,
     status: quota.remaining <= 0 ? 'EXHAUSTED' : quota.remaining < quota.budget * 0.20 ? 'LOW' : 'OK',
     reset_info: 'Counter resets automatically at midnight (server local time)',
+  });
+});
+
+// Admin: clear all server memory and disk cache on demand
+app.get("/admin/clear-cache", (req, res) => {
+  const fs = require("fs");
+  const path = require("path");
+  const cacheDir = path.join(__dirname, "../.cache");
+  let deletedCount = 0;
+
+  if (fs.existsSync(cacheDir)) {
+    const files = fs.readdirSync(cacheDir);
+    for (const file of files) {
+      if (file.endsWith(".json")) {
+        try {
+          fs.unlinkSync(path.join(cacheDir, file));
+          deletedCount++;
+        } catch (e) {}
+      }
+    }
+  }
+
+  res.json({
+    success: true,
+    message: `Cache flushed! Removed ${deletedCount} cache files from disk and cleared memory cache.`,
   });
 });
 
