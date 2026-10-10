@@ -184,6 +184,11 @@ const popularLeagues = [
   { leagueId: "307", leagueName: "Saudi Pro League",     country: "Saudi Arabia", leagueLogo: "https://media.api-sports.io/football/leagues/307.png" },
 ];
 
+const POPULAR_LEAGUE_IDS_SET = new Set([
+  '39', '140', '135', '78', '61', '2', '3', '848', '88', '94',
+  '71', '128', '253', '307', '13', '1', '4', '9', '10', '11', '15', '393', '239'
+]);
+
 app.get("/football-popular-leagues", (req, res) => {
   res.json(popularLeagues);
 });
@@ -424,7 +429,8 @@ app.get("/football-dashboard", async (req, res) => {
         { date: formattedDate, timezone: DEFAULT_TZ },
         3000, // 50 min — matches cacheWarmer warm cycle & matches-by-date TTL
         (apiResponse) => {
-          const list = apiResponse.response || [];
+          const rawList = apiResponse.response || [];
+          const list = rawList.filter((item) => POPULAR_LEAGUE_IDS_SET.has(String(item.league.id)));
           return list.map((item) => {
             const statusShort = item.fixture.status.short || "NS";
             const isNotStarted =
@@ -542,7 +548,8 @@ app.get("/football-get-matches-by-date", async (req, res) => {
       { date: formattedDate, timezone },
       ttl,
       (apiResponse) => {
-        const list = apiResponse.response || [];
+        const rawList = apiResponse.response || [];
+        const list = rawList.filter((item) => POPULAR_LEAGUE_IDS_SET.has(String(item.league.id)));
         return list.map((item) => {
           const statusShort = item.fixture.status.short || "NS";
           const isNotStarted =
