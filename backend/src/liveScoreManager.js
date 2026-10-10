@@ -176,6 +176,33 @@ async function sendGoalNotification(matchId, scoringTeam, homeTeam, awayTeam, ne
 }
 
 
+// Set of popular / featured league IDs (Big 5, Champions League, Europa League, Saudi Pro, MLS, Brasil, Argentina, World Cup, Euros, etc.)
+const POPULAR_LEAGUE_IDS = new Set([
+  '39',   // Premier League
+  '140',  // La Liga
+  '135',  // Serie A
+  '78',   // Bundesliga
+  '61',   // Ligue 1
+  '2',    // UEFA Champions League
+  '3',    // UEFA Europa League
+  '848',  // UEFA Conference League
+  '88',   // Eredivisie
+  '94',   // Primeira Liga
+  '71',   // Brasileirão Série A
+  '128',  // Liga Profesional Argentina
+  '253',  // MLS
+  '307',  // Saudi Pro League
+  '13',   // Copa Libertadores
+  '1',    // World Cup
+  '4',    // Euro Championship
+  '9',    // Copa America
+  '10',   // International Friendlies
+  '11',   // UEFA Nations League
+  '15',   // FIFA Club World Cup
+  '393',  // AFC Champions League
+  '239'   // Süper Lig
+]);
+
 /**
  * Normalizes raw API response into standardized internal format
  */
@@ -232,6 +259,11 @@ async function fetchAndProcessLiveScores() {
     const normalizedMatches = normalizeApiResponse(response.data);
     const activeMatchIds = new Set();
 
+    // Filter to popular leagues so users only see top match live scores (clean UI)
+    const popularMatches = normalizedMatches.filter((m) => POPULAR_LEAGUE_IDS.has(String(m.leagueId)));
+    // Fallback to all matches if no popular league matches are live
+    const displayMatches = popularMatches.length > 0 ? popularMatches : normalizedMatches;
+
     // Goal Detection & State Comparison
     for (const match of normalizedMatches) {
       const matchId = match.id;
@@ -284,17 +316,16 @@ async function fetchAndProcessLiveScores() {
     }
 
     // MEMORY MANAGEMENT: Complete Atomic Overwrite (Re-assignment)
-    // Drops old object reference so V8 GC cleans up old data automatically
     cachedLiveScores = Object.freeze({
       lastUpdated: new Date().toISOString(),
-      count: normalizedMatches.length,
-      matches: normalizedMatches
+      count: displayMatches.length,
+      matches: displayMatches
     });
 
     cache.set('live_scores_global', cachedLiveScores, 120);
 
-    console.log(`[Poll Engine] Success. Matches active: ${normalizedMatches.length}`);
-    return normalizedMatches.length;
+    console.log(`[Poll Engine] Success. Total live: ${normalizedMatches.length}, Displaying popular: ${displayMatches.length}`);
+    return displayMatches.length;
 
   } catch (err) {
     console.error(`[Poll Engine Error] Third-party fetch failed:`, err.message);
