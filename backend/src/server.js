@@ -1202,6 +1202,10 @@ app.get("/football-get-match-location", async (req, res) => {
     return res.status(400).json({ error: "Missing eventid parameter" });
   }
 
+  if (!/^\d+$/.test(String(eventid))) {
+    return res.json({ venue: "Football Arena", city: "" });
+  }
+
   const cacheKey = `location_${eventid}`;
   try {
     const data = await fetchAndCache(
@@ -1465,6 +1469,10 @@ app.get("/football-get-match-events", async (req, res) => {
   const eventid = req.query.eventid;
   if (!eventid) {
     return res.status(400).json({ error: "Missing eventid parameter" });
+  }
+
+  if (!/^\d+$/.test(String(eventid))) {
+    return res.json([]);
   }
 
   const cacheKey = `events_fixture_${eventid}`;
