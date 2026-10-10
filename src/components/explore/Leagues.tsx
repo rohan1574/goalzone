@@ -156,6 +156,32 @@ const MatchCard = React.memo(function MatchCard({
   );
 });
 
+const POPULAR_LEAGUE_IDS = new Set([
+  '39',   // Premier League
+  '140',  // La Liga
+  '135',  // Serie A
+  '78',   // Bundesliga
+  '61',   // Ligue 1
+  '2',    // UEFA Champions League
+  '3',    // UEFA Europa League
+  '848',  // UEFA Conference League
+  '88',   // Eredivisie
+  '94',   // Primeira Liga
+  '71',   // Brasileirão Série A
+  '128',  // Liga Profesional Argentina
+  '253',  // MLS
+  '307',  // Saudi Pro League
+  '13',   // Copa Libertadores
+  '1',    // World Cup
+  '4',    // Euro Championship
+  '9',    // Copa America
+  '10',   // International Friendlies
+  '11',   // UEFA Nations League
+  '15',   // FIFA Club World Cup
+  '393',  // AFC Champions League
+  '239'   // Süper Lig
+]);
+
 export default function Leagues({
   leaguesList,
   activeNotifications,
@@ -166,12 +192,17 @@ export default function Leagues({
 }: LeaguesProps) {
   const [displayLimit, setDisplayLimit] = React.useState(15);
 
+  const filteredLeaguesList = React.useMemo(() => {
+    if (!leaguesList) return [];
+    return leaguesList.filter((league) => POPULAR_LEAGUE_IDS.has(String(league.leagueId)));
+  }, [leaguesList]);
+
   // Reset display limit when leaguesList changes (e.g. date changed)
   React.useEffect(() => {
     setDisplayLimit(15);
   }, [leaguesList]);
 
-  if (loadingFixtures && (!leaguesList || leaguesList.length === 0)) {
+  if (loadingFixtures && (!filteredLeaguesList || filteredLeaguesList.length === 0)) {
     return (
       <View className="mt-8 px-4 items-center justify-center py-12">
         <ActivityIndicator size="large" color="#02DB54" />
@@ -182,13 +213,13 @@ export default function Leagues({
     );
   }
 
-  if (!leaguesList || leaguesList.length === 0) {
+  if (!filteredLeaguesList || filteredLeaguesList.length === 0) {
     return (
       <View className="mt-8 px-4 items-center justify-center py-12 bg-[#131415] rounded-3xl mx-4 border border-white/5">
         <Text className="text-white font-bold text-sm mb-1 text-center">
           {searchQuery && searchQuery.trim()
             ? `No matches found for "${searchQuery}"`
-            : "No matches found for this date."}
+            : "No popular league matches for this date."}
         </Text>
         {searchQuery && searchQuery.trim() && (
           <Text className="text-gray-400 text-xs text-center px-4 mt-1">
@@ -199,8 +230,8 @@ export default function Leagues({
     );
   }
 
-  const visibleLeagues = leaguesList.slice(0, displayLimit);
-  const remainingCount = leaguesList.length - visibleLeagues.length;
+  const visibleLeagues = filteredLeaguesList.slice(0, displayLimit);
+  const remainingCount = filteredLeaguesList.length - visibleLeagues.length;
 
   return (
     <View className="mt-6 px-4 mb-24 bg-[#0D0E0F]">
