@@ -292,10 +292,11 @@ let warmerTimer = null;
 let newsTimer = null;
 let isWarmerRunning = false;
 
-// Full warm cycle: every 45 minutes for fast fresh updates
-const WARM_INTERVAL_MS = 45 * 60 * 1000;
-// News refresh: every 5 minutes (no API quota cost)
-const NEWS_INTERVAL_MS = 5 * 60 * 1000;
+// Full warm cycle: every 90 minutes — cache TTL is 50 min so data is still fresh
+// This uses ~700 req/day max (was ~1,400/day at 45-min interval)
+const WARM_INTERVAL_MS = 90 * 60 * 1000;
+// News refresh: every 10 minutes (no API-Sports quota cost — external RSS)
+const NEWS_INTERVAL_MS = 10 * 60 * 1000;
 
 async function warmCycleLoop() {
   if (!isWarmerRunning) return;

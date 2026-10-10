@@ -55,20 +55,74 @@ function getCachedLiveScores() {
  */
 const previousMatchState = new Map();
 
+// ==========================================
+// DAILY QUOTA TRACKER
+// ==========================================
+/**
+ * Tracks live-score API calls made today.
+ * Resets automatically at midnight (server local time).
+ *
+ * Daily budget split:
+ *   Live polling budget  : 3,600 / day  (~150/hr)
+ *   CacheWarmer budget   : 700  / day  (~29/hr)
+ *   User-triggered budget: 700  / day  (cache-miss buffer)
+ *   Safety reserve       : 2,500 / day
+ *   ──────────────────────────────────────────────
+ *   Total                : 7,500 / day
+ */
+const DAILY_POLL_BUDGET = 3600; // max live-score polls per day
+let dailyPollCount = 0;
+let lastResetDay = new Date().toDateString();
+
+function trackAndCheckQuota() {
+  const today = new Date().toDateString();
+  if (today !== lastResetDay) {
+    // New day — reset counter
+    dailyPollCount = 0;
+    lastResetDay = today;
+    console.log('[QuotaTracker] New day detected — daily poll counter reset to 0.');
+  }
+  dailyPollCount++;
+  const remaining = DAILY_POLL_BUDGET - dailyPollCount;
+  if (dailyPollCount % 50 === 0) {
+    console.log(`[QuotaTracker] Daily poll count: ${dailyPollCount}/${DAILY_POLL_BUDGET} (remaining: ${remaining})`);
+  }
+  return remaining > 0; // false = budget exhausted
+}
+
+function getDailyQuotaStatus() {
+  return { used: dailyPollCount, budget: DAILY_POLL_BUDGET, remaining: DAILY_POLL_BUDGET - dailyPollCount };
+}
+
 /**
  * Calculates dynamic poll interval based on number of active live matches.
- * Quota Math (7,500 daily quota = 312 req/hr max):
- * - 0 live matches: 10 mins (600,000ms) -> 6 req/hr
- * - 1 to 5 live matches: 30 secs (30,000ms) -> 120 req/hr
- * - > 5 live matches: 20 secs (20,000ms) -> 180 req/hr
+ *
+ * Conservative Quota Math (target ≤ 150 polls/hr from live poller):
+ * - 0 live matches : 15 min  (900,000ms) → ~96 req/day  (very cheap)
+ * - 1–3 live matches: 60 sec (60,000ms)  → ~1,440 req/day (~60/hr)
+ * - 4–9 live matches: 45 sec (45,000ms)  → ~1,920 req/day (~80/hr)
+ * - ≥10 live matches: 30 sec (30,000ms)  → ~2,880 req/day (~120/hr)
+ *
+ * Even worst-case (≥10 matches all day) = 2,880 → well under 3,600 budget.
  */
-function calculateNextPollInterval(liveMatchCount) {
+function calculateNextPollInterval(liveMatchCount, quotaRemaining) {
+  // If we've burned through the daily poll budget, back off to 30 min
+  if (quotaRemaining <= 0) {
+    console.warn('[QuotaTracker] Daily poll budget EXHAUSTED. Backing off to 30-min interval.');
+    return 30 * 60 * 1000; // 30 minutes
+  }
+
+  // Scale back interval when budget is running low (< 20% remaining)
+  const budgetLow = quotaRemaining < DAILY_POLL_BUDGET * 0.20;
+
   if (liveMatchCount === 0) {
-    return 3 * 60 * 1000; // 3 minutes when no live matches (~320 req/day)
-  } else if (liveMatchCount <= 5) {
-    return 20 * 1000; // 20 seconds when 1-5 live matches (~1,440 req/day)
+    return 15 * 60 * 1000; // 15 minutes — no live matches
+  } else if (liveMatchCount <= 3) {
+    return budgetLow ? 90 * 1000 : 60 * 1000; // 60-90 sec for 1-3 matches
+  } else if (liveMatchCount <= 9) {
+    return budgetLow ? 60 * 1000 : 45 * 1000; // 45-60 sec for 4-9 matches
   } else {
-    return 15 * 1000; // 15 seconds when > 5 live matches (~1,920 req/day)
+    return budgetLow ? 45 * 1000 : 30 * 1000; // 30-45 sec for ≥10 matches
   }
 }
 
@@ -258,16 +312,25 @@ let isPollingRunning = false;
 async function pollCycle() {
   if (!isPollingRunning) return;
 
-  const matchCount = await fetchAndProcessLiveScores();
-
-  // If fetch failed (null), back off safely for 30s before retrying
-  let nextDelay = 30 * 1000;
-
-  if (matchCount !== null) {
-    nextDelay = calculateNextPollInterval(matchCount);
+  // Check quota before hitting the API
+  const allowed = trackAndCheckQuota();
+  if (!allowed) {
+    console.warn('[Poll Engine] Daily poll budget exhausted — skipping fetch, sleeping 30 min.');
+    pollingTimer = setTimeout(pollCycle, 30 * 60 * 1000);
+    return;
   }
 
-  console.log(`[Poll Engine] Next poll scheduled in ${nextDelay / 1000} seconds.`);
+  const matchCount = await fetchAndProcessLiveScores();
+
+  // If fetch failed (null), back off safely for 2 min before retrying
+  let nextDelay = 2 * 60 * 1000;
+
+  if (matchCount !== null) {
+    const { remaining } = getDailyQuotaStatus();
+    nextDelay = calculateNextPollInterval(matchCount, remaining);
+  }
+
+  console.log(`[Poll Engine] Next poll in ${(nextDelay / 1000).toFixed(0)}s | quota used today: ${dailyPollCount}/${DAILY_POLL_BUDGET}`);
 
   // Recursive setTimeout ensures zero request overlap if network latency spikes
   pollingTimer = setTimeout(pollCycle, nextDelay);
@@ -293,5 +356,6 @@ module.exports = {
   getCachedLiveScores,
   startLiveScorePolling,
   stopLiveScorePolling,
-  fetchAndProcessLiveScores
+  fetchAndProcessLiveScores,
+  getDailyQuotaStatus
 };

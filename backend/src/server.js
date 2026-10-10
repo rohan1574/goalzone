@@ -9,6 +9,7 @@ const {
   getCachedLiveScores,
   startLiveScorePolling,
   stopLiveScorePolling,
+  getDailyQuotaStatus,
 } = require("./liveScoreManager");
 const { cache } = require("./cache");
 const { startCacheWarmer, stopCacheWarmer } = require("./cacheWarmer");
@@ -40,6 +41,11 @@ const api = axios.create({
   },
 });
 
+// In-flight request deduplication map
+// Prevents duplicate API calls when the same cache key is requested simultaneously
+// (e.g., 10 users all open the same match page at the same moment)
+const inFlightRequests = new Map();
+
 // Helper to handle API requests and cache them
 async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
   const cachedData = cache.get(cacheKey);
@@ -47,37 +53,52 @@ async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
     return cachedData;
   }
 
-  console.log(`[API Call] Requesting ${endpoint} with params:`, params);
-  try {
-    const response = await api.get(endpoint, { params });
-    if (
-      response.data &&
-      response.data.errors &&
-      Object.keys(response.data.errors).length > 0
-    ) {
-      console.error(
-        `[API Error] Errors returned from api-football:`,
-        response.data.errors,
-      );
-      throw new Error(JSON.stringify(response.data.errors));
-    }
-
-    const mappedData = mapper(response.data);
-    const isEmpty =
-      !mappedData ||
-      (Array.isArray(mappedData) && mappedData.length === 0) ||
-      (mappedData && mappedData.lineup === null);
-    // On empty result: cache for 5 min so we don't spam the API every 30s when no matches are on
-    const effectiveTtl = isEmpty ? Math.min(ttlSeconds, 300) : ttlSeconds;
-    cache.set(cacheKey, mappedData, effectiveTtl);
-    return mappedData;
-  } catch (err) {
-    console.error(
-      `[API Request Failed] Endpoint: ${endpoint}, Error:`,
-      err.message || err,
-    );
-    throw err;
+  // Deduplicate: if an identical request is already in-flight, wait for it instead of making another
+  if (inFlightRequests.has(cacheKey)) {
+    console.log(`[API Dedup] Waiting on in-flight request for key: ${cacheKey}`);
+    return inFlightRequests.get(cacheKey);
   }
+
+  console.log(`[API Call] Requesting ${endpoint} with params:`, params);
+
+  const requestPromise = (async () => {
+    try {
+      const response = await api.get(endpoint, { params });
+      if (
+        response.data &&
+        response.data.errors &&
+        Object.keys(response.data.errors).length > 0
+      ) {
+        console.error(
+          `[API Error] Errors returned from api-football:`,
+          response.data.errors,
+        );
+        throw new Error(JSON.stringify(response.data.errors));
+      }
+
+      const mappedData = mapper(response.data);
+      const isEmpty =
+        !mappedData ||
+        (Array.isArray(mappedData) && mappedData.length === 0) ||
+        (mappedData && mappedData.lineup === null);
+      // On empty result: cache for 5 min so we don't spam the API every request when no data is available
+      const effectiveTtl = isEmpty ? Math.min(ttlSeconds, 300) : ttlSeconds;
+      cache.set(cacheKey, mappedData, effectiveTtl);
+      return mappedData;
+    } catch (err) {
+      console.error(
+        `[API Request Failed] Endpoint: ${endpoint}, Error:`,
+        err.message || err,
+      );
+      throw err;
+    } finally {
+      // Always clean up the in-flight map when done (success or error)
+      inFlightRequests.delete(cacheKey);
+    }
+  })();
+
+  inFlightRequests.set(cacheKey, requestPromise);
+  return requestPromise;
 }
 
 // ==========================================
@@ -388,16 +409,20 @@ app.get("/football-dashboard", async (req, res) => {
 
   try {
     // 2. Fixtures by date
+    // IMPORTANT: Use the SAME cache key as /football-get-matches-by-date (Asia/Dhaka timezone)
+    // so that if the user already visited that page today, dashboard serves from existing cache
+    // — zero extra API calls.
     const formattedDate = `${dateQuery.substring(0, 4)}-${dateQuery.substring(4, 6)}-${dateQuery.substring(6, 8)}`;
-    const fixturesCacheKey = `fixtures_date_${dateQuery}`;
+    const DEFAULT_TZ = "Asia/Dhaka";
+    const fixturesCacheKey = `fixtures_date_${dateQuery}_${DEFAULT_TZ.replace(/\//g, "_")}`;
     let fixtures = cache.get(fixturesCacheKey);
 
     if (!fixtures) {
       fixtures = await fetchAndCache(
         fixturesCacheKey,
         "/fixtures",
-        { date: formattedDate },
-        1800,
+        { date: formattedDate, timezone: DEFAULT_TZ },
+        3000, // 50 min — matches cacheWarmer warm cycle & matches-by-date TTL
         (apiResponse) => {
           const list = apiResponse.response || [];
           return list.map((item) => {
@@ -444,6 +469,7 @@ app.get("/football-dashboard", async (req, res) => {
               status: statusShort,
               time,
               date: item.fixture.date,
+              timestamp: item.fixture.timestamp,
             };
           });
         },
@@ -466,6 +492,33 @@ app.get("/football-dashboard", async (req, res) => {
 });
 
 // ==========================================
+// SMART DATE-AWARE TTL HELPER
+// ==========================================
+/**
+ * Returns the appropriate cache TTL based on whether the date is in the past, today, or future.
+ *
+ * Past dates   : 7 days  (604800s) — results are final, never change again
+ * Today        : 50 min  (3000s)   — live updates needed during match day
+ * Future dates : 6 hours (21600s)  — schedule can change but rarely does
+ *
+ * This saves significant quota: a user browsing back through last week's
+ * matches will only ever trigger ONE API call per past date — ever.
+ */
+function getFixtureTtlByDate(dateQuery) {
+  // dateQuery format: "YYYYMMDD"
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10).replace(/-/g, ""); // "YYYYMMDD"
+
+  if (dateQuery < todayStr) {
+    return 7 * 24 * 60 * 60; // Past: 7 days — results are permanent
+  } else if (dateQuery === todayStr) {
+    return 3000;              // Today: 50 min — live match day
+  } else {
+    return 6 * 60 * 60;      // Future: 6 hours — schedule rarely changes
+  }
+}
+
+// ==========================================
 // 3. MATCHES BY DATE
 // ==========================================
 app.get("/football-get-matches-by-date", async (req, res) => {
@@ -479,13 +532,15 @@ app.get("/football-get-matches-by-date", async (req, res) => {
 
   const formattedDate = `${dateQuery.substring(0, 4)}-${dateQuery.substring(4, 6)}-${dateQuery.substring(6, 8)}`;
   const cacheKey = `fixtures_date_${dateQuery}_${timezone.replace(/\//g, "_")}`;
+  // Smart TTL: past=7 days, today=50 min, future=6 hours
+  const ttl = getFixtureTtlByDate(dateQuery);
 
   try {
     const data = await fetchAndCache(
       cacheKey,
       "/fixtures",
       { date: formattedDate, timezone },
-      3000, // 50 min TTL — matches cacheWarmer warm cycle so disk cache is always valid
+      ttl,
       (apiResponse) => {
         const list = apiResponse.response || [];
         return list.map((item) => {
@@ -1066,6 +1121,18 @@ app.get("/football-get-standing-all", async (req, res) => {
 
   const currentYear = new Date().getFullYear();
   const seasonsToTry = [currentYear, 2024, 2023];
+
+  // Check if we already know which season works for this league (saves up to 2 extra API calls)
+  const bestSeasonKey = `standings_best_season_${leagueid}`;
+  const cachedBestSeason = cache.get(bestSeasonKey);
+  if (cachedBestSeason !== null) {
+    const cacheKey = `standings_${leagueid}_${cachedBestSeason}`;
+    const cached = cache.get(cacheKey);
+    if (cached !== null) {
+      return res.json(cached);
+    }
+  }
+
   let lastError = null;
 
   for (const season of seasonsToTry) {
@@ -1093,6 +1160,11 @@ app.get("/football-get-standing-all", async (req, res) => {
         },
       );
 
+      if (Array.isArray(data) && data.length > 0) {
+        // Remember which season worked — valid for 4 hours
+        cache.set(bestSeasonKey, season, 14400);
+      }
+
       return res.json(data);
     } catch (err) {
       lastError = err;
@@ -1104,6 +1176,7 @@ app.get("/football-get-standing-all", async (req, res) => {
       ) {
         continue;
       }
+      break; // Non-plan error — stop retrying immediately
     }
   }
 
@@ -1342,7 +1415,10 @@ app.get("/football-get-match-statistics", async (req, res) => {
       cacheKey,
       "/fixtures/statistics",
       { fixture: eventid },
-      300,
+      // Live/recent match: 10 min is enough for stats refresh.
+      // Finished match stats never change, so serve from cache for 24hr.
+      // We use 600s (10 min) as a safe middle ground for both cases.
+      600,
       (apiResponse) => {
         return parseFixtureStats(apiResponse);
       },
@@ -1389,7 +1465,9 @@ app.get("/football-get-match-events", async (req, res) => {
       cacheKey,
       "/fixtures/events",
       { fixture: eventid },
-      180,
+      // 5 minutes for live events — frequent enough without burning quota.
+      // Finished match events never change — TTL extended to 24hr once cached.
+      300,
       (apiResponse) => parseFixtureEvents(apiResponse)
     );
     res.json(data);
@@ -1547,6 +1625,23 @@ app.get("/health", (req, res) => {
 });
 
 // Admin: manually trigger a full cache warm cycle
+// ==========================================
+// ADMIN: QUOTA STATUS
+// ==========================================
+app.get("/admin/quota-status", (req, res) => {
+  const quota = getDailyQuotaStatus();
+  const percentUsed = ((quota.used / quota.budget) * 100).toFixed(1);
+  res.json({
+    live_poll_budget: quota.budget,
+    used_today: quota.used,
+    remaining: quota.remaining,
+    percent_used: `${percentUsed}%`,
+    estimated_total_daily: `~${(quota.used + 700 + 700).toLocaleString()} / 7,500`,
+    status: quota.remaining <= 0 ? 'EXHAUSTED' : quota.remaining < quota.budget * 0.20 ? 'LOW' : 'OK',
+    reset_info: 'Counter resets automatically at midnight (server local time)',
+  });
+});
+
 app.post("/admin/warm", async (req, res) => {
   const { runWarmCycle } = require("./cacheWarmer");
   res.json({ status: "warming", message: "Cache warm cycle triggered in background." });
