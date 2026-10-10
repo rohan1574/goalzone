@@ -266,30 +266,10 @@ async function warmNews() {
 // FULL WARM CYCLE
 // ==========================================
 
-async function runWarmCycle(isStartup = false) {
-  if (isStartup) {
-    const lastWarm = cache.get('last_full_warm_timestamp');
-    if (lastWarm && Date.now() - lastWarm < 60 * 60 * 1000) {
-      console.log('[CacheWarmer] Cache is already warm (last run <60m ago). Skipping startup burst.');
-      return;
-    }
-  }
-
-  console.log(`\n[CacheWarmer] Starting warm cycle at ${new Date().toISOString()}`);
-  const start = Date.now();
-
-  await warmFixturesByDate();
-  await sleep(1500);
-
+async function runWarmCycle() {
+  // Only refresh RSS news in background — zero API-Sports quota cost.
+  // Fixtures and dates are cached strictly on-demand when real users request them.
   await warmNews();
-  await sleep(1000);
-
-  await warmLeagueFixtures();
-
-  cache.set('last_full_warm_timestamp', Date.now(), 7200);
-
-  const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-  console.log(`[CacheWarmer] Warm cycle completed in ${elapsed}s\n`);
 }
 
 // ==========================================
