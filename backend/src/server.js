@@ -528,6 +528,7 @@ function getFixtureTtlByDate(dateQuery) {
 // 3. MATCHES BY DATE
 // ==========================================
 app.get("/football-get-matches-by-date", async (req, res) => {
+  const dateQuery = req.query.date;
   // Always use Asia/Dhaka timezone for unified caching across all user devices
   const timezone = "Asia/Dhaka";
   if (!dateQuery || dateQuery.length !== 8) {
