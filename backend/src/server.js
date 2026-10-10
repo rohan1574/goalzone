@@ -9,20 +9,34 @@ const {
   getCachedLiveScores,
   startLiveScorePolling,
   stopLiveScorePolling,
-  getDailyQuotaStatus,
 } = require("./liveScoreManager");
 const { cache } = require("./cache");
 const { startCacheWarmer, stopCacheWarmer } = require("./cacheWarmer");
+const { apiGet, getQuotaStatus } = require("./apiClient");
+const {
+  startSyncEngine,
+  stopSyncEngine,
+  requestSync,
+  getSyncStatus,
+  JOB_NAMES,
+} = require("./syncEngine");
+const {
+  POPULAR_LEAGUE_IDS_SET,
+  mapDateFixtures,
+  mapLeagueFixtures,
+  mapStandings,
+  mapLocation,
+  parseFixtureStats,
+  parseFixtureEvents,
+  parsePredictions,
+  getMockPredictions,
+} = require("./mappers");
 
 // Initialize Firebase Admin SDK
 initFirebase();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const APISPORTS_URL =
-  process.env.APISPORTS_URL ||
-  process.env.THIRD_PARTY_API_URL ||
-  "https://v3.football.api-sports.io";
 const APISPORTS_KEY =
   process.env.APISPORTS_KEY || process.env.THIRD_PARTY_API_KEY || "";
 
@@ -33,26 +47,12 @@ if (!APISPORTS_KEY) {
 app.use(cors());
 app.use(express.json());
 
-// API Client Instance
-const api = axios.create({
-  baseURL: APISPORTS_URL,
-  headers: {
-    "x-apisports-key": APISPORTS_KEY,
-  },
-});
-
 // In-flight request deduplication map
 // Prevents duplicate API calls when the same cache key is requested simultaneously
 // (e.g., 10 users all open the same match page at the same moment)
 const inFlightRequests = new Map();
 
-// Helper to handle API requests and cache them
-async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
-  const cachedData = cache.get(cacheKey);
-  if (cachedData !== null) {
-    return cachedData;
-  }
-
+function requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper) {
   // Deduplicate: if an identical request is already in-flight, wait for it instead of making another
   if (inFlightRequests.has(cacheKey)) {
     console.log(`[API Dedup] Waiting on in-flight request for key: ${cacheKey}`);
@@ -63,20 +63,8 @@ async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
 
   const requestPromise = (async () => {
     try {
-      const response = await api.get(endpoint, { params });
-      if (
-        response.data &&
-        response.data.errors &&
-        Object.keys(response.data.errors).length > 0
-      ) {
-        console.error(
-          `[API Error] Errors returned from api-football:`,
-          response.data.errors,
-        );
-        throw new Error(JSON.stringify(response.data.errors));
-      }
-
-      const mappedData = mapper(response.data);
+      const apiResponse = await apiGet(endpoint, params, "ondemand");
+      const mappedData = mapper(apiResponse);
       const isEmpty =
         !mappedData ||
         (Array.isArray(mappedData) && mappedData.length === 0) ||
@@ -86,10 +74,12 @@ async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
       cache.set(cacheKey, mappedData, effectiveTtl);
       return mappedData;
     } catch (err) {
-      console.error(
-        `[API Request Failed] Endpoint: ${endpoint}, Error:`,
-        err.message || err,
-      );
+      if (!err.isQuotaError) {
+        console.error(
+          `[API Request Failed] Endpoint: ${endpoint}, Error:`,
+          err.message || err,
+        );
+      }
       throw err;
     } finally {
       // Always clean up the in-flight map when done (success or error)
@@ -99,6 +89,35 @@ async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
 
   inFlightRequests.set(cacheKey, requestPromise);
   return requestPromise;
+}
+
+/**
+ * Serves data from the cache, calling API-Football only when nothing usable is stored.
+ * Most popular-league data is kept fresh by the background sync engine (syncEngine.js).
+ *
+ * - Fresh entry   → returned immediately.
+ * - Stale entry   → returned immediately; refreshed in the background if quota allows.
+ *                   Users never wait on, or see an error from, an expired entry.
+ * - No entry      → fetched from the API if the on-demand quota tier allows it;
+ *                   otherwise the empty result shape is returned (not cached).
+ */
+async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
+  const entry = cache.getEntry(cacheKey);
+  if (entry && !entry.stale) {
+    return entry.data;
+  }
+
+  if (entry) {
+    requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper).catch(() => {});
+    return entry.data;
+  }
+
+  try {
+    return await requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper);
+  } catch (err) {
+    if (err.isQuotaError) return mapper({ response: [] });
+    throw err;
+  }
 }
 
 // ==========================================
@@ -183,11 +202,6 @@ const popularLeagues = [
   // ── Middle East & Asia ──
   { leagueId: "307", leagueName: "Saudi Pro League",     country: "Saudi Arabia", leagueLogo: "https://media.api-sports.io/football/leagues/307.png" },
 ];
-
-const POPULAR_LEAGUE_IDS_SET = new Set([
-  '39', '140', '135', '78', '61', '2', '3', '848', '88', '94',
-  '71', '128', '253', '307', '13', '1', '4', '9', '10', '11', '15', '393', '239'
-]);
 
 app.get("/football-popular-leagues", (req, res) => {
   res.json(popularLeagues);
@@ -403,84 +417,22 @@ app.get("/football-dashboard", async (req, res) => {
     }
   }
 
-  const cacheKey = `dashboard_aggregated_${dateQuery}`;
-  const cached = cache.get(cacheKey);
-  if (cached) {
-    // Dynamic live injection ensures live matches are never stale in cluster mode
-    cached.live = live;
-    res.setHeader("Cache-Control", "public, max-age=15");
-    return res.json(cached);
-  }
-
   try {
     // 2. Fixtures by date
     // IMPORTANT: Use the SAME cache key as /football-get-matches-by-date (Asia/Dhaka timezone)
-    // so that if the user already visited that page today, dashboard serves from existing cache
-    // — zero extra API calls.
+    // so both screens share one cached list. The sync engine keeps today's list fresh and
+    // patches live scores into it, so the payload is built on every request (it is cheap)
+    // instead of being cached separately and going stale.
     const formattedDate = `${dateQuery.substring(0, 4)}-${dateQuery.substring(4, 6)}-${dateQuery.substring(6, 8)}`;
     const DEFAULT_TZ = "Asia/Dhaka";
     const fixturesCacheKey = `fixtures_date_${dateQuery}_${DEFAULT_TZ.replace(/\//g, "_")}`;
-    let fixtures = cache.get(fixturesCacheKey);
-
-    if (!fixtures) {
-      fixtures = await fetchAndCache(
-        fixturesCacheKey,
-        "/fixtures",
-        { date: formattedDate, timezone: DEFAULT_TZ },
-        3000, // 50 min — matches cacheWarmer warm cycle & matches-by-date TTL
-        (apiResponse) => {
-          const rawList = apiResponse.response || [];
-          const list = rawList.filter((item) => POPULAR_LEAGUE_IDS_SET.has(String(item.league.id)));
-          return list.map((item) => {
-            const statusShort = item.fixture.status.short || "NS";
-            const isNotStarted =
-              statusShort === "NS" ||
-              statusShort === "TBD" ||
-              statusShort === "PST" ||
-              statusShort === "CANC";
-            const score = isNotStarted
-              ? "VS"
-              : `${item.goals.home ?? 0} - ${item.goals.away ?? 0}`;
-            const fixtureDate = item.fixture.date ? new Date(item.fixture.date) : null;
-            const time = fixtureDate
-              ? fixtureDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-              : "19:00";
-
-            return {
-              id: String(item.fixture.id),
-              league: item.league.name,
-              leagueId: String(item.league.id),
-              leagueLogo: item.league.logo,
-              leagueCountry: item.league.country,
-              home: {
-                id: item.teams.home.id,
-                name: item.teams.home.name,
-                short:
-                  item.teams.home.code ||
-                  item.teams.home.name.substring(0, 3).toUpperCase(),
-                logo: item.teams.home.logo,
-              },
-              away: {
-                id: item.teams.away.id,
-                name: item.teams.away.name,
-                short:
-                  item.teams.away.code ||
-                  item.teams.away.name.substring(0, 3).toUpperCase(),
-                logo: item.teams.away.logo,
-              },
-              score,
-              minute: item.fixture.status.elapsed
-                ? `${item.fixture.status.elapsed}'`
-                : statusShort,
-              status: statusShort,
-              time,
-              date: item.fixture.date,
-              timestamp: item.fixture.timestamp,
-            };
-          });
-        },
-      );
-    }
+    const fixtures = await fetchAndCache(
+      fixturesCacheKey,
+      "/fixtures",
+      { date: formattedDate, timezone: DEFAULT_TZ },
+      getFixtureTtlByDate(dateQuery),
+      mapDateFixtures,
+    );
 
     const payload = {
       live,
@@ -489,8 +441,7 @@ app.get("/football-dashboard", async (req, res) => {
       teams: popularTeams,
     };
 
-    cache.set(cacheKey, payload, 1800); // 30 min — matches warm cycle TTL so dashboard is never re-fetched cold
-    res.setHeader("Cache-Control", "public, max-age=30");
+    res.setHeader("Cache-Control", "public, max-age=15");
     res.json(payload);
   } catch (err) {
     res.status(500).json({ error: "Failed to load dashboard data", message: err.message });
@@ -548,51 +499,7 @@ app.get("/football-get-matches-by-date", async (req, res) => {
       "/fixtures",
       { date: formattedDate, timezone },
       ttl,
-      (apiResponse) => {
-        const rawList = apiResponse.response || [];
-        const list = rawList.filter((item) => POPULAR_LEAGUE_IDS_SET.has(String(item.league.id)));
-        return list.map((item) => {
-          const statusShort = item.fixture.status.short || "NS";
-          const isNotStarted =
-            statusShort === "NS" ||
-            statusShort === "TBD" ||
-            statusShort === "PST" ||
-            statusShort === "CANC";
-          const score = isNotStarted
-            ? "VS"
-            : `${item.goals.home ?? 0} - ${item.goals.away ?? 0}`;
-
-          return {
-            id: String(item.fixture.id),
-            league: item.league.name,
-            leagueId: String(item.league.id),
-            leagueLogo: item.league.logo,
-            home: {
-              id: item.teams.home.id,
-              name: item.teams.home.name,
-              short:
-                item.teams.home.code ||
-                item.teams.home.name.substring(0, 3).toUpperCase(),
-              logo: item.teams.home.logo,
-            },
-            away: {
-              id: item.teams.away.id,
-              name: item.teams.away.name,
-              short:
-                item.teams.away.code ||
-                item.teams.away.name.substring(0, 3).toUpperCase(),
-              logo: item.teams.away.logo,
-            },
-            score,
-            minute: item.fixture.status.elapsed
-              ? `${item.fixture.status.elapsed}'`
-              : statusShort,
-            status: statusShort,
-            date: item.fixture.date,
-            timestamp: item.fixture.timestamp,
-          };
-        });
-      },
+      mapDateFixtures,
     );
 
     res.json(data);
@@ -618,38 +525,7 @@ app.get("/football-get-fixtures-by-league", async (req, res) => {
       "/fixtures",
       { league: leagueid, next: 10 },
       1800,
-      (apiResponse) => {
-        const list = apiResponse.response || [];
-        return list.map((item) => {
-          const fixtureDate = item.fixture.date
-            ? new Date(item.fixture.date)
-            : new Date();
-          const time = fixtureDate.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-          const date = `${String(fixtureDate.getDate()).padStart(2, "0")}/${String(fixtureDate.getMonth() + 1).padStart(2, "0")}`;
-
-          return {
-            id: String(item.fixture.id),
-            status: item.fixture.status.short || "NS",
-            time,
-            date,
-            rawDate: item.fixture.date,
-            timestamp: item.fixture.timestamp,
-            home: {
-              id: item.teams.home.id,
-              name: item.teams.home.name,
-              logo: item.teams.home.logo,
-            },
-            away: {
-              id: item.teams.away.id,
-              name: item.teams.away.name,
-              logo: item.teams.away.logo,
-            },
-          };
-        });
-      },
+      mapLeagueFixtures,
     );
 
     res.json(data);
@@ -1128,18 +1004,11 @@ app.get("/football-get-standing-all", async (req, res) => {
   }
 
   const currentYear = new Date().getFullYear();
-  const seasonsToTry = [currentYear, 2024, 2023];
 
-  // Check if we already know which season works for this league (saves up to 2 extra API calls)
+  // Season that worked last time for this league (kept up to date by the sync engine)
   const bestSeasonKey = `standings_best_season_${leagueid}`;
-  const cachedBestSeason = cache.get(bestSeasonKey);
-  if (cachedBestSeason !== null) {
-    const cacheKey = `standings_${leagueid}_${cachedBestSeason}`;
-    const cached = cache.get(cacheKey);
-    if (cached !== null) {
-      return res.json(cached);
-    }
-  }
+  const bestSeason = cache.getEntry(bestSeasonKey)?.data;
+  const seasonsToTry = [...new Set([bestSeason, currentYear, currentYear - 1].filter(Boolean))];
 
   let lastError = null;
 
@@ -1151,29 +1020,15 @@ app.get("/football-get-standing-all", async (req, res) => {
         "/standings",
         { league: leagueid, season },
         14400,
-        (apiResponse) => {
-          const list = apiResponse.response || [];
-          if (list.length === 0) return [];
-
-          const apiStandings = list[0]?.league?.standings?.[0] || [];
-          return apiStandings.map((item) => ({
-            teamId: item.team.id,
-            teamName: item.team.name,
-            logoUrl: item.team.logo,
-            pos: item.rank,
-            played: item.all.played,
-            goalsDiff: item.goalsDiff,
-            points: item.points,
-          }));
-        },
+        mapStandings,
       );
 
       if (Array.isArray(data) && data.length > 0) {
-        // Remember which season worked — valid for 4 hours
-        cache.set(bestSeasonKey, season, 14400);
+        // Remember which season worked
+        if (season !== bestSeason) cache.set(bestSeasonKey, season, 7 * 24 * 3600);
+        return res.json(data);
       }
-
-      return res.json(data);
+      // Empty table: the season may not have started yet, try the previous one
     } catch (err) {
       lastError = err;
       if (
@@ -1188,6 +1043,7 @@ app.get("/football-get-standing-all", async (req, res) => {
     }
   }
 
+  if (!lastError) return res.json([]);
   res
     .status(500)
     .json({ error: "Failed to fetch standings", message: lastError?.message });
@@ -1213,14 +1069,7 @@ app.get("/football-get-match-location", async (req, res) => {
       "/fixtures",
       { id: eventid },
       86400,
-      (apiResponse) => {
-        const list = apiResponse.response || [];
-        const item = list[0];
-        return {
-          venue: item?.fixture?.venue?.name || "Football Arena",
-          city: item?.fixture?.venue?.city || "",
-        };
-      },
+      (apiResponse) => mapLocation((apiResponse.response || [])[0]),
     );
 
     res.json(data);
@@ -1355,62 +1204,6 @@ function getMockStats(eventid) {
   ];
 }
 
-function parseFixtureStats(apiResponse) {
-  const responseList = apiResponse.response || [];
-  if (responseList.length === 0) return [];
-
-  const homeTeamStats = responseList[0]?.statistics || [];
-  const awayTeamStats = responseList[1]?.statistics || [];
-  if (homeTeamStats.length === 0 && awayTeamStats.length === 0) return [];
-
-  const targetStats = [
-    { key: "Shots on Goal", name: "Shots on Target" },
-    { key: "Shots off Goal", name: "Shots off Target" },
-    { key: "Blocked Shots", name: "Blocked Shots" },
-    { key: "Ball Possession", name: "Possession (%)" },
-    { key: "Corner Kicks", name: "Corner Kicks" },
-    { key: "Offsides", name: "Offsides" },
-    { key: "Fouls", name: "Fouls" },
-    { key: "Goalkeeper Saves", name: "Goalkeeper Saves" },
-    { key: "Yellow Cards", name: "Yellow Cards" },
-    { key: "Red Cards", name: "Red Cards" },
-  ];
-
-  return targetStats.map((target) => {
-    const homeStat = homeTeamStats.find((s) => s.type === target.key);
-    const awayStat = awayTeamStats.find((s) => s.type === target.key);
-
-    let homeValStr =
-      homeStat?.value !== null && homeStat?.value !== undefined
-        ? String(homeStat.value)
-        : "0";
-    let awayValStr =
-      awayStat?.value !== null && awayStat?.value !== undefined
-        ? String(awayStat.value)
-        : "0";
-
-    let homeValNum = parseFloat(homeValStr.replace("%", "")) || 0;
-    let awayValNum = parseFloat(awayValStr.replace("%", "")) || 0;
-
-    let homePct = 50;
-    let awayPct = 50;
-
-    const total = homeValNum + awayValNum;
-    if (total > 0) {
-      homePct = Math.round((homeValNum / total) * 100);
-      awayPct = Math.round((awayValNum / total) * 100);
-    }
-
-    return {
-      name: target.name,
-      home: homeValStr,
-      away: awayValStr,
-      homePct,
-      awayPct,
-    };
-  });
-}
-
 app.get("/football-get-match-statistics", async (req, res) => {
   const eventid = req.query.eventid;
   if (!eventid) {
@@ -1447,24 +1240,6 @@ app.get("/football-get-match-statistics", async (req, res) => {
 // ==========================================
 // 8.1 FIXTURE EVENTS (MATCH TIMELINE)
 // ==========================================
-function parseFixtureEvents(apiResponse) {
-  const list = apiResponse?.response || [];
-  return list.map((item, idx) => ({
-    id: `${item.team?.id}-${item.time?.elapsed}-${idx}`,
-    type: item.type === "Goal" ? "goal" :
-          item.type === "subst" ? "subst" :
-          item.type === "Card" ? "card" : item.type.toLowerCase(),
-    detail: item.detail || "",
-    minute: item.time?.extra ? `${item.time.elapsed}+${item.time.extra}'` : `${item.time?.elapsed}'`,
-    elapsed: item.time?.elapsed || 0,
-    teamId: item.team?.id,
-    teamName: item.team?.name || "",
-    teamLogo: item.team?.logo || "",
-    player: item.player?.name || "Player",
-    assist: item.assist?.name || null
-  }));
-}
-
 app.get("/football-get-match-events", async (req, res) => {
   const eventid = req.query.eventid;
   if (!eventid) {
@@ -1570,36 +1345,6 @@ app.get("/football-get-h2h", async (req, res) => {
   }
 });
 
-function getMockPredictions(eventid) {
-  return {
-    advice: "Double chance : home team or draw",
-    percent: {
-      home: "40%",
-      draw: "35%",
-      away: "25%",
-    },
-    winner: "Home Team",
-  };
-}
-
-function parsePredictions(apiResponse) {
-  const list = apiResponse.response || [];
-  if (list.length === 0) return getMockPredictions("generic");
-
-  const pred = list[0]?.predictions;
-  if (!pred) return getMockPredictions("generic");
-
-  return {
-    advice: pred.advice || "No advice available",
-    percent: {
-      home: pred.percent?.home || "33%",
-      draw: pred.percent?.draw || "34%",
-      away: pred.percent?.away || "33%",
-    },
-    winner: pred.winner?.name || "Draw",
-  };
-}
-
 app.get("/football-get-predictions", async (req, res) => {
   const eventid = req.query.eventid;
   if (!eventid) {
@@ -1640,37 +1385,69 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Admin: manually trigger a full cache warm cycle
 // ==========================================
-// ADMIN: QUOTA STATUS
+// ADMIN
 // ==========================================
+// Admin routes require the ADMIN_TOKEN from .env, sent as the "x-admin-token" header or
+// "?token=" query param. Without ADMIN_TOKEN set they are disabled (a reverse proxy makes
+// every request look local, so there is no safe "localhost only" fallback).
+function requireAdmin(req, res, next) {
+  const adminToken = process.env.ADMIN_TOKEN;
+  if (!adminToken) {
+    return res.status(403).json({ error: "Admin routes are disabled. Set ADMIN_TOKEN in .env." });
+  }
+  const provided = req.get("x-admin-token") || req.query.token;
+  if (provided === adminToken) return next();
+  return res.status(401).json({ error: "Unauthorized" });
+}
+app.use("/admin", requireAdmin);
+
 app.get("/admin/quota-status", (req, res) => {
-  const quota = getDailyQuotaStatus();
-  const percentUsed = ((quota.used / quota.budget) * 100).toFixed(1);
+  const quota = getQuotaStatus();
+  const percentUsed = ((quota.used / quota.limit) * 100).toFixed(1);
   res.json({
-    live_poll_budget: quota.budget,
+    daily_limit: quota.limit,
     used_today: quota.used,
     remaining: quota.remaining,
     percent_used: `${percentUsed}%`,
-    estimated_total_daily: `~${(quota.used + 700 + 700).toLocaleString()} / 7,500`,
-    status: quota.remaining <= 0 ? 'EXHAUSTED' : quota.remaining < quota.budget * 0.20 ? 'LOW' : 'OK',
-    reset_info: 'Counter resets automatically at midnight (server local time)',
+    status: quota.exhausted ? "EXHAUSTED" : !quota.tiersAllowed.ondemand ? "LOW" : "OK",
+    calls_by_tier: quota.callsByTier,
+    denied_by_tier: quota.deniedByTier,
+    tier_floors: quota.floors,
+    tiers_allowed: quota.tiersAllowed,
+    resets_at: quota.resetsAt,
   });
 });
 
-// Admin: clear all server memory and disk cache on demand
+// Sync engine status: last run, result and next run of every background job
+app.get("/admin/sync-status", (req, res) => {
+  res.json({ quota: getQuotaStatus(), sync: getSyncStatus() });
+});
+
+// Manually run sync jobs now, ignoring their schedule: POST /admin/sync/all or /admin/sync/dates
+app.post("/admin/sync/:job", (req, res) => {
+  const job = req.params.job;
+  if (job !== "all" && !JOB_NAMES.includes(job)) {
+    return res.status(400).json({ error: `Unknown job. Use one of: all, ${JOB_NAMES.join(", ")}` });
+  }
+  requestSync([job]);
+  res.json({ status: "queued", job, message: "Runs within 15 seconds. Check /admin/sync-status." });
+});
+
+// Admin: clear all server memory and disk cache on demand.
+// Warning: cached data is the fallback served when the API is unavailable or out of quota,
+// and refilling it costs API requests. Internal state files (starting with "_") are kept.
 app.get("/admin/clear-cache", (req, res) => {
   const fs = require("fs");
-  const path = require("path");
-  const cacheDir = path.join(__dirname, "../.cache");
+  const { CACHE_DIR } = require("./cache");
   let deletedCount = 0;
 
-  if (fs.existsSync(cacheDir)) {
-    const files = fs.readdirSync(cacheDir);
+  if (fs.existsSync(CACHE_DIR)) {
+    const files = fs.readdirSync(CACHE_DIR);
     for (const file of files) {
-      if (file.endsWith(".json")) {
+      if (file.endsWith(".json") && !file.startsWith("_")) {
         try {
-          fs.unlinkSync(path.join(cacheDir, file));
+          fs.unlinkSync(require("path").join(CACHE_DIR, file));
           deletedCount++;
         } catch (e) {}
       }
@@ -1679,7 +1456,7 @@ app.get("/admin/clear-cache", (req, res) => {
 
   res.json({
     success: true,
-    message: `Cache flushed! Removed ${deletedCount} cache files from disk and cleared memory cache.`,
+    message: `Cache flushed! Removed ${deletedCount} cache files from disk. Workers drop their memory copies within 2 seconds.`,
   });
 });
 
@@ -1707,16 +1484,21 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`====================================================`);
 
   // In PM2 cluster mode, multiple worker instances run simultaneously.
-  // We check process.env.pm_id (standard PM2 process ID) and process.env.NODE_APP_INSTANCE.
-  // Background tasks (live score polling + cache warmer) MUST ONLY run on process 0
-  // to prevent multiplying API requests by the number of PM2 cluster instances.
-  const pmId = process.env.pm_id !== undefined 
-    ? String(process.env.pm_id) 
-    : (process.env.NODE_APP_INSTANCE !== undefined ? String(process.env.NODE_APP_INSTANCE) : '0');
+  // Background tasks (live score polling, sync engine, cache warmer) MUST ONLY run on one
+  // instance to prevent multiplying API requests by the number of PM2 cluster instances.
+  // NODE_APP_INSTANCE is 0..n-1 within this app; pm_id is global across all PM2 apps, so it
+  // is only used as a fallback. SYNC_LEADER=true/false overrides the detection.
+  const pmId = process.env.NODE_APP_INSTANCE !== undefined
+    ? String(process.env.NODE_APP_INSTANCE)
+    : (process.env.pm_id !== undefined ? String(process.env.pm_id) : '0');
+  const isLeader = process.env.SYNC_LEADER !== undefined
+    ? process.env.SYNC_LEADER === 'true'
+    : pmId === '0';
 
-  if (pmId === '0') {
-    console.log(`[Server] Primary Instance (pm_id: 0): Starting background services...`);
+  if (isLeader) {
+    console.log(`[Server] Primary Instance (instance: ${pmId}): Starting background services...`);
     startLiveScorePolling();
+    startSyncEngine();
     startCacheWarmer();
   } else {
     console.log(`[Server] Worker Instance (pm_id: ${pmId}): Skipping background services (handled by instance 0).`);
@@ -1727,6 +1509,7 @@ const server = app.listen(PORT, "0.0.0.0", () => {
 function gracefulShutdown(signal) {
   console.log(`\n[Server] Received ${signal}. Shutting down gracefully...`);
   stopLiveScorePolling();
+  stopSyncEngine();
   stopCacheWarmer();
 
   server.close(() => {

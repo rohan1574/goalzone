@@ -1,21 +1,7 @@
-const axios = require('axios');
 const { getMessaging } = require('./firebase');
 const { cache } = require('./cache');
-
-// Configuration & Environment Variables
-const rawBaseUrl = process.env.THIRD_PARTY_API_URL || process.env.APISPORTS_URL || 'https://v3.football.api-sports.io';
-const cleanBaseUrl = rawBaseUrl.replace(/\/+$/, '');
-const THIRD_PARTY_API_URL = cleanBaseUrl.includes('/fixtures') ? cleanBaseUrl : `${cleanBaseUrl}/fixtures?live=all`;
-const THIRD_PARTY_API_KEY = process.env.THIRD_PARTY_API_KEY || process.env.APISPORTS_KEY || '';
-
-// Axios Client with timeout to prevent hanging connections
-const apiClient = axios.create({
-  timeout: 10000,
-  headers: {
-    'x-apisports-key': THIRD_PARTY_API_KEY,
-    'Accept': 'application/json'
-  }
-});
+const { apiGet, getQuotaStatus } = require('./apiClient');
+const { applyLiveUpdates, onMatchesEnded, getNextKickoffMs } = require('./syncEngine');
 
 // ==========================================
 // 1. IN-MEMORY & DISK-BACKED CACHE
@@ -56,74 +42,46 @@ function getCachedLiveScores() {
 const previousMatchState = new Map();
 
 // ==========================================
-// DAILY QUOTA TRACKER
+// POLL PACING
 // ==========================================
 /**
- * Tracks live-score API calls made today.
- * Resets automatically at midnight (server local time).
+ * Live polls use the "live" quota tier (see apiClient.js), so they keep running after
+ * user-triggered and scheduled calls have been paused. Remaining quota is read from the
+ * API-Football response headers, shared across PM2 workers.
  *
- * Daily budget split:
- *   Live polling budget  : 3,600 / day  (~150/hr)
- *   CacheWarmer budget   : 700  / day  (~29/hr)
- *   User-triggered budget: 700  / day  (cache-miss buffer)
- *   Safety reserve       : 2,500 / day
- *   ──────────────────────────────────────────────
- *   Total                : 7,500 / day
+ * Intervals (healthy quota):
+ * - 0 live matches  : until the next kickoff, between 60 sec and 15 min
+ * - 1–3 live matches: 60 sec
+ * - 4–9 live matches: 45 sec
+ * - ≥10 live matches: 30 sec
+ * Below 2,500 remaining requests the live intervals stretch by 1.5x, below 800 by 3x.
  */
-const DAILY_POLL_BUDGET = 3600; // max live-score polls per day
-let dailyPollCount = 0;
-let lastResetDay = new Date().toDateString();
-
-function trackAndCheckQuota() {
-  const today = new Date().toDateString();
-  if (today !== lastResetDay) {
-    // New day — reset counter
-    dailyPollCount = 0;
-    lastResetDay = today;
-    console.log('[QuotaTracker] New day detected — daily poll counter reset to 0.');
-  }
-  dailyPollCount++;
-  const remaining = DAILY_POLL_BUDGET - dailyPollCount;
-  if (dailyPollCount % 50 === 0) {
-    console.log(`[QuotaTracker] Daily poll count: ${dailyPollCount}/${DAILY_POLL_BUDGET} (remaining: ${remaining})`);
-  }
-  return remaining > 0; // false = budget exhausted
-}
-
 function getDailyQuotaStatus() {
-  return { used: dailyPollCount, budget: DAILY_POLL_BUDGET, remaining: DAILY_POLL_BUDGET - dailyPollCount };
+  const q = getQuotaStatus();
+  return { used: q.used, budget: q.limit, remaining: q.remaining };
 }
 
-/**
- * Calculates dynamic poll interval based on number of active live matches.
- *
- * Conservative Quota Math (target ≤ 150 polls/hr from live poller):
- * - 0 live matches : 15 min  (900,000ms) → ~96 req/day  (very cheap)
- * - 1–3 live matches: 60 sec (60,000ms)  → ~1,440 req/day (~60/hr)
- * - 4–9 live matches: 45 sec (45,000ms)  → ~1,920 req/day (~80/hr)
- * - ≥10 live matches: 30 sec (30,000ms)  → ~2,880 req/day (~120/hr)
- *
- * Even worst-case (≥10 matches all day) = 2,880 → well under 3,600 budget.
- */
 function calculateNextPollInterval(liveMatchCount, quotaRemaining) {
-  // If we've burned through the daily poll budget, back off to 30 min
   if (quotaRemaining <= 0) {
-    console.warn('[QuotaTracker] Daily poll budget EXHAUSTED. Backing off to 30-min interval.');
-    return 30 * 60 * 1000; // 30 minutes
+    console.warn('[QuotaTracker] Daily quota EXHAUSTED. Backing off to 30-min interval.');
+    return 30 * 60 * 1000;
   }
-
-  // Scale back interval when budget is running low (< 20% remaining)
-  const budgetLow = quotaRemaining < DAILY_POLL_BUDGET * 0.20;
 
   if (liveMatchCount === 0) {
-    return 15 * 60 * 1000; // 15 minutes — no live matches
-  } else if (liveMatchCount <= 3) {
-    return budgetLow ? 90 * 1000 : 60 * 1000; // 60-90 sec for 1-3 matches
-  } else if (liveMatchCount <= 9) {
-    return budgetLow ? 60 * 1000 : 45 * 1000; // 45-60 sec for 4-9 matches
-  } else {
-    return budgetLow ? 45 * 1000 : 30 * 1000; // 30-45 sec for ≥10 matches
+    // Sleep until the next scheduled kickoff so matches show as live straight away
+    const nextKickoff = getNextKickoffMs();
+    const untilKickoff = nextKickoff === null ? Infinity : nextKickoff - Date.now();
+    return Math.min(15 * 60 * 1000, Math.max(60 * 1000, untilKickoff));
   }
+
+  let interval;
+  if (liveMatchCount <= 3) interval = 60 * 1000;
+  else if (liveMatchCount <= 9) interval = 45 * 1000;
+  else interval = 30 * 1000;
+
+  if (quotaRemaining < 800) interval *= 3;
+  else if (quotaRemaining < 2500) interval *= 1.5;
+  return interval;
 }
 
 // ==========================================
@@ -255,8 +213,8 @@ async function fetchAndProcessLiveScores() {
   console.log(`[Poll Engine] Polling third-party API at ${new Date().toISOString()}...`);
 
   try {
-    const response = await apiClient.get(THIRD_PARTY_API_URL);
-    const normalizedMatches = normalizeApiResponse(response.data);
+    const data = await apiGet('/fixtures', { live: 'all' }, 'live');
+    const normalizedMatches = normalizeApiResponse(data);
     const activeMatchIds = new Set();
 
     // Filter strictly to popular leagues only (no minor/unknown leagues displayed)
@@ -302,16 +260,21 @@ async function fetchAndProcessLiveScores() {
         homeScore: match.homeScore,
         awayScore: match.awayScore,
         homeTeam: match.homeTeam,
-        awayTeam: match.awayTeam
+        awayTeam: match.awayTeam,
+        leagueId: match.leagueId
       });
     }
 
     // MEMORY MANAGEMENT: Prune matches no longer live to prevent unbounded Map memory growth
-    for (const matchId of previousMatchState.keys()) {
+    const endedPopularIds = [];
+    for (const [matchId, oldState] of previousMatchState.entries()) {
       if (!activeMatchIds.has(matchId)) {
+        if (POPULAR_LEAGUE_IDS.has(String(oldState.leagueId))) endedPopularIds.push(matchId);
         previousMatchState.delete(matchId);
       }
     }
+    // Matches that left the live feed: sync engine fetches their final score & events
+    if (endedPopularIds.length > 0) onMatchesEnded(endedPopularIds);
 
     // MEMORY MANAGEMENT: Complete Atomic Overwrite (Re-assignment)
     cachedLiveScores = Object.freeze({
@@ -320,12 +283,20 @@ async function fetchAndProcessLiveScores() {
       matches: displayMatches
     });
 
-    cache.set('live_scores_global', cachedLiveScores, 120);
+    // TTL outlasts the longest idle poll interval (15 min) so other PM2 workers keep serving it
+    cache.set('live_scores_global', cachedLiveScores, 20 * 60);
+
+    // Push live scores into cached fixture lists (date screens, dashboard) — no API cost
+    applyLiveUpdates(displayMatches);
 
     console.log(`[Poll Engine] Success. Total live: ${normalizedMatches.length}, Displaying popular: ${displayMatches.length}`);
     return displayMatches.length;
 
   } catch (err) {
+    if (err.isQuotaError) {
+      console.warn(`[Poll Engine] Skipped: ${err.message}`);
+      return null;
+    }
     console.error(`[Poll Engine Error] Third-party fetch failed:`, err.message);
     // Return null to signal error condition to dynamic scheduler
     return null;
@@ -341,25 +312,18 @@ let isPollingRunning = false;
 async function pollCycle() {
   if (!isPollingRunning) return;
 
-  // Check quota before hitting the API
-  const allowed = trackAndCheckQuota();
-  if (!allowed) {
-    console.warn('[Poll Engine] Daily poll budget exhausted — skipping fetch, sleeping 30 min.');
-    pollingTimer = setTimeout(pollCycle, 30 * 60 * 1000);
-    return;
-  }
-
   const matchCount = await fetchAndProcessLiveScores();
+  const { remaining } = getDailyQuotaStatus();
 
   // If fetch failed (null), back off safely for 2 min before retrying
   let nextDelay = 2 * 60 * 1000;
-
-  if (matchCount !== null) {
-    const { remaining } = getDailyQuotaStatus();
+  if (remaining <= 0) {
+    nextDelay = 30 * 60 * 1000;
+  } else if (matchCount !== null) {
     nextDelay = calculateNextPollInterval(matchCount, remaining);
   }
 
-  console.log(`[Poll Engine] Next poll in ${(nextDelay / 1000).toFixed(0)}s | quota used today: ${dailyPollCount}/${DAILY_POLL_BUDGET}`);
+  console.log(`[Poll Engine] Next poll in ${(nextDelay / 1000).toFixed(0)}s | API quota remaining today: ${remaining}`);
 
   // Recursive setTimeout ensures zero request overlap if network latency spikes
   pollingTimer = setTimeout(pollCycle, nextDelay);
