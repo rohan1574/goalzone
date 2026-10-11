@@ -281,11 +281,8 @@ async function fetchAndProcessLiveScores() {
     const normalizedMatches = normalizeApiResponse(data);
     const activeMatchIds = new Set();
 
-    // Filter to popular leagues first; fallback to all live matches if 0 popular matches are currently playing
-    let displayMatches = normalizedMatches.filter((m) => POPULAR_LEAGUE_IDS.has(String(m.leagueId)));
-    if (displayMatches.length === 0 && normalizedMatches.length > 0) {
-      displayMatches = normalizedMatches;
-    }
+    // Filter strictly to popular leagues (never show obscure/unknown regional leagues)
+    const displayMatches = normalizedMatches.filter((m) => POPULAR_LEAGUE_IDS.has(String(m.leagueId)));
 
     // Goal Detection & State Comparison
     for (const match of normalizedMatches) {
