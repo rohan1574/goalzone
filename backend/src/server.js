@@ -104,12 +104,17 @@ function requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper) {
 async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
   const entry = cache.getEntry(cacheKey);
   if (entry && !entry.stale) {
-    return entry.data;
+    if (!Array.isArray(entry.data) || entry.data.length > 0) {
+      return entry.data;
+    }
+    console.log(`[Cache Empty Hit] ${cacheKey} is empty in cache. Fetching fresh from API...`);
   }
 
   if (entry) {
     requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper).catch(() => {});
-    return entry.data;
+    if (!Array.isArray(entry.data) || entry.data.length > 0) {
+      return entry.data;
+    }
   }
 
   try {

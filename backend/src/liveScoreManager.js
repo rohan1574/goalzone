@@ -158,7 +158,21 @@ const POPULAR_LEAGUE_IDS = new Set([
   '11',   // UEFA Nations League
   '15',   // FIFA Club World Cup
   '393',  // AFC Champions League
-  '239'   // Süper Lig
+  '239',  // Primera A / Süper Lig
+  '40',   // Championship
+  '45',   // FA Cup
+  '48',   // EFL Cup
+  '143',  // Copa del Rey
+  '81',   // DFB Pokal
+  '137',  // Coppa Italia
+  '66',   // Coupe de France
+  '16',   // CONCACAF Champions Cup
+  '203',  // Super Lig
+  '179',  // Premiership Scotland
+  '235',  // Russian Premier League
+  '234',  // Liga Nacional Honduras
+  '281',  // Primera Division Peru
+  '344'   // Primera Division Bolivia
 ]);
 
 /**
@@ -217,8 +231,11 @@ async function fetchAndProcessLiveScores() {
     const normalizedMatches = normalizeApiResponse(data);
     const activeMatchIds = new Set();
 
-    // Filter strictly to popular leagues only (no minor/unknown leagues displayed)
-    const displayMatches = normalizedMatches.filter((m) => POPULAR_LEAGUE_IDS.has(String(m.leagueId)));
+    // Filter to popular leagues first; fallback to all live matches if 0 popular matches are currently playing
+    let displayMatches = normalizedMatches.filter((m) => POPULAR_LEAGUE_IDS.has(String(m.leagueId)));
+    if (displayMatches.length === 0 && normalizedMatches.length > 0) {
+      displayMatches = normalizedMatches;
+    }
 
     // Goal Detection & State Comparison
     for (const match of normalizedMatches) {

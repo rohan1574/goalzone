@@ -1,8 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
-// Contabo VPS hosted live backend URL
+// Contabo VPS hosted live backend URL with local fallback
 const BACKEND_URL = "http://62.84.190.145";
+const LOCAL_BACKEND_URL_ANDROID = "http://10.0.2.2:3000";
+const LOCAL_BACKEND_URL_LOCALHOST = "http://localhost:3000";
 
 export const api = axios.create({
   baseURL: BACKEND_URL,
@@ -11,6 +13,34 @@ export const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+export async function fetchWithBackendFallback(endpoint: string, params: any = {}) {
+  try {
+    const res = await api.get(endpoint, { params });
+    const hasContent = res.data && (
+      (Array.isArray(res.data) && res.data.length > 0) ||
+      (res.data.fixtures && Array.isArray(res.data.fixtures) && res.data.fixtures.length > 0) ||
+      (res.data.live && Array.isArray(res.data.live) && res.data.live.length > 0)
+    );
+    if (hasContent) return res;
+
+    console.log(`[API Fallback] VPS returned empty for ${endpoint}. Trying local backend...`);
+    const localRes = await axios.get(`${LOCAL_BACKEND_URL_ANDROID}${endpoint}`, { params, timeout: 5000 })
+      .catch(() => axios.get(`${LOCAL_BACKEND_URL_LOCALHOST}${endpoint}`, { params, timeout: 5000 }));
+    if (localRes && localRes.data) return localRes;
+    return res;
+  } catch (err) {
+    console.warn(`[API Fallback] VPS failed for ${endpoint}. Trying local backend...`);
+    try {
+      const localRes = await axios.get(`${LOCAL_BACKEND_URL_ANDROID}${endpoint}`, { params, timeout: 5000 })
+        .catch(() => axios.get(`${LOCAL_BACKEND_URL_LOCALHOST}${endpoint}`, { params, timeout: 5000 }));
+      if (localRes && localRes.data) return localRes;
+    } catch (localErr) {
+      console.warn(`[API Fallback] Local backend unreachable for ${endpoint}`);
+    }
+    throw err;
+  }
+}
 
 // Fast In-Memory Cache (0ms response time on tab navigation)
 const memoryCache = new Map<string, { data: any; expiry: number }>();
@@ -458,8 +488,8 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
 
   // 2. Try single aggregated /football-dashboard endpoint first (1 fast request)
   try {
-    const aggRes = await api.get("/football-dashboard", {
-      params: { date: formatFootballDate(0) },
+    const aggRes = await fetchWithBackendFallback("/football-dashboard", {
+      date: formatFootballDate(0),
     });
     if (aggRes.data && aggRes.data.teams && aggRes.data.teams.length > 0) {
       const response = {
@@ -539,8 +569,9 @@ export const fetchFixturesByDate = async (dateString: string) => {
   try {
     const userTimezone =
       Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Dhaka";
-    const response = await api.get("/football-get-matches-by-date", {
-      params: { date: dateString, timezone: userTimezone },
+    const response = await fetchWithBackendFallback("/football-get-matches-by-date", {
+      date: dateString,
+      timezone: userTimezone,
     });
     const freshData = findArray(response.data);
 
