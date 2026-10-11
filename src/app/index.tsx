@@ -42,7 +42,6 @@ if (Platform.OS === "android") {
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: "#02DB54",
-    sound: "default",
   }).catch(() => {});
 
   Notifications.setNotificationChannelAsync("match_alerts", {
@@ -50,7 +49,6 @@ if (Platform.OS === "android") {
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: "#02DB54",
-    sound: "default",
   }).catch(() => {});
 }
 
