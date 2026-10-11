@@ -257,29 +257,9 @@ async function syncLeagueFixtures({ force }) {
 const failedPredictions = new Set();
 
 async function syncPredictions({ force }) {
-  const upcoming = [];
-  for (const offset of [0, 1]) {
-    const entry = cache.getEntry(dateFixturesKey(syncDateCompact(offset)));
-    if (entry && Array.isArray(entry.data)) {
-      upcoming.push(...entry.data.filter((f) => f.status === 'NS'));
-    }
-  }
-
-  const missing = upcoming.filter((f) =>
-    !failedPredictions.has(f.id) && (force || !cache.getEntry(`predictions_event_${f.id}`)));
-  let calls = 0;
-  for (const f of missing.slice(0, force ? 40 : 8)) {
-    try {
-      const data = await apiGet('/predictions', { fixture: f.id }, 'sync');
-      cache.set(`predictions_event_${f.id}`, parsePredictions(data), 3 * 24 * 3600);
-    } catch (err) {
-      if (err.isQuotaError) throw err;
-      failedPredictions.add(f.id); // don't retry a broken fixture every 10 min
-    }
-    calls++;
-    await sleep(300);
-  }
-  return { calls, remaining: Math.max(0, missing.length - calls) };
+  // Disabled background bulk fetching of predictions to save API quota.
+  // Predictions are fetched on demand when a user opens predictions in match details and cached for 3 days.
+  return { calls: 0, remaining: 0 };
 }
 
 async function pruneCache() {
