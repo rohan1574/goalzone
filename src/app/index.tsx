@@ -436,16 +436,11 @@ export default function ExploreScreen() {
     warmupFixturesCache(); // loads existing AsyncStorage cache into memory, no API calls
     loadData(false);
 
-    // Auto-subscribe device to FCM push notifications for the 22 popular leagues
+    // If permission was ALREADY granted previously by user, silently ensure popular subscription
     (async () => {
       try {
-        const { status: existingStatus } = await Notifications.getPermissionsAsync();
-        let finalStatus = existingStatus;
-        if (existingStatus !== "granted") {
-          const { status } = await Notifications.requestPermissionsAsync();
-          finalStatus = status;
-        }
-        if (finalStatus === "granted") {
+        const { status } = await Notifications.getPermissionsAsync();
+        if (status === "granted") {
           const tokenObj = await Notifications.getDevicePushTokenAsync();
           if (tokenObj?.data) {
             await toggleServerMatchNotification(String(tokenObj.data), "popular", "subscribe");
@@ -613,6 +608,7 @@ export default function ExploreScreen() {
                   const tokenObj = await Notifications.getDevicePushTokenAsync();
                   if (tokenObj?.data) {
                     toggleServerMatchNotification(String(tokenObj.data), matchId, "subscribe");
+                    toggleServerMatchNotification(String(tokenObj.data), "popular", "subscribe");
                   }
                 } catch (_) {}
               }
