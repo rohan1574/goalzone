@@ -1377,11 +1377,18 @@ app.get("/football-get-predictions", async (req, res) => {
 // Health check endpoint for VPS process manager (PM2 / Docker)
 app.get("/health", (req, res) => {
   const cacheData = getCachedLiveScores();
+  const quota = getQuotaStatus();
   res.json({
     status: "ok",
     uptime: process.uptime(),
     lastUpdated: cacheData.lastUpdated,
     liveMatches: cacheData.count,
+    quota: {
+      used: quota.used,
+      remaining: quota.remaining,
+      callsByTier: quota.callsByTier,
+      deniedByTier: quota.deniedByTier,
+    },
   });
 });
 
