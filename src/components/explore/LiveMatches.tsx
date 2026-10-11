@@ -101,7 +101,7 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
                     </View>
                   ) : (
                     <Image
-                      source={{ uri: match?.leagueLogo || "" }}
+                      source={match?.leagueLogo ? { uri: match.leagueLogo } : undefined}
                       className="w-14 h-14"
                       resizeMode="contain"
                       resizeMethod="resize"
@@ -116,7 +116,7 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
                 <View className="flex-row justify-between items-center mt-1">
                   {/* Home Team */}
                   <View className="items-center flex-1">
-                    <Image source={{ uri: match.home?.logo || "" }} className="w-9 h-9" resizeMethod="resize" />
+                    <Image source={match.home?.logo ? { uri: match.home.logo } : undefined} className="w-9 h-9" resizeMethod="resize" />
                     <Text
                       className="text-gray-300 text-xs font-black mt-2 text-center"
                       numberOfLines={1}
@@ -137,7 +137,7 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
 
                   {/* Away Team */}
                   <View className="items-center flex-1">
-                    <Image source={{ uri: match.away?.logo || "" }} className="w-9 h-9" resizeMethod="resize" />
+                    <Image source={match.away?.logo ? { uri: match.away.logo } : undefined} className="w-9 h-9" resizeMethod="resize" />
                     <Text
                       className="text-gray-300 text-xs font-black mt-2 text-center"
                       numberOfLines={1}

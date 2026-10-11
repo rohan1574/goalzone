@@ -475,7 +475,7 @@ export default function MatchDetailsModal({
               <View className="items-center flex-1">
                 <View className="w-16 h-16 bg-[#181A1C] border border-white/10 items-center justify-center rounded-2xl mb-2">
                   <Image
-                    source={{ uri: match.home?.logo || "" }}
+                    source={match.home?.logo ? { uri: match.home.logo } : undefined}
                     className="w-11 h-11"
                     resizeMode="contain"
                   />
@@ -504,7 +504,7 @@ export default function MatchDetailsModal({
               <View className="items-center flex-1">
                 <View className="w-16 h-16 bg-[#181A1C] border border-white/10 items-center justify-center rounded-2xl mb-2">
                   <Image
-                    source={{ uri: match.away?.logo || "" }}
+                    source={match.away?.logo ? { uri: match.away.logo } : undefined}
                     className="w-11 h-11"
                     resizeMode="contain"
                   />

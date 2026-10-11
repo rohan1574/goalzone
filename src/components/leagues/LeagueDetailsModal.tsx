@@ -487,22 +487,22 @@ export default function LeagueDetailsModal({
                       <View className="flex-1 px-3 justify-center gap-2">
                         <View className="flex-row items-center gap-2.5">
                           <Image
-                            source={{ uri: match.home.logo }}
+                            source={match.home?.logo ? { uri: match.home.logo } : undefined}
                             className="w-6 h-6"
                             resizeMode="contain"
                           />
                           <Text className="text-white text-sm font-extrabold" numberOfLines={1}>
-                            {match.home.name}
+                            {match.home?.name || "Home"}
                           </Text>
                         </View>
                         <View className="flex-row items-center gap-2.5">
                           <Image
-                            source={{ uri: match.away.logo }}
+                            source={match.away?.logo ? { uri: match.away.logo } : undefined}
                             className="w-6 h-6"
                             resizeMode="contain"
                           />
                           <Text className="text-white text-sm font-extrabold" numberOfLines={1}>
-                            {match.away.name}
+                            {match.away?.name || "Away"}
                           </Text>
                         </View>
                       </View>
