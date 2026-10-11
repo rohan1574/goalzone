@@ -190,9 +190,10 @@ async function syncDates({ force }) {
 let batchDetailsSupported = true;
 
 async function syncMatchDetails({ force }) {
-  if (!batchDetailsSupported) return { calls: 0, skipped: 'batch ids not supported by plan' };
-
-  const now = Date.now();
+  // Disabled background bulk fetching of lineups/stats/events for all live matches to save 90%+ API quota.
+  // Match details are fetched on demand when a user opens a match and cached for 24 hours.
+  return { calls: 0, skipped: 'on-demand' };
+}
   const candidates = new Set(pendingFinalize);
   for (const id of lastLiveIds) candidates.add(id);
 
