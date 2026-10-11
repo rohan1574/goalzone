@@ -186,7 +186,7 @@ function LeaguesView({ apiLeagues, onPressDetails }: LeaguesViewProps) {
           maxToRenderPerBatch={15}
           windowSize={8}
           initialNumToRender={20}
-          removeClippedSubviews={true}
+          removeClippedSubviews={false}
         />
       )}
 

@@ -463,10 +463,10 @@ export default function MatchDetailsModal({
 
             {/* League Details */}
             <Text className="text-gray-300 text-xs font-bold text-center mb-1">
-              {match.home.name} vs {match.away.name}
+              {match.home?.name || "Home"} vs {match.away?.name || "Away"}
             </Text>
             <Text className="text-[#86EFAC] text-[11px] font-extrabold text-center mb-4">
-              {match.league}
+              {match.league || "Competition"}
             </Text>
 
             {/* Score layout */}
@@ -475,13 +475,13 @@ export default function MatchDetailsModal({
               <View className="items-center flex-1">
                 <View className="w-16 h-16 bg-[#181A1C] border border-white/10 items-center justify-center rounded-2xl mb-2">
                   <Image
-                    source={{ uri: match.home.logo }}
+                    source={{ uri: match.home?.logo || "" }}
                     className="w-11 h-11"
                     resizeMode="contain"
                   />
                 </View>
                 <Text className="text-white font-extrabold text-xs text-center" numberOfLines={1}>
-                  {match.home.name}
+                  {match.home?.name || "Home"}
                 </Text>
                 <Text className="text-gray-400 text-[10px] font-bold mt-0.5">Home</Text>
               </View>
@@ -489,7 +489,7 @@ export default function MatchDetailsModal({
               {/* Score & Minute */}
               <View className="items-center mx-4">
                 <Text className="text-white text-3xl font-black tracking-tight">
-                  {match.score}
+                  {match.score || "VS"}
                 </Text>
                 <View className="bg-black/50 px-3 py-1 rounded-full mt-2">
                   <LiveMatchClock
@@ -504,13 +504,13 @@ export default function MatchDetailsModal({
               <View className="items-center flex-1">
                 <View className="w-16 h-16 bg-[#181A1C] border border-white/10 items-center justify-center rounded-2xl mb-2">
                   <Image
-                    source={{ uri: match.away.logo }}
+                    source={{ uri: match.away?.logo || "" }}
                     className="w-11 h-11"
                     resizeMode="contain"
                   />
                 </View>
                 <Text className="text-white font-extrabold text-xs text-center" numberOfLines={1}>
-                  {match.away.name}
+                  {match.away?.name || "Away"}
                 </Text>
                 <Text className="text-gray-400 text-[10px] font-bold mt-0.5">Away</Text>
               </View>
@@ -595,7 +595,7 @@ export default function MatchDetailsModal({
                     const isHome =
                       item.isHome ??
                       (item.teamId
-                        ? String(item.teamId) === String(match.home.id)
+                        ? String(item.teamId) === String(match.home?.id)
                         : true);
 
                     return (

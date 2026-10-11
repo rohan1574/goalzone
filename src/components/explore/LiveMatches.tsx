@@ -59,7 +59,7 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
       </View>
 
       {/* Horizontal scroll of Live Matches or No Live Matches Card */}
-      {liveMatches.length === 0 ? (
+      {(!liveMatches || !Array.isArray(liveMatches) || liveMatches.length === 0) ? (
         <View
           className="bg-[#131415] rounded-3xl p-5 items-center justify-center border border-[#ffffff08] self-center"
           style={{ width: width - 32, height: 110 }}
@@ -80,9 +80,9 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingRight: 20 }}
         >
-          {liveMatches.map((match) => (
+          {(liveMatches ?? []).map((match) => (
             <View
-              key={match.id}
+              key={match?.id ?? Math.random().toString()}
               className="flex-row bg-[#131415] rounded-3xl overflow-hidden mr-4 border border-[#ffffff08]"
               style={{ width: width * 0.82, height: 165 }}
             >
@@ -90,7 +90,7 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
               <View className="w-[36%] relative items-center justify-center bg-[#092d16]">
                 <SoccerFieldVector />
                 <View className="bg-[#131415] p-2.5 rounded-3xl border border-[#ffffff20] z-10 shadow-lg">
-                  {match.league === "MLS" ? (
+                  {match?.league === "MLS" ? (
                     <View className="w-16 h-16 relative overflow-hidden items-center justify-center">
                       <Svg width="60" height="60" viewBox="0 0 100 100">
                         <Polygon points="10,10 90,10 90,60 50,90 10,60" fill="#ffffff" />
@@ -101,7 +101,7 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
                     </View>
                   ) : (
                     <Image
-                      source={{ uri: match.leagueLogo }}
+                      source={{ uri: match?.leagueLogo || "" }}
                       className="w-14 h-14"
                       resizeMode="contain"
                       resizeMethod="resize"
@@ -116,12 +116,12 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
                 <View className="flex-row justify-between items-center mt-1">
                   {/* Home Team */}
                   <View className="items-center flex-1">
-                    <Image source={{ uri: match.home.logo }} className="w-9 h-9" resizeMethod="resize" />
+                    <Image source={{ uri: match.home?.logo || "" }} className="w-9 h-9" resizeMethod="resize" />
                     <Text
                       className="text-gray-300 text-xs font-black mt-2 text-center"
                       numberOfLines={1}
                     >
-                      {match.home.short}
+                      {match.home?.short || match.home?.name || "HOM"}
                     </Text>
                   </View>
 
@@ -137,12 +137,12 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
 
                   {/* Away Team */}
                   <View className="items-center flex-1">
-                    <Image source={{ uri: match.away.logo }} className="w-9 h-9" resizeMethod="resize" />
+                    <Image source={{ uri: match.away?.logo || "" }} className="w-9 h-9" resizeMethod="resize" />
                     <Text
                       className="text-gray-300 text-xs font-black mt-2 text-center"
                       numberOfLines={1}
                     >
-                      {match.away.short}
+                      {match.away?.short || match.away?.name || "AWY"}
                     </Text>
                   </View>
                 </View>
