@@ -139,7 +139,7 @@ app.post("/api/match-notifications", async (req, res) => {
     return res.status(400).json({ error: "Missing token or matchId" });
   }
 
-  const topicName = `match_${matchId}`;
+  const topicName = matchId === "popular" ? "popular_matches" : `match_${matchId}`;
   try {
     const { getMessaging } = require("./firebase");
     const messaging = getMessaging();

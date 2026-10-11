@@ -62,6 +62,7 @@ import BannerAdComponent from "../components/ads/BannerAdComponent";
 import BottomNavBar, { TabType } from "../components/bottom/BottomNavBar";
 import MatchDetailsModal from "../components/details/MatchDetailsModal";
 import ExploreView from "../components/explore/ExploreView";
+import { POPULAR_LEAGUE_IDS } from "../components/explore/Leagues";
 import Header from "../components/explore/Header";
 import HighlightView from "../components/highlight/HighlightView";
 import LeaguesView from "../components/leagues/LeaguesView";
@@ -434,6 +435,26 @@ export default function ExploreScreen() {
   useEffect(() => {
     warmupFixturesCache(); // loads existing AsyncStorage cache into memory, no API calls
     loadData(false);
+
+    // Auto-subscribe device to FCM push notifications for the 22 popular leagues
+    (async () => {
+      try {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== "granted") {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus === "granted") {
+          const tokenObj = await Notifications.getDevicePushTokenAsync();
+          if (tokenObj?.data) {
+            await toggleServerMatchNotification(String(tokenObj.data), "popular", "subscribe");
+          }
+        }
+      } catch (_) {
+        // Silent background fallback
+      }
+    })();
   }, []);
 
   // Real-time live score auto-update without manual refresh (polls every 15s silently)
@@ -475,9 +496,22 @@ export default function ExploreScreen() {
                 const newScore = liveMatch.score || getMatchScore(liveMatch).display || m.score;
                 const newMinute = liveMatch.minute || getMatchStatus(liveMatch) || m.minute;
 
-                // Send goal alert notification if bell is active
+                // Match is in 22 popular leagues OR user enabled bell
+                const matchLeagueId = String(
+                  m.leagueId ||
+                  m.league?.id ||
+                  liveMatch.leagueId ||
+                  liveMatch.league?.id ||
+                  getMatchLeagueId(m) ||
+                  getMatchLeagueId(liveMatch) ||
+                  ""
+                );
+                const isPopular = POPULAR_LEAGUE_IDS.has(matchLeagueId);
+                const shouldNotify = !!activeNotifications[mId] || isPopular;
+
+                // Send goal alert notification if bell is active or in popular leagues
                 if (
-                  activeNotifications[mId] &&
+                  shouldNotify &&
                   m.score &&
                   newScore !== m.score &&
                   newScore !== "0 - 0" &&
@@ -493,9 +527,9 @@ export default function ExploreScreen() {
                   }).catch(() => {});
                 }
 
-                // Send kickoff alert if bell is active and match just started
+                // Send kickoff alert if bell is active or in popular leagues and match just started
                 if (
-                  activeNotifications[mId] &&
+                  shouldNotify &&
                   (m.status === "NS" || !m.status) &&
                   (liveMatch.status === "Live" || liveMatch.minute)
                 ) {

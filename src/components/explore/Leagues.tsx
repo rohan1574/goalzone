@@ -156,7 +156,7 @@ const MatchCard = React.memo(function MatchCard({
   );
 });
 
-const POPULAR_LEAGUE_IDS = new Set([
+export const POPULAR_LEAGUE_IDS = new Set([
   '39',   // Premier League
   '140',  // La Liga
   '135',  // Serie A

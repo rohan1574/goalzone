@@ -87,88 +87,98 @@ function calculateNextPollInterval(liveMatchCount, quotaRemaining) {
  * Sends a real-time FCM notification to match topic when a goal is scored.
  * Target topic format: match_{matchId}
  */
-async function sendGoalNotification(matchId, scoringTeam, homeTeam, awayTeam, newHomeScore, newAwayScore) {
-  const topicName = `match_${matchId}`;
-  
-  const message = {
-    topic: topicName,
-    notification: {
-      title: `⚽ GOAL! ${scoringTeam}`,
-      body: `${homeTeam} ${newHomeScore} - ${newAwayScore} ${awayTeam}`
-    },
-    data: {
-      type: 'GOAL_ALERT',
-      matchId: String(matchId),
-      homeScore: String(newHomeScore),
-      awayScore: String(newAwayScore),
-      scoringTeam: scoringTeam
-    },
-    android: {
-      priority: 'high',
+async function sendGoalNotification(matchId, scoringTeam, homeTeam, awayTeam, newHomeScore, newAwayScore, isPopular = false) {
+  const topics = [`match_${matchId}`];
+  if (isPopular) {
+    topics.push('popular_matches');
+  }
+
+  for (const topicName of topics) {
+    const message = {
+      topic: topicName,
       notification: {
-        sound: 'default',
-        channelId: 'goal_alerts'
-      }
-    },
-    apns: {
-      payload: {
-        aps: {
+        title: `⚽ GOAL! ${scoringTeam}`,
+        body: `${homeTeam} ${newHomeScore} - ${newAwayScore} ${awayTeam}`
+      },
+      data: {
+        type: 'GOAL_ALERT',
+        matchId: String(matchId),
+        homeScore: String(newHomeScore),
+        awayScore: String(newAwayScore),
+        scoringTeam: scoringTeam
+      },
+      android: {
+        priority: 'high',
+        notification: {
           sound: 'default',
-          contentAvailable: true
+          channelId: 'goal_alerts'
+        }
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            contentAvailable: true
+          }
         }
       }
-    }
-  };
+    };
 
-  try {
-    const messaging = getMessaging();
-    const response = await messaging.send(message);
-    console.log(`[FCM Goal Alert] Notification sent to topic "${topicName}": ${response}`);
-  } catch (err) {
-    console.error(`[FCM Error] Failed to send goal alert for topic "${topicName}":`, err.message);
+    try {
+      const messaging = getMessaging();
+      const response = await messaging.send(message);
+      console.log(`[FCM Goal Alert] Notification sent to topic "${topicName}": ${response}`);
+    } catch (err) {
+      console.error(`[FCM Error] Failed to send goal alert for topic "${topicName}":`, err.message);
+    }
   }
 }
 
 /**
  * Sends a real-time FCM notification to match topic when a match kicks off.
- * Target topic format: match_{matchId}
+ * Target topic format: match_{matchId} and popular_matches
  */
-async function sendKickoffNotification(matchId, homeTeam, awayTeam) {
-  const topicName = `match_${matchId}`;
+async function sendKickoffNotification(matchId, homeTeam, awayTeam, isPopular = false) {
+  const topics = [`match_${matchId}`];
+  if (isPopular) {
+    topics.push('popular_matches');
+  }
 
-  const message = {
-    topic: topicName,
-    notification: {
-      title: `⚡ Match Started!`,
-      body: `${homeTeam} vs ${awayTeam} has kicked off! ⚽`
-    },
-    data: {
-      type: 'MATCH_STARTED',
-      matchId: String(matchId)
-    },
-    android: {
-      priority: 'high',
+  for (const topicName of topics) {
+    const message = {
+      topic: topicName,
       notification: {
-        sound: 'default',
-        channelId: 'match_alerts'
-      }
-    },
-    apns: {
-      payload: {
-        aps: {
+        title: `⚡ Match Started!`,
+        body: `${homeTeam} vs ${awayTeam} has kicked off! ⚽`
+      },
+      data: {
+        type: 'MATCH_STARTED',
+        matchId: String(matchId)
+      },
+      android: {
+        priority: 'high',
+        notification: {
           sound: 'default',
-          contentAvailable: true
+          channelId: 'match_alerts'
+        }
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            contentAvailable: true
+          }
         }
       }
-    }
-  };
+    };
 
-  try {
-    const messaging = getMessaging();
-    const response = await messaging.send(message);
-    console.log(`[FCM Kickoff Alert] Notification sent to topic "${topicName}": ${response}`);
-  } catch (err) {
-    console.error(`[FCM Error] Failed to send kickoff alert for topic "${topicName}":`, err.message);
+    try {
+      const messaging = getMessaging();
+      const response = await messaging.send(message);
+      console.log(`[FCM Kickoff Alert] Notification sent to topic "${topicName}": ${response}`);
+    } catch (err) {
+      console.error(`[FCM Error] Failed to send kickoff alert for topic "${topicName}":`, err.message);
+    }
   }
 }
 
@@ -183,6 +193,7 @@ const POPULAR_LEAGUE_IDS = new Set([
   '2',    // UEFA Champions League
   '3',    // UEFA Europa League
   '848',  // UEFA Conference League
+  '88',   // Eredivisie
   '94',   // Primeira Liga
   '71',   // Brasileirão Série A
   '128',  // Liga Profesional Argentina
@@ -272,6 +283,7 @@ async function fetchAndProcessLiveScores() {
       activeMatchIds.add(matchId);
 
       const oldState = previousMatchState.get(matchId);
+      const isPopular = POPULAR_LEAGUE_IDS.has(String(match.leagueId));
 
       if (oldState) {
         // Check Home Goal
@@ -283,7 +295,8 @@ async function fetchAndProcessLiveScores() {
             match.homeTeam,
             match.awayTeam,
             match.homeScore,
-            match.awayScore
+            match.awayScore,
+            isPopular
           );
         }
 
@@ -296,13 +309,14 @@ async function fetchAndProcessLiveScores() {
             match.homeTeam,
             match.awayTeam,
             match.homeScore,
-            match.awayScore
+            match.awayScore,
+            isPopular
           );
         }
       } else if (previousMatchState.size > 0) {
         // Newly started match detected!
         console.log(`[Kickoff Detected] ${match.homeTeam} vs ${match.awayTeam} started! Match ID: ${matchId}`);
-        sendKickoffNotification(matchId, match.homeTeam, match.awayTeam);
+        sendKickoffNotification(matchId, match.homeTeam, match.awayTeam, isPopular);
       }
 
       // Update State Tracking for Next Cycle
