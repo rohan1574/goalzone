@@ -103,20 +103,19 @@ function requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper) {
  */
 async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
   const entry = cache.getEntry(cacheKey);
+
+  // 1. Fresh cache: return immediately
   if (entry && !entry.stale) {
-    if (!Array.isArray(entry.data) || entry.data.length > 0) {
-      return entry.data;
-    }
-    console.log(`[Cache Empty Hit] ${cacheKey} is empty in cache. Fetching fresh from API...`);
+    return entry.data;
   }
 
-  if (entry) {
-    requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper).catch(() => {});
-    if (!Array.isArray(entry.data) || entry.data.length > 0) {
-      return entry.data;
-    }
+  // 2. Stale cache: return existing data immediately without hammering the API!
+  // This prevents thousands of user requests from triggering background API calls.
+  if (entry && (!Array.isArray(entry.data) || entry.data.length > 0)) {
+    return entry.data;
   }
 
+  // 3. Cold cache (no entry on disk): fetch once from API and cache
   try {
     return await requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper);
   } catch (err) {
