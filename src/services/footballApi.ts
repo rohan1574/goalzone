@@ -42,6 +42,18 @@ export async function fetchWithBackendFallback(endpoint: string, params: any = {
   }
 }
 
+export const toggleServerMatchNotification = async (
+  token: string,
+  matchId: string,
+  action: "subscribe" | "unsubscribe"
+) => {
+  try {
+    await api.post("/api/match-notifications", { token, matchId, action });
+  } catch (err) {
+    console.warn("[FCM Subscription Error]:", err);
+  }
+};
+
 // Fast In-Memory Cache (0ms response time on tab navigation)
 const memoryCache = new Map<string, { data: any; expiry: number }>();
 

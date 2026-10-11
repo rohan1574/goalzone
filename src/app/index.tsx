@@ -19,6 +19,7 @@ import {
     getFromMemoryCache,
     getAllCachedFixtures,
     warmupFixturesCache,
+    toggleServerMatchNotification,
 } from "../services/footballApi";
 
 import * as Notifications from "expo-notifications";
@@ -508,18 +509,35 @@ export default function ExploreScreen() {
 
         if (nextState) {
           Notifications.requestPermissionsAsync()
-            .then(({ status }) => {
+            .then(async ({ status }) => {
               if (status === "granted") {
                 Notifications.scheduleNotificationAsync({
                   content: {
                     title: "🔔 Match Notification Enabled",
                     body: matchName
-                      ? `Alerts enabled for ${matchName}`
-                      : "You will receive notifications for this match.",
+                      ? `Goal & kickoff alerts enabled for ${matchName}`
+                      : "You will receive goal & kickoff alerts for this match.",
                     sound: true,
                   },
                   trigger: null,
                 }).catch(() => {});
+
+                // Subscribe device token to server topic for real-time goal & kickoff push alerts
+                try {
+                  const tokenObj = await Notifications.getDevicePushTokenAsync();
+                  if (tokenObj?.data) {
+                    toggleServerMatchNotification(String(tokenObj.data), matchId, "subscribe");
+                  }
+                } catch (_) {}
+              }
+            })
+            .catch(() => {});
+        } else {
+          // Unsubscribe device token when bell is turned off
+          Notifications.getDevicePushTokenAsync()
+            .then((tokenObj) => {
+              if (tokenObj?.data) {
+                toggleServerMatchNotification(String(tokenObj.data), matchId, "unsubscribe");
               }
             })
             .catch(() => {});

@@ -133,6 +133,30 @@ app.get("/api/live-scores", (req, res) => {
   res.json(data);
 });
 
+app.post("/api/match-notifications", async (req, res) => {
+  const { token, matchId, action } = req.body;
+  if (!token || !matchId) {
+    return res.status(400).json({ error: "Missing token or matchId" });
+  }
+
+  const topicName = `match_${matchId}`;
+  try {
+    const { getMessaging } = require("./firebase");
+    const messaging = getMessaging();
+    if (action === "unsubscribe") {
+      await messaging.unsubscribeFromTopic([token], topicName);
+      console.log(`[FCM] Unsubscribed token from topic "${topicName}"`);
+    } else {
+      await messaging.subscribeToTopic([token], topicName);
+      console.log(`[FCM] Subscribed token to topic "${topicName}"`);
+    }
+    res.json({ success: true, topic: topicName });
+  } catch (err) {
+    console.error(`[FCM Topic Error]`, err.message);
+    res.status(500).json({ error: "Failed to update notification subscription", message: err.message });
+  }
+});
+
 app.get("/football-current-live", (req, res) => {
   const data = getCachedLiveScores();
   res.setHeader("Cache-Control", "public, max-age=15");

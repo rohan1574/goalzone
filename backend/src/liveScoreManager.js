@@ -129,6 +129,49 @@ async function sendGoalNotification(matchId, scoringTeam, homeTeam, awayTeam, ne
   }
 }
 
+/**
+ * Sends a real-time FCM notification to match topic when a match kicks off.
+ * Target topic format: match_{matchId}
+ */
+async function sendKickoffNotification(matchId, homeTeam, awayTeam) {
+  const topicName = `match_${matchId}`;
+
+  const message = {
+    topic: topicName,
+    notification: {
+      title: `⚡ Match Started!`,
+      body: `${homeTeam} vs ${awayTeam} has kicked off! ⚽`
+    },
+    data: {
+      type: 'MATCH_STARTED',
+      matchId: String(matchId)
+    },
+    android: {
+      priority: 'high',
+      notification: {
+        sound: 'default',
+        channelId: 'match_alerts'
+      }
+    },
+    apns: {
+      payload: {
+        aps: {
+          sound: 'default',
+          contentAvailable: true
+        }
+      }
+    }
+  };
+
+  try {
+    const messaging = getMessaging();
+    const response = await messaging.send(message);
+    console.log(`[FCM Kickoff Alert] Notification sent to topic "${topicName}": ${response}`);
+  } catch (err) {
+    console.error(`[FCM Error] Failed to send kickoff alert for topic "${topicName}":`, err.message);
+  }
+}
+
 
 // Set of popular / featured league IDs (Big 5, Champions League, Europa League, Saudi Pro, MLS, Brasil, Argentina, World Cup, Euros, etc.)
 const POPULAR_LEAGUE_IDS = new Set([
@@ -256,6 +299,10 @@ async function fetchAndProcessLiveScores() {
             match.awayScore
           );
         }
+      } else if (previousMatchState.size > 0) {
+        // Newly started match detected!
+        console.log(`[Kickoff Detected] ${match.homeTeam} vs ${match.awayTeam} started! Match ID: ${matchId}`);
+        sendKickoffNotification(matchId, match.homeTeam, match.awayTeam);
       }
 
       // Update State Tracking for Next Cycle
