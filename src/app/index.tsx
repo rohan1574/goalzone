@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { Dimensions, View } from "react-native";
+import { Dimensions, View, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     fetchFixturesByDate,
@@ -34,6 +34,25 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
+
+// Setup Android Notification Channels
+if (Platform.OS === "android") {
+  Notifications.setNotificationChannelAsync("goal_alerts", {
+    name: "Goal Alerts",
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: "#02DB54",
+    sound: "default",
+  }).catch(() => {});
+
+  Notifications.setNotificationChannelAsync("match_alerts", {
+    name: "Match Alerts",
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: "#02DB54",
+    sound: "default",
+  }).catch(() => {});
+}
 
 // Component imports for tabs
 import {
@@ -457,6 +476,41 @@ export default function ExploreScreen() {
               if (liveMatch) {
                 const newScore = liveMatch.score || getMatchScore(liveMatch).display || m.score;
                 const newMinute = liveMatch.minute || getMatchStatus(liveMatch) || m.minute;
+
+                // Send goal alert notification if bell is active
+                if (
+                  activeNotifications[mId] &&
+                  m.score &&
+                  newScore !== m.score &&
+                  newScore !== "0 - 0" &&
+                  newScore !== "VS"
+                ) {
+                  Notifications.scheduleNotificationAsync({
+                    content: {
+                      title: "⚽ GOAL!",
+                      body: `${m.home?.name || "Home"} ${newScore} ${m.away?.name || "Away"}`,
+                      sound: true,
+                    },
+                    trigger: null,
+                  }).catch(() => {});
+                }
+
+                // Send kickoff alert if bell is active and match just started
+                if (
+                  activeNotifications[mId] &&
+                  (m.status === "NS" || !m.status) &&
+                  (liveMatch.status === "Live" || liveMatch.minute)
+                ) {
+                  Notifications.scheduleNotificationAsync({
+                    content: {
+                      title: "⚡ Match Started!",
+                      body: `${m.home?.name || "Home"} vs ${m.away?.name || "Away"} has kicked off! ⚽`,
+                      sound: true,
+                    },
+                    trigger: null,
+                  }).catch(() => {});
+                }
+
                 if (m.score !== newScore || m.minute !== newMinute) {
                   hasChanged = true;
                   return {
