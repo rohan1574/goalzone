@@ -29,6 +29,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -533,14 +535,9 @@ export default function ExploreScreen() {
   );
 
   const handlePressDetails = React.useCallback((match: any) => {
-    pendingMatchRef.current = match;
-    if (interstitialLoadedRef.current) {
-      interstitialAd.show();
-    } else {
-      setSelectedMatch(match);
-      setDetailsVisible(true);
-      pendingMatchRef.current = null;
-    }
+    setSelectedMatch(match);
+    setDetailsVisible(true);
+    pendingMatchRef.current = null;
   }, []);
 
   const formatDateString = (date: Date) => {

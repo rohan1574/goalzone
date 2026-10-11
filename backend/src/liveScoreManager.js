@@ -144,7 +144,6 @@ const POPULAR_LEAGUE_IDS = new Set([
   '2',    // UEFA Champions League
   '3',    // UEFA Europa League
   '848',  // UEFA Conference League
-  '88',   // Eredivisie
   '94',   // Primeira Liga
   '71',   // Brasileirão Série A
   '128',  // Liga Profesional Argentina
@@ -158,21 +157,12 @@ const POPULAR_LEAGUE_IDS = new Set([
   '11',   // UEFA Nations League
   '15',   // FIFA Club World Cup
   '393',  // AFC Champions League
-  '239',  // Primera A / Süper Lig
+  '239',  // Primera A
   '40',   // Championship
   '45',   // FA Cup
   '48',   // EFL Cup
   '143',  // Copa del Rey
-  '81',   // DFB Pokal
-  '137',  // Coppa Italia
-  '66',   // Coupe de France
-  '16',   // CONCACAF Champions Cup
-  '203',  // Super Lig
-  '179',  // Premiership Scotland
-  '235',  // Russian Premier League
-  '234',  // Liga Nacional Honduras
-  '281',  // Primera Division Peru
-  '344'   // Primera Division Bolivia
+  '16'    // CONCACAF Champions Cup
 ]);
 
 /**
