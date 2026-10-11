@@ -74,11 +74,7 @@ function calculateNextPollInterval(liveMatchCount, quotaRemaining) {
     return Math.min(15 * 60 * 1000, Math.max(60 * 1000, untilKickoff));
   }
 
-  let interval;
-  if (liveMatchCount <= 3) interval = 60 * 1000;
-  else if (liveMatchCount <= 9) interval = 45 * 1000;
-  else interval = 30 * 1000;
-
+  let interval = 60 * 1000; // 60 seconds interval is industry standard for live scores and saves 50% quota
   if (quotaRemaining < 800) interval *= 3;
   else if (quotaRemaining < 2500) interval *= 1.5;
   return interval;

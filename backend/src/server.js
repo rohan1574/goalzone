@@ -1501,9 +1501,10 @@ const server = app.listen(PORT, "0.0.0.0", () => {
     : pmId === '0';
 
   if (isLeader) {
-    console.log(`[Server] Primary Instance (instance: ${pmId}): Starting background services...`);
+    console.log(`[Server] Primary Instance (instance: ${pmId}): Starting live score polling service...`);
     startLiveScorePolling();
-    startSyncEngine();
+    // startSyncEngine() disabled: all fixtures, standings, and match details are fetched on demand and cached for 24 hours.
+    // Disabling syncEngine saves 500+ redundant API calls per hour.
   } else {
     console.log(`[Server] Worker Instance (pm_id: ${pmId}): Skipping background services (handled by instance 0).`);
   }
