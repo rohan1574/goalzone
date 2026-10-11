@@ -20,6 +20,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.Neymar10",
+      "googleServicesFile": "./google-services.json",
       "androidNavigationBar": {
         "enforceContrast": false
       }
