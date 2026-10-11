@@ -109,12 +109,17 @@ async function sendGoalNotification(matchId, scoringTeam, homeTeam, awayTeam, ne
       },
       android: {
         priority: 'high',
+        collapseKey: `match_${matchId}`,
         notification: {
           sound: 'default',
-          channelId: 'goal_alerts'
+          channelId: 'goal_alerts',
+          tag: `match_${matchId}`
         }
       },
       apns: {
+        headers: {
+          'apns-collapse-id': `match_${matchId}`
+        },
         payload: {
           aps: {
             sound: 'default',
@@ -157,12 +162,17 @@ async function sendKickoffNotification(matchId, homeTeam, awayTeam, isPopular = 
       },
       android: {
         priority: 'high',
+        collapseKey: `kickoff_${matchId}`,
         notification: {
           sound: 'default',
-          channelId: 'match_alerts'
+          channelId: 'match_alerts',
+          tag: `kickoff_${matchId}`
         }
       },
       apns: {
+        headers: {
+          'apns-collapse-id': `kickoff_${matchId}`
+        },
         payload: {
           aps: {
             sound: 'default',
