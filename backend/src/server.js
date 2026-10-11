@@ -474,9 +474,9 @@ function getFixtureTtlByDate(dateQuery) {
   if (dateQuery < todayStr) {
     return 7 * 24 * 60 * 60; // Past: 7 days — results are permanent
   } else if (dateQuery === todayStr) {
-    return 3000;              // Today: 50 min — live match day
+    return 7200;              // Today: 2 hours (saves 60% quota while keeping today fresh)
   } else {
-    return 6 * 60 * 60;      // Future: 6 hours — schedule rarely changes
+    return 24 * 60 * 60;     // Future: 24 hours — schedule rarely changes
   }
 }
 
@@ -529,7 +529,7 @@ app.get("/football-get-fixtures-by-league", async (req, res) => {
       cacheKey,
       "/fixtures",
       { league: leagueid, next: 10 },
-      1800,
+      86400, // 24 hours cache (previously 30 min)
       mapLeagueFixtures,
     );
 
@@ -555,7 +555,7 @@ app.get("/football-get-fixtures-by-team", async (req, res) => {
       cacheKey,
       "/fixtures",
       { team: teamid, next: 20 },
-      1800,
+      86400, // 24 hours cache (previously 30 min)
       (apiResponse) => {
         const list = apiResponse.response || [];
         return list.map((item) => {
@@ -1024,7 +1024,7 @@ app.get("/football-get-standing-all", async (req, res) => {
         cacheKey,
         "/standings",
         { league: leagueid, season },
-        14400,
+        86400, // 24 hours cache (previously 4 hours)
         mapStandings,
       );
 
@@ -1225,10 +1225,7 @@ app.get("/football-get-match-statistics", async (req, res) => {
       cacheKey,
       "/fixtures/statistics",
       { fixture: eventid },
-      // Live/recent match: 10 min is enough for stats refresh.
-      // Finished match stats never change, so serve from cache for 24hr.
-      // We use 600s (10 min) as a safe middle ground for both cases.
-      600,
+      3600, // 1 hour cache (previously 10 min)
       (apiResponse) => {
         return parseFixtureStats(apiResponse);
       },
@@ -1261,9 +1258,7 @@ app.get("/football-get-match-events", async (req, res) => {
       cacheKey,
       "/fixtures/events",
       { fixture: eventid },
-      // 5 minutes for live events — frequent enough without burning quota.
-      // Finished match events never change — TTL extended to 24hr once cached.
-      300,
+      1800, // 30 minutes cache (previously 5 min)
       (apiResponse) => parseFixtureEvents(apiResponse)
     );
     res.json(data);
@@ -1366,7 +1361,7 @@ app.get("/football-get-predictions", async (req, res) => {
       cacheKey,
       "/predictions",
       { fixture: eventid },
-      86400,
+      259200, // 3 days cache (previously 24h)
       (apiResponse) => {
         return parsePredictions(apiResponse);
       },
