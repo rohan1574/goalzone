@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
   View,
@@ -179,22 +179,21 @@ export default function LeagueDetailsModal({
   const zones = Array.from(new Set(table.map((r) => r.zone).filter(Boolean)));
   const hasWdl = table.some((r) => r.w !== null);
 
-  const groupedTable = useMemo(() => {
-    const groups: { [key: string]: TableRow[] } = {};
-    const hasDistinctGroups = new Set(table.map((r) => r.group).filter(Boolean)).size > 1;
-
-    if (!hasDistinctGroups) {
-      return [{ title: "", rows: table }];
-    }
-
+  const hasDistinctGroups = new Set(table.map((r) => r.group).filter(Boolean)).size > 1;
+  const groupedTable: { title: string; rows: TableRow[] }[] = [];
+  if (!hasDistinctGroups) {
+    groupedTable.push({ title: "", rows: table });
+  } else {
+    const groups: Record<string, TableRow[]> = {};
     table.forEach((row) => {
       const g = row.group || "Other";
       if (!groups[g]) groups[g] = [];
       groups[g].push(row);
     });
-
-    return Object.entries(groups).map(([title, rows]) => ({ title, rows }));
-  }, [table]);
+    Object.entries(groups).forEach(([title, rows]) => {
+      groupedTable.push({ title, rows });
+    });
+  }
 
   return (
     <Modal animationType="slide" transparent={false} visible={visible} onRequestClose={onClose}>

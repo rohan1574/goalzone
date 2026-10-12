@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Modal,
   View,
@@ -673,22 +673,21 @@ export default function MatchDetailsModal({
   const hasWdl = standings.some((r) => r.w !== null || r.d !== null || r.l !== null);
   const standingsZones = Array.from(new Set(standings.map((r) => r.zone).filter(Boolean))) as string[];
 
-  const groupedStandings = useMemo(() => {
-    const groups: { [key: string]: any[] } = {};
-    const hasDistinctGroups = new Set(standings.map((r) => r.group).filter(Boolean)).size > 1;
-
-    if (!hasDistinctGroups) {
-      return [{ title: "", rows: standings }];
-    }
-
+  const hasDistinctGroups = new Set(standings.map((r) => r.group).filter(Boolean)).size > 1;
+  const groupedStandings: { title: string; rows: any[] }[] = [];
+  if (!hasDistinctGroups) {
+    groupedStandings.push({ title: "", rows: standings });
+  } else {
+    const groupMap: Record<string, any[]> = {};
     standings.forEach((row) => {
       const g = row.group || "Other";
-      if (!groups[g]) groups[g] = [];
-      groups[g].push(row);
+      if (!groupMap[g]) groupMap[g] = [];
+      groupMap[g].push(row);
     });
-
-    return Object.entries(groups).map(([title, rows]) => ({ title, rows }));
-  }, [standings]);
+    Object.entries(groupMap).forEach(([title, rows]) => {
+      groupedStandings.push({ title, rows });
+    });
+  }
 
   return (
     <Modal
