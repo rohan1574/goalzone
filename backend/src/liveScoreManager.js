@@ -1,7 +1,7 @@
 const { getMessaging } = require('./firebase');
 const { cache } = require('./cache');
 const { apiGet, getQuotaStatus } = require('./apiClient');
-const { applyLiveUpdates, onMatchesEnded, getNextKickoffMs } = require('./syncEngine');
+const { applyLiveUpdates, onMatchesEnded, getNextKickoffMs, getNearbyFixtures } = require('./syncEngine');
 
 // ==========================================
 // 1. IN-MEMORY & DISK-BACKED CACHE
@@ -48,6 +48,12 @@ const previousMatchState = new Map();
 const kickoffSentAt = new Map();
 const KICKOFF_MEMORY_MS = 4 * 60 * 60 * 1000;
 
+/**
+ * Lineup alerts already sent: matchId -> sentAt (ms). Prevents duplicate alerts.
+ */
+const lineupsSentAt = new Map();
+const LINEUP_MEMORY_MS = 6 * 60 * 60 * 1000;
+
 // A match first seen in the live feed only counts as "just started" this early on.
 // With nothing live the poller can sleep up to 15 min, so the window has to cover that.
 const KICKOFF_WINDOW_MINUTES = 20;
@@ -61,6 +67,7 @@ function saveAlertState() {
     savedAt: Date.now(),
     matches: [...previousMatchState.entries()],
     kickoffs: [...kickoffSentAt.entries()],
+    lineups: [...lineupsSentAt.entries()],
   }, 24 * 3600);
 }
 
@@ -74,7 +81,10 @@ function loadAlertState() {
   for (const [id, sentAt] of saved.kickoffs || []) {
     if (Date.now() - sentAt < KICKOFF_MEMORY_MS) kickoffSentAt.set(id, sentAt);
   }
-  console.log(`[Alerts] Restored state: ${previousMatchState.size} live matches, ${kickoffSentAt.size} kickoffs already sent`);
+  for (const [id, sentAt] of saved.lineups || []) {
+    if (Date.now() - sentAt < LINEUP_MEMORY_MS) lineupsSentAt.set(id, sentAt);
+  }
+  console.log(`[Alerts] Restored state: ${previousMatchState.size} live matches, ${kickoffSentAt.size} kickoffs, ${lineupsSentAt.size} lineups already sent`);
 }
 
 const isJustKickedOff = (match) =>
@@ -266,6 +276,24 @@ function sendKickoffNotification(match, isPopular) {
   });
 }
 
+function sendLineupNotification(match, isPopular) {
+  const home = match.home?.name || match.homeTeam || 'Home Team';
+  const away = match.away?.name || match.awayTeam || 'Away Team';
+  return sendMatchAlert({
+    matchId: match.id,
+    isPopular,
+    title: '📋 Lineups Announced!',
+    body: `${home} vs ${away} starting XIs are officially out! Tap to see the lineups.`,
+    data: {
+      type: 'LINEUP_ANNOUNCED',
+      matchId: String(match.id),
+      screen: 'lineup',
+    },
+    channelId: 'match_alerts',
+    tag: `lineup_${match.id}`,
+  });
+}
+
 
 // Set of popular / featured league IDs (Big 5, Champions League, Europa League, Saudi Pro, MLS, Brasil, Argentina, World Cup, Euros, etc.)
 const POPULAR_LEAGUE_IDS = new Set([
@@ -430,6 +458,64 @@ async function fetchAndProcessLiveScores() {
   }
 }
 
+// Fixture ID -> timestamp of last lineup check (ms)
+const lastLineupCheck = new Map();
+
+/**
+ * Checks upcoming matches in popular leagues scheduled to start in 5 to 55 minutes.
+ * If starting XIs are published by API-Sports, broadcasts a push notification.
+ */
+async function checkAndSendLineupAlerts() {
+  const now = Date.now();
+  let nearby = [];
+  try {
+    nearby = getNearbyFixtures();
+  } catch (err) {
+    return;
+  }
+  if (!Array.isArray(nearby) || nearby.length === 0) return;
+
+  for (const f of nearby) {
+    if (!f || !f.id || f.status !== 'NS' || !f.timestamp) continue;
+    const fixtureId = String(f.id);
+
+    // Skip if lineup alert was already sent for this match
+    if (lineupsSentAt.has(fixtureId)) continue;
+
+    const leagueId = String(f.leagueId || f.league?.id || '');
+    const isPopular = POPULAR_LEAGUE_IDS.has(leagueId);
+    if (!isPopular) continue;
+
+    const kickoffMs = f.timestamp * 1000;
+    const diffMinutes = (kickoffMs - now) / (60 * 1000);
+
+    // Check window: 5 to 55 minutes before scheduled kickoff
+    if (diffMinutes < 5 || diffMinutes > 55) continue;
+
+    // Throttle checks per fixture: check at most once every 3.5 minutes
+    const lastCheck = lastLineupCheck.get(fixtureId) || 0;
+    if (now - lastCheck < 3.5 * 60 * 1000) continue;
+    lastLineupCheck.set(fixtureId, now);
+
+    try {
+      const lineupData = await apiGet('/fixtures/lineups', { fixture: fixtureId }, 'sync');
+      const list = lineupData?.response || lineupData?.data || [];
+      const hasLineup = Array.isArray(list) && list.length >= 2 && (list[0]?.startXI?.length > 0 || list[1]?.startXI?.length > 0);
+
+      if (hasLineup) {
+        const homeName = f.home?.name || f.homeTeam || 'Home';
+        const awayName = f.away?.name || f.awayTeam || 'Away';
+        console.log(`[Lineup Detected] Lineups announced for match ${fixtureId} (${homeName} vs ${awayName})`);
+        lineupsSentAt.set(fixtureId, now);
+        saveAlertState();
+        sendLineupNotification(f, isPopular);
+      }
+    } catch (err) {
+      if (err.isQuotaError) break; // Don't burn quota
+    }
+  }
+}
+
 // ==========================================
 // 5. SMART DYNAMIC POLLING LOOP (RECURSIVE SETTIMEOUT)
 // ==========================================
@@ -440,6 +526,7 @@ async function pollCycle() {
   if (!isPollingRunning) return;
 
   const matchCount = await fetchAndProcessLiveScores();
+  await checkAndSendLineupAlerts().catch((err) => console.warn('[Lineup Check Error]:', err.message));
   const { remaining } = getDailyQuotaStatus();
 
   // If fetch failed (null), back off safely for 2 min before retrying

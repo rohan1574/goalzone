@@ -223,11 +223,14 @@ app.all("/api/test-notification", async (req, res) => {
     const tokenManager = require("./tokenManager");
     const tokens = tokenManager.getAllTokens();
 
-    const title = req.query.title || req.body?.title || "GoalZone Test ⚽";
-    const body = req.query.body || req.body?.body || "Test notification: Push alerts are active and working!";
+    const isLineup = req.query.type === "lineup" || req.body?.type === "lineup";
+    const title = req.query.title || req.body?.title || (isLineup ? "📋 Lineups Announced!" : "GoalZone Test ⚽");
+    const body = req.query.body || req.body?.body || (isLineup ? "Real Madrid vs Barcelona starting XIs are officially out! Tap to see the lineups." : "Test notification: Push alerts are active and working!");
+    const alertType = isLineup ? "LINEUP_ANNOUNCED" : "TEST_ALERT";
 
     const results = {
       timestamp: new Date().toISOString(),
+      type: alertType,
       tokensCount: tokens.length,
       topicSent: false,
       multicastSent: false,
@@ -238,7 +241,7 @@ app.all("/api/test-notification", async (req, res) => {
       const topicMsg = {
         topic: "popular_matches",
         notification: { title, body },
-        data: { type: "TEST_ALERT" },
+        data: { type: alertType },
         android: {
           priority: "high",
           notification: { sound: "default", channelId: "match_alerts" },
@@ -257,7 +260,7 @@ app.all("/api/test-notification", async (req, res) => {
         const multicastMsg = {
           tokens,
           notification: { title, body },
-          data: { type: "TEST_ALERT" },
+          data: { type: alertType },
           android: {
             priority: "high",
             notification: { sound: "default", channelId: "match_alerts" },

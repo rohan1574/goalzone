@@ -397,5 +397,6 @@ module.exports = {
   applyLiveUpdates,
   onMatchesEnded,
   getNextKickoffMs,
+  getNearbyFixtures,
   JOB_NAMES: JOB_ORDER,
 };
