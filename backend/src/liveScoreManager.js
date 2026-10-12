@@ -147,6 +147,9 @@ function calculateNextPollInterval(liveMatchCount, quotaRemaining) {
  * per device even when the device is in both topics.
  */
 async function sendMatchAlert({ matchId, isPopular, title, body, data, channelId, tag }) {
+  const tokenManager = require('./tokenManager');
+  const tokens = tokenManager.getTokensForMatch(matchId, isPopular);
+
   const target = isPopular
     ? { condition: `'popular_matches' in topics || 'match_${matchId}' in topics` }
     : { topic: `match_${matchId}` };
@@ -166,11 +169,50 @@ async function sendMatchAlert({ matchId, isPopular, title, body, data, channelId
     },
   };
 
+  // 1. Send to FCM topic
   try {
     const response = await getMessaging().send(message);
-    console.log(`[FCM] ${data.type} for match ${matchId} sent (${isPopular ? 'popular' : 'match topic'}): ${response}`);
+    console.log(`[FCM Topic] ${data.type} for match ${matchId} sent: ${response}`);
   } catch (err) {
-    console.error(`[FCM Error] Failed to send ${data.type} for match ${matchId}:`, err.message);
+    console.error(`[FCM Topic Error] Failed to send ${data.type} for match ${matchId}:`, err.message);
+  }
+
+  // 2. Also send multicast to registered device tokens
+  if (tokens.length > 0) {
+    try {
+      const multicastMessage = {
+        tokens,
+        notification: { title, body },
+        data: { ...data, matchId: String(matchId) },
+        android: {
+          priority: 'high',
+          collapseKey: tag,
+          notification: { sound: 'default', channelId, tag },
+        },
+        apns: {
+          headers: { 'apns-collapse-id': tag },
+          payload: { aps: { sound: 'default', contentAvailable: true } },
+        },
+      };
+      const multiRes = await getMessaging().sendEachForMulticast(multicastMessage);
+      console.log(`[FCM Multicast] ${data.type} sent to ${multiRes.successCount}/${tokens.length} devices (failed: ${multiRes.failureCount})`);
+
+      // Prune invalid tokens
+      const invalidTokens = [];
+      multiRes.responses.forEach((resp, idx) => {
+        if (resp.error && (
+          resp.error.code === 'messaging/registration-token-not-registered' ||
+          resp.error.code === 'messaging/invalid-registration-token'
+        )) {
+          invalidTokens.push(tokens[idx]);
+        }
+      });
+      if (invalidTokens.length > 0) {
+        tokenManager.removeInvalidTokens(invalidTokens);
+      }
+    } catch (err) {
+      console.error(`[FCM Multicast Error] Failed to multicast ${data.type}:`, err.message);
+    }
   }
 }
 

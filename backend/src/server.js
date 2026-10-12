@@ -184,27 +184,111 @@ app.post("/api/match-notifications", async (req, res) => {
   }
 
   const topicName = matchId === "popular" ? "popular_matches" : `match_${matchId}`;
+  const verb = action === "unsubscribe" ? "unsubscribe" : "subscribe";
+
+  // 1. Always register/unregister in tokenManager for reliable multicast delivery
+  const tokenManager = require("./tokenManager");
+  if (verb === "unsubscribe") {
+    tokenManager.removeToken(token, topicName);
+  } else {
+    tokenManager.addToken(token, topicName);
+  }
+
+  // 2. Also attempt Firebase topic subscription as best effort
   try {
     const { getMessaging } = require("./firebase");
     const messaging = getMessaging();
-    const verb = action === "unsubscribe" ? "unsubscribe" : "subscribe";
     const result = verb === "unsubscribe"
       ? await messaging.unsubscribeFromTopic([token], topicName)
       : await messaging.subscribeToTopic([token], topicName);
 
-    // Per-token failures (e.g. missing IAM permission, invalid token) come back in the
-    // result rather than as a thrown error, so they have to be checked explicitly
     if (result.failureCount > 0) {
-      const error = result.errors?.[0]?.error;
-      console.error(`[FCM Topic Error] Failed to ${verb} token for topic "${topicName}": ${error?.code} ${error?.message}`);
-      return res.status(502).json({ error: `Failed to ${verb}`, code: error?.code, message: error?.message });
+      console.warn(`[FCM Topic Best-Effort] Topic ${verb} returned non-fatal error (fallback to multicast):`, result.errors?.[0]?.error?.message);
+    } else {
+      console.log(`[FCM Topic] ${verb} token for topic "${topicName}"`);
+    }
+  } catch (err) {
+    console.warn(`[FCM Topic Best-Effort] Topic ${verb} failed (fallback to multicast):`, err.message);
+  }
+
+  // Return success because token is saved in tokenManager and will receive alerts directly!
+  res.json({ success: true, topic: topicName });
+});
+
+/** Test endpoint to fire an instant test push notification to all devices */
+app.all("/api/test-notification", async (req, res) => {
+  try {
+    const { getMessaging } = require("./firebase");
+    const messaging = getMessaging();
+    const tokenManager = require("./tokenManager");
+    const tokens = tokenManager.getAllTokens();
+
+    const title = req.query.title || req.body?.title || "GoalZone Test ⚽";
+    const body = req.query.body || req.body?.body || "Test notification: Push alerts are active and working!";
+
+    const results = {
+      timestamp: new Date().toISOString(),
+      tokensCount: tokens.length,
+      topicSent: false,
+      multicastSent: false,
+    };
+
+    // 1. Send to topic
+    try {
+      const topicMsg = {
+        topic: "popular_matches",
+        notification: { title, body },
+        data: { type: "TEST_ALERT" },
+        android: {
+          priority: "high",
+          notification: { sound: "default", channelId: "match_alerts" },
+        },
+      };
+      const topicRes = await messaging.send(topicMsg);
+      results.topicSent = true;
+      results.topicResponse = topicRes;
+    } catch (err) {
+      results.topicError = err.message;
     }
 
-    console.log(`[FCM] ${verb === "unsubscribe" ? "Unsubscribed token from" : "Subscribed token to"} topic "${topicName}"`);
-    res.json({ success: true, topic: topicName });
+    // 2. Send multicast directly to registered device tokens
+    if (tokens.length > 0) {
+      try {
+        const multicastMsg = {
+          tokens,
+          notification: { title, body },
+          data: { type: "TEST_ALERT" },
+          android: {
+            priority: "high",
+            notification: { sound: "default", channelId: "match_alerts" },
+          },
+        };
+        const multiRes = await messaging.sendEachForMulticast(multicastMsg);
+        results.multicastSent = true;
+        results.multicastSuccess = multiRes.successCount;
+        results.multicastFailure = multiRes.failureCount;
+
+        // Prune invalid tokens
+        const invalidTokens = [];
+        multiRes.responses.forEach((resp, idx) => {
+          if (resp.error && (
+            resp.error.code === "messaging/registration-token-not-registered" ||
+            resp.error.code === "messaging/invalid-registration-token"
+          )) {
+            invalidTokens.push(tokens[idx]);
+          }
+        });
+        if (invalidTokens.length > 0) {
+          tokenManager.removeInvalidTokens(invalidTokens);
+        }
+      } catch (err) {
+        results.multicastError = err.message;
+      }
+    }
+
+    res.json({ success: true, results });
   } catch (err) {
-    console.error(`[FCM Topic Error]`, err.message);
-    res.status(500).json({ error: "Failed to update notification subscription", message: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
