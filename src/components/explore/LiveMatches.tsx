@@ -20,6 +20,7 @@ interface Match {
   minute: string;
   status: string;
   extra?: string | number;
+  timestamp?: number;
 }
 
 interface LiveMatchesProps {
@@ -132,7 +133,7 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
                       {match.score}
                     </Text>
                     <View className="bg-black/60 px-2.5 py-0.5 rounded-full mt-1">
-                      <LiveMatchClock minute={match.minute} status={match.status} extra={match.extra} />
+                      <LiveMatchClock minute={match.minute} status={match.status} extra={match.extra} timestamp={match.timestamp} />
                     </View>
                   </View>
 

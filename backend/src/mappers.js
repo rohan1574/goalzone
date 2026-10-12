@@ -36,29 +36,34 @@ function mapDateFixtures(apiResponse) {
       ? fixtureDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "19:00";
 
-    const isFinished = FINISHED_STATUSES.has(statusShort);
+    const fixtureTimestamp = item.fixture.timestamp;
+    const minsSinceKO = fixtureTimestamp ? (Date.now() - fixtureTimestamp * 1000) / 60000 : null;
+    const isDurationExpired = minsSinceKO !== null && minsSinceKO >= 115;
+
+    const isFinished = FINISHED_STATUSES.has(statusShort) || (isDurationExpired && (statusShort === "2H" || statusShort === "1H" || statusShort === "LIVE"));
     let finalStatus = isFinished
       ? (statusShort === "AET" || statusShort === "PEN" ? statusShort : "FT")
       : statusShort;
     let elapsedMinute = statusShort;
+
     if (item.fixture.status.elapsed && !isFinished) {
       const el = item.fixture.status.elapsed;
       const ex = item.fixture.status.extra;
       if (statusShort === "1H" && el >= 45) {
         const cur = el > 45 ? el - 45 : 0;
-        if ((ex && cur > ex) || (!ex && cur >= 6)) {
+        if ((ex && cur > ex) || (!ex && cur >= 5) || (minsSinceKO !== null && minsSinceKO >= 55)) {
           finalStatus = "HT";
           elapsedMinute = "HT";
         } else {
-          elapsedMinute = ex ? `45+${cur}' (+${ex})` : `45+${cur}'`;
+          elapsedMinute = ex ? `45+${cur}' (+${ex})` : (cur > 0 ? `45+${cur}'` : `45'`);
         }
       } else if (statusShort === "2H" && el >= 90) {
         const cur = el > 90 ? el - 90 : 0;
-        if ((ex && cur > ex) || (!ex && cur >= 8)) {
+        if ((ex && cur > ex) || (!ex && cur >= 5) || (minsSinceKO !== null && minsSinceKO >= 108)) {
           finalStatus = "FT";
           elapsedMinute = "FT";
         } else {
-          elapsedMinute = ex ? `90+${cur}' (+${ex})` : `90+${cur}'`;
+          elapsedMinute = ex ? `90+${cur}' (+${ex})` : (cur > 0 ? `90+${cur}'` : `90'`);
         }
       } else if (ex) {
         elapsedMinute = `${el}' (+${ex})`;

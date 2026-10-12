@@ -605,8 +605,18 @@ export default function ExploreScreen() {
       return [];
     }
 
-    // Limit to top 25 live matches to prevent UI freezing
-    return apiData.live.slice(0, 25).map((m: any, idx: number) => {
+    // Limit to top 25 live matches to prevent UI freezing (exclude finished matches)
+    return apiData.live
+      .filter((m: any) => {
+        const ts = m.timestamp || (m.date ? Math.floor(new Date(m.date).getTime() / 1000) : null) || m.fixture?.timestamp;
+        const diff = ts ? (Date.now() - ts * 1000) / 60000 : null;
+        if (diff !== null && diff >= 115) return false;
+        const st = String(m.status || "").toUpperCase();
+        if (st === "FT" || st === "AET" || st === "PEN") return false;
+        return true;
+      })
+      .slice(0, 25)
+      .map((m: any, idx: number) => {
       const hName = getHomeTeamName(m);
       const hShort =
         m.home?.short ||
@@ -624,6 +634,8 @@ export default function ExploreScreen() {
         aShort && aShort !== "TBD"
           ? aShort
           : aName.substring(0, 3).toUpperCase();
+
+      const mTs = m.timestamp || (m.date ? Math.floor(new Date(m.date).getTime() / 1000) : undefined) || m.fixture?.timestamp;
 
       return {
         id: getMatchEventId(m) || `${hName}-${aName}-${idx}`,
@@ -649,6 +661,7 @@ export default function ExploreScreen() {
         minute: m.minute || getMatchStatus(m),
         status: m.status || "Live",
         extra: m.extra ?? m.fixture?.status?.extra ?? undefined,
+        timestamp: mTs,
       };
     });
   }, [apiData?.live]);
@@ -702,10 +715,15 @@ export default function ExploreScreen() {
       const hLogo = hObj.logo || hObj.image || (hObj.id ? `https://images.fotmob.com/image_resources/logo/teamlogo/${hObj.id}.png` : "");
       const aLogo = aObj.logo || aObj.image || (aObj.id ? `https://images.fotmob.com/image_resources/logo/teamlogo/${aObj.id}.png` : "");
 
+      const mTimestamp = m.timestamp || (m.date ? Math.floor(new Date(m.date).getTime() / 1000) : null) || m.fixture?.timestamp;
+      const minsSinceKO = mTimestamp ? (Date.now() - mTimestamp * 1000) / 60000 : null;
+      const isTimeExpired = minsSinceKO !== null && minsSinceKO >= 115;
+
       const mStatusUpper = String(m.status || "").trim().toUpperCase();
       const mMinuteUpper = String(m.minute || "").trim().toUpperCase();
 
       const isFinishedMatch =
+        isTimeExpired ||
         mStatusUpper === "FT" ||
         mStatusUpper === "AET" ||
         mStatusUpper === "PEN" ||
@@ -738,7 +756,7 @@ export default function ExploreScreen() {
         time: formatLocalMatchTime(m),
         date: defaultDateStr,
         rawDate: m.rawDate || m.date || m.fixture?.date,
-        timestamp: m.timestamp || m.fixture?.timestamp,
+        timestamp: mTimestamp || undefined,
         leagueId: lId,
         league: lName,
         home: {

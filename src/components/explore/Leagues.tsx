@@ -13,6 +13,7 @@ interface LeagueMatch {
   home: { id?: string | number; name: string; logo: string };
   away: { id?: string | number; name: string; logo: string };
   extra?: string | number;
+  timestamp?: number;
 }
 
 interface LeagueGroup {
@@ -45,7 +46,12 @@ const MatchCard = React.memo(function MatchCard({
   const stUpper = String(match.status || "").trim().toUpperCase();
   const minUpper = String(match.minute || "").trim().toUpperCase();
 
+  const isTimeExpired = match.timestamp
+    ? (Date.now() - match.timestamp * 1000) / 60000 >= 115
+    : false;
+
   const isFinished =
+    isTimeExpired ||
     stUpper === "FT" ||
     stUpper === "AET" ||
     stUpper === "PEN" ||
@@ -86,6 +92,7 @@ const MatchCard = React.memo(function MatchCard({
         minute: match.minute || effectiveStatus,
         status: match.status || effectiveStatus,
         extra: match.extra,
+        timestamp: match.timestamp,
       });
     }
   }, [match, leagueName, leagueId, leagueLogo, onPressDetails, isFinished, effectiveStatus]);
@@ -112,7 +119,7 @@ const MatchCard = React.memo(function MatchCard({
       <View className="w-[20%] pl-2 justify-center">
         {isLiveTicking ? (
           <View className="mb-1 items-start">
-            <LiveMatchClock minute={match.minute} status={match.status} extra={match.extra} />
+            <LiveMatchClock minute={match.minute} status={match.status} extra={match.extra} timestamp={match.timestamp} />
           </View>
         ) : (
           <Text className="text-gray-400 text-xs font-bold tracking-wider mb-1">

@@ -371,14 +371,17 @@ function normalizeApiResponse(rawResponse) {
             const el = item.fixture.status.elapsed;
             const ex = item.fixture.status.extra;
             const st = item.fixture.status.short;
+            const ts = item.fixture?.timestamp;
+            const minsSinceKO = ts ? (Date.now() - ts * 1000) / 60000 : null;
+            if (minsSinceKO !== null && minsSinceKO >= 115) return 'FT';
             if (st === '1H' && el >= 45) {
               const cur = el > 45 ? el - 45 : 0;
-              if ((ex && cur > ex) || (!ex && cur >= 6)) return 'HT';
+              if ((ex && cur > ex) || (!ex && cur >= 5) || (minsSinceKO !== null && minsSinceKO >= 55)) return 'HT';
               return ex ? `45+${cur}' (+${ex})` : (cur > 0 ? `45+${cur}'` : `45'`);
             }
             if (st === '2H' && el >= 90) {
               const cur = el > 90 ? el - 90 : 0;
-              if ((ex && cur > ex) || (!ex && cur >= 8)) return 'FT';
+              if ((ex && cur > ex) || (!ex && cur >= 5) || (minsSinceKO !== null && minsSinceKO >= 108)) return 'FT';
               return ex ? `90+${cur}' (+${ex})` : (cur > 0 ? `90+${cur}'` : `90'`);
             }
             if (ex) return `${el}' (+${ex})`;
@@ -389,18 +392,22 @@ function normalizeApiResponse(rawResponse) {
         const el = item.fixture?.status?.elapsed;
         const ex = item.fixture?.status?.extra;
         const st = item.fixture?.status?.short || item.status || 'LIVE';
+        const ts = item.fixture?.timestamp;
+        const minsSinceKO = ts ? (Date.now() - ts * 1000) / 60000 : null;
+        if (minsSinceKO !== null && minsSinceKO >= 115) return 'FT';
         if (st === '1H' && el >= 45) {
           const cur = el > 45 ? el - 45 : 0;
-          if ((ex && cur > ex) || (!ex && cur >= 6)) return 'HT';
+          if ((ex && cur > ex) || (!ex && cur >= 5) || (minsSinceKO !== null && minsSinceKO >= 55)) return 'HT';
         }
         if (st === '2H' && el >= 90) {
           const cur = el > 90 ? el - 90 : 0;
-          if ((ex && cur > ex) || (!ex && cur >= 8)) return 'FT';
+          if ((ex && cur > ex) || (!ex && cur >= 5) || (minsSinceKO !== null && minsSinceKO >= 108)) return 'FT';
         }
         return st;
       })(),
       elapsed: item.fixture?.status?.elapsed ?? null,
       extra: item.fixture?.status?.extra ?? null,
+      timestamp: item.fixture?.timestamp ?? null,
     };
   });
 }

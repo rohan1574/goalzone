@@ -12,11 +12,25 @@ const NOT_STARTED_SET = new Set([
 export const useLiveClock = (
   initialMinute?: string | number,
   status?: string,
-  extraProp?: string | number
+  extraProp?: string | number,
+  timestamp?: number
 ) => {
   const minStr = String(initialMinute || "").trim();
   const stUpper = String(status || "").trim().toUpperCase();
   const minUpper = minStr.toUpperCase();
+
+  const isNotStarted = NOT_STARTED_SET.has(stUpper) || NOT_STARTED_SET.has(minUpper);
+
+  // 0. Kickoff duration check: if 115+ minutes have passed since match kickoff, match is FT
+  if (timestamp && !isNotStarted) {
+    const minsSinceKO = (Date.now() - timestamp * 1000) / 60000;
+    if (minsSinceKO >= 115) {
+      return "FT";
+    }
+    if (minsSinceKO >= 55 && minsSinceKO < 75 && (stUpper === "1H" || minUpper.startsWith("45"))) {
+      return "HT";
+    }
+  }
 
   // 1. Finished match check (ONLY true full-time / finished statuses)
   const isFinished =
@@ -30,7 +44,6 @@ export const useLiveClock = (
     minUpper.includes("FULL TIME");
 
   const isHalfTime = stUpper === "HT" || minUpper === "HT";
-  const isNotStarted = NOT_STARTED_SET.has(stUpper) || NOT_STARTED_SET.has(minUpper);
 
   // Check for non-ticking statuses
   const isSpecial =
@@ -67,10 +80,12 @@ export const useLiveClock = (
       const base = parseInt(parts[0], 10);
       const elapsedExtra = parseInt(parts[1], 10);
       if (!isNaN(base)) {
+        const effectiveTotalExtra =
+          totalExtra ?? (!isNaN(elapsedExtra) && elapsedExtra > 0 ? elapsedExtra : null);
         return {
           base,
           elapsedExtra: !isNaN(elapsedExtra) ? elapsedExtra : 0,
-          totalExtra,
+          totalExtra: effectiveTotalExtra,
         };
       }
     }
@@ -79,18 +94,20 @@ export const useLiveClock = (
     if (!isNaN(num)) {
       // If 2H stoppage time: elapsed minute >= 90
       if (stUpper === "2H" && num >= 90) {
+        const cur = num > 90 ? num - 90 : 0;
         return {
           base: 90,
-          elapsedExtra: num > 90 ? num - 90 : 0,
-          totalExtra,
+          elapsedExtra: cur,
+          totalExtra: totalExtra ?? (cur > 0 ? cur : null),
         };
       }
       // If 1H stoppage time: elapsed minute >= 45
       if (stUpper === "1H" && num >= 45) {
+        const cur = num > 45 ? num - 45 : 0;
         return {
           base: 45,
-          elapsedExtra: num > 45 ? num - 45 : 0,
-          totalExtra,
+          elapsedExtra: cur,
+          totalExtra: totalExtra ?? (cur > 0 ? cur : null),
         };
       }
       // If extra time is explicitly announced and minute is 90+
@@ -125,10 +142,17 @@ export const useLiveClock = (
   const [seconds, setSeconds] = useState(() => Math.floor((Date.now() / 1000) % 60));
   const [extraMinutesTicked, setExtraMinutesTicked] = useState(0);
 
+  const lastBaseExtraKey = `${parsed?.base}_${parsed?.elapsedExtra}`;
+  const lastBaseExtraRef = React.useRef(lastBaseExtraKey);
+
   useEffect(() => {
     if (isSpecial || !parsed) return;
 
-    setExtraMinutesTicked(0);
+    if (lastBaseExtraRef.current !== lastBaseExtraKey) {
+      lastBaseExtraRef.current = lastBaseExtraKey;
+      setExtraMinutesTicked(0);
+    }
+
     const interval = setInterval(() => {
       setSeconds((prev) => {
         if (prev >= 59) {
@@ -140,7 +164,7 @@ export const useLiveClock = (
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [minStr, isSpecial, extraProp]);
+  }, [lastBaseExtraKey, isSpecial, extraProp, timestamp]);
 
   if (isFinished) {
     if (stUpper === "AET" || minUpper === "AET") return "AET";
@@ -178,14 +202,14 @@ export const useLiveClock = (
 
   if (parsed.elapsedExtra > 0) {
     const curExtra = parsed.elapsedExtra + extraMinutesTicked;
-    if (parsed.base === 45 && curExtra >= 6) return "HT";
-    if (parsed.base === 90 && curExtra >= 8) return "FT";
+    if (parsed.base === 45 && curExtra >= 5) return "HT";
+    if (parsed.base === 90 && curExtra >= 5) return "FT";
     return `${parsed.base}+${curExtra}:${secDisplay}`;
   }
 
   const currentMinute = parsed.base + extraMinutesTicked;
-  if (parsed.base >= 90 && currentMinute >= 98) return "FT";
-  if (parsed.base >= 45 && currentMinute >= 51 && stUpper === "1H") return "HT";
+  if (parsed.base >= 90 && currentMinute >= 96) return "FT";
+  if (parsed.base >= 45 && currentMinute >= 50 && stUpper === "1H") return "HT";
   return `${currentMinute}:${secDisplay}`;
 };
 
@@ -193,6 +217,7 @@ export interface LiveMatchClockProps {
   minute?: string | number;
   status?: string;
   extra?: string | number;
+  timestamp?: number;
   textClass?: string;
   showDot?: boolean;
 }
@@ -201,10 +226,11 @@ export default function LiveMatchClock({
   minute,
   status,
   extra,
+  timestamp,
   textClass = "text-[#02DB54] text-[10px] font-bold",
   showDot = true,
 }: LiveMatchClockProps) {
-  const formatted = useLiveClock(minute, status, extra);
+  const formatted = useLiveClock(minute, status, extra, timestamp);
   const isTicking = formatted.includes(":");
 
   return (

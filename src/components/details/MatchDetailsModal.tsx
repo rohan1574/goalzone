@@ -65,6 +65,7 @@ interface Match {
   venueCity?: string;
   round?: string;
   extra?: string | number;
+  timestamp?: number;
 }
 
 interface PlayerRating {
@@ -764,6 +765,7 @@ export default function MatchDetailsModal({
                       minute={match.minute}
                       status={match.status}
                       extra={match.extra}
+                      timestamp={match.timestamp}
                       textClass="text-[#02DB54] text-[11px] font-black uppercase"
                     />
                   )}

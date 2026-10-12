@@ -596,6 +596,37 @@ app.get("/football-get-popular-teams", (req, res) => {
   res.json(popularTeams);
 });
 
+function sanitizeFixturesStatus(data) {
+  if (!Array.isArray(data)) return data;
+  return data.map((item) => {
+    if (!item) return item;
+    const stUpper = String(item.status || "").trim().toUpperCase();
+    const minUpper = String(item.minute || "").trim().toUpperCase();
+    if (stUpper === "FT" || stUpper === "AET" || stUpper === "PEN") return item;
+
+    const ts = item.timestamp || (item.date ? Math.floor(new Date(item.date).getTime() / 1000) : null);
+    const minsSinceKO = ts ? (Date.now() - ts * 1000) / 60000 : null;
+
+    if (minsSinceKO !== null && minsSinceKO >= 115) {
+      if (stUpper === "2H" || stUpper === "1H" || stUpper === "LIVE" || minUpper.includes("+") || minUpper.includes("'")) {
+        return {
+          ...item,
+          status: "FT",
+          minute: "FT",
+        };
+      }
+    }
+    if (minsSinceKO !== null && minsSinceKO >= 55 && minsSinceKO < 75 && stUpper === "1H") {
+      return {
+        ...item,
+        status: "HT",
+        minute: "HT",
+      };
+    }
+    return item;
+  });
+}
+
 // ==========================================
 // 2.1 AGGREGATED DASHBOARD ENDPOINT
 // ==========================================
@@ -613,6 +644,13 @@ app.get("/football-dashboard", async (req, res) => {
       live = fallback;
     }
   }
+
+  // Filter out any matches that have exceeded regular match duration (115+ mins since kickoff)
+  live = (live || []).filter((m) => {
+    const ts = m.timestamp;
+    const diff = ts ? (Date.now() - ts * 1000) / 60000 : null;
+    return diff === null || diff < 115;
+  });
 
   try {
     // 2. Fixtures by date
@@ -632,9 +670,9 @@ app.get("/football-dashboard", async (req, res) => {
     );
 
     const payload = {
-      live,
+      live: sanitizeFixturesStatus(live),
       leagues: popularLeagues,
-      fixtures: fixtures || [],
+      fixtures: sanitizeFixturesStatus(fixtures || []),
       teams: popularTeams,
     };
 
@@ -699,7 +737,7 @@ app.get("/football-get-matches-by-date", async (req, res) => {
       mapDateFixtures,
     );
 
-    res.json(data);
+    res.json(sanitizeFixturesStatus(data));
   } catch (err) {
     res
       .status(500)
