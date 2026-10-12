@@ -439,6 +439,28 @@ export default function LeagueDetailsModal({
                     if (onPressDetails && league) {
                       const hName = match.home?.name || "Home";
                       const aName = match.away?.name || "Away";
+                      const stUpper = String(match.status || "").trim().toUpperCase();
+                      const minUpper = String(match.minute || "").trim().toUpperCase();
+                      const isFinished =
+                        stUpper === "FT" ||
+                        stUpper === "AET" ||
+                        stUpper === "PEN" ||
+                        stUpper.includes("FINISH") ||
+                        stUpper.includes("ENDED") ||
+                        stUpper.includes("FULL TIME") ||
+                        minUpper === "FT" ||
+                        minUpper === "AET" ||
+                        minUpper === "PEN" ||
+                        minUpper.includes("FINISH") ||
+                        minUpper.includes("ENDED") ||
+                        minUpper === "90'" ||
+                        minUpper === "90" ||
+                        minUpper === "90M" ||
+                        minUpper === "90 MIN" ||
+                        (stUpper === "2H" && (minUpper.startsWith("90") || (match.score && match.score !== "VS")));
+                      const effectiveStatus = isFinished
+                        ? (stUpper === "AET" || minUpper === "AET" ? "AET" : stUpper === "PEN" || minUpper === "PEN" ? "PEN" : "FT")
+                        : (match.status || "NS");
                       onPressDetails({
                         id: String(match.id),
                         league: league.name,
@@ -456,9 +478,9 @@ export default function LeagueDetailsModal({
                           short: match.away?.short || aName.substring(0, 3).toUpperCase(),
                           logo: match.away?.logo || "",
                         },
-                        score: match.score || (match.status === "FT" || match.status === "Live" ? match.time : "VS"),
-                        minute: match.minute || match.status || "NS",
-                        status: match.status || "NS",
+                        score: match.score || (isFinished || match.status === "Live" ? match.time : "VS"),
+                        minute: effectiveStatus,
+                        status: effectiveStatus,
                       });
                     }
                   };

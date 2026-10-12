@@ -369,9 +369,27 @@ export default function MatchDetailsModal({
   // Fallback Stadium
   const stadiumName = "ESTADIO NORBERTO TITO TOMAGHELLO";
 
-  const isFinished = [
-    "FT", "AET", "PEN", "FINISHED", "ENDED", "FULL TIME", "CANC", "ABD", "AWD", "WO"
-  ].includes(String(match.status || "").trim().toUpperCase());
+  const matchStatusUpper = String(match.status || "").trim().toUpperCase();
+  const matchMinuteUpper = String(match.minute || "").trim().toUpperCase();
+
+  const isFinished =
+    matchStatusUpper === "FT" ||
+    matchStatusUpper === "AET" ||
+    matchStatusUpper === "PEN" ||
+    matchStatusUpper.includes("FINISH") ||
+    matchStatusUpper.includes("ENDED") ||
+    matchStatusUpper.includes("FULL TIME") ||
+    matchMinuteUpper === "FT" ||
+    matchMinuteUpper === "AET" ||
+    matchMinuteUpper === "PEN" ||
+    matchMinuteUpper.includes("FINISH") ||
+    matchMinuteUpper.includes("ENDED") ||
+    matchMinuteUpper === "90'" ||
+    matchMinuteUpper === "90" ||
+    matchMinuteUpper === "90M" ||
+    matchMinuteUpper === "90 MIN" ||
+    matchMinuteUpper === "90MIN" ||
+    (matchStatusUpper === "2H" && (matchMinuteUpper.startsWith("90") || (match.score && match.score !== "VS")));
 
   const isUpcoming =
     !isFinished &&
@@ -527,11 +545,21 @@ export default function MatchDetailsModal({
                   {match.score || "VS"}
                 </Text>
                 <View className="bg-black/50 px-3 py-1 rounded-full mt-2">
-                  <LiveMatchClock
-                    minute={isFinished ? (match.status || "FT") : match.minute}
-                    status={isFinished ? (match.status || "FT") : match.status}
-                    textClass="text-[#02DB54] text-[11px] font-black uppercase"
-                  />
+                  {isFinished ? (
+                    <Text className="text-[#02DB54] text-[11px] font-black uppercase tracking-wider">
+                      {matchStatusUpper === "AET" || matchMinuteUpper === "AET"
+                        ? "AET"
+                        : matchStatusUpper === "PEN" || matchMinuteUpper === "PEN"
+                        ? "PEN"
+                        : "FT"}
+                    </Text>
+                  ) : (
+                    <LiveMatchClock
+                      minute={match.minute}
+                      status={match.status}
+                      textClass="text-[#02DB54] text-[11px] font-black uppercase"
+                    />
+                  )}
                 </View>
               </View>
 

@@ -15,11 +15,25 @@ export const useLiveClock = (initialMinute?: string | number, status?: string) =
   const minUpper = minStr.toUpperCase();
 
   // 1. Finished match: MUST display FT/AET/PEN, NEVER 90', and NEVER tick seconds
-  if (FINISHED_SET.has(stUpper)) {
-    return status || "FT";
-  }
-  if (FINISHED_SET.has(minUpper)) {
-    return minStr || "FT";
+  const isFinished =
+    FINISHED_SET.has(stUpper) ||
+    FINISHED_SET.has(minUpper) ||
+    stUpper.includes("FINISH") ||
+    stUpper.includes("ENDED") ||
+    stUpper.includes("FULL TIME") ||
+    minUpper.includes("FINISH") ||
+    minUpper.includes("ENDED") ||
+    minUpper === "90'" ||
+    minUpper === "90" ||
+    minUpper === "90M" ||
+    minUpper === "90 MIN" ||
+    minUpper === "90MIN" ||
+    (stUpper === "2H" && minUpper.startsWith("90"));
+
+  if (isFinished) {
+    if (stUpper === "AET" || minUpper === "AET") return "AET";
+    if (stUpper === "PEN" || minUpper === "PEN") return "PEN";
+    return "FT";
   }
 
   // 2. Half Time: display HT, NEVER tick seconds

@@ -47,6 +47,31 @@ const MatchCard = React.memo(function MatchCard({
   onToggleNotification: (id: string, matchName?: string) => void;
   onPressDetails?: (match: any) => void;
 }) {
+  const stUpper = String(match.status || "").trim().toUpperCase();
+  const minUpper = String(match.minute || "").trim().toUpperCase();
+
+  const isFinished =
+    stUpper === "FT" ||
+    stUpper === "AET" ||
+    stUpper === "PEN" ||
+    stUpper.includes("FINISH") ||
+    stUpper.includes("ENDED") ||
+    stUpper.includes("FULL TIME") ||
+    minUpper === "FT" ||
+    minUpper === "AET" ||
+    minUpper === "PEN" ||
+    minUpper.includes("FINISH") ||
+    minUpper.includes("ENDED") ||
+    minUpper === "90'" ||
+    minUpper === "90" ||
+    minUpper === "90M" ||
+    minUpper === "90 MIN" ||
+    (stUpper === "2H" && (minUpper.startsWith("90") || (match.score && match.score !== "VS")));
+
+  const effectiveStatus = isFinished
+    ? (stUpper === "AET" || minUpper === "AET" ? "AET" : stUpper === "PEN" || minUpper === "PEN" ? "PEN" : "FT")
+    : (match.status || "NS");
+
   const handleCardPress = React.useCallback(() => {
     if (onPressDetails) {
       onPressDetails({
@@ -66,14 +91,12 @@ const MatchCard = React.memo(function MatchCard({
           short: (match.away?.name || "AWY").substring(0, 3).toUpperCase(),
           logo: match.away?.logo || "",
         },
-        score: match.score || (match.status === "FT" || match.status === "Live" ? match.time : "VS"),
-        minute: ["FT", "AET", "PEN", "CANC", "ABD", "AWD", "WO", "FINISHED", "ENDED"].includes(String(match.status || "").trim().toUpperCase())
-          ? (match.status || "FT")
-          : (match.minute || match.status || "NS"),
-        status: match.status || "NS",
+        score: match.score || (isFinished || match.status === "Live" ? match.time : "VS"),
+        minute: effectiveStatus,
+        status: effectiveStatus,
       });
     }
-  }, [match, leagueName, leagueId, leagueLogo, onPressDetails]);
+  }, [match, leagueName, leagueId, leagueLogo, onPressDetails, isFinished, effectiveStatus]);
 
   const handleBellPress = React.useCallback(
     (e: any) => {
@@ -95,13 +118,13 @@ const MatchCard = React.memo(function MatchCard({
 
       {/* Left column: Match times / info */}
       <View className="w-[20%] pl-2 justify-center">
-        {match.status === "Live" ? (
+        {match.status === "Live" && !isFinished ? (
           <View className="mb-1 items-start">
             <LiveMatchClock minute={match.minute} status={match.status} />
           </View>
         ) : (
           <Text className="text-gray-400 text-xs font-bold tracking-wider mb-1">
-            {match.status}
+            {effectiveStatus}
           </Text>
         )}
         <Text className="text-[#02DB54] font-black text-sm tracking-tight mb-0.5">
