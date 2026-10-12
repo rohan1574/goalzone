@@ -716,12 +716,7 @@ export default function ExploreScreen() {
         mMinuteUpper === "PEN" ||
         mMinuteUpper.includes("FINISH") ||
         mMinuteUpper.includes("ENDED") ||
-        mMinuteUpper === "90'" ||
-        mMinuteUpper === "90" ||
-        mMinuteUpper === "90M" ||
-        mMinuteUpper === "90 MIN" ||
-        mMinuteUpper === "90MIN" ||
-        (mStatusUpper === "2H" && (mMinuteUpper.startsWith("90") || (m.score && m.score !== "VS")));
+        mMinuteUpper.includes("FULL TIME");
 
       const matchStatus = isFinishedMatch
         ? (mStatusUpper === "AET" || mMinuteUpper === "AET" ? "AET" : mStatusUpper === "PEN" || mMinuteUpper === "PEN" ? "PEN" : "FT")

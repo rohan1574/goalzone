@@ -98,12 +98,7 @@ const getMatchPhase = (match: Match | null) => {
     minuteUpper === "PEN" ||
     minuteUpper.includes("FINISH") ||
     minuteUpper.includes("ENDED") ||
-    minuteUpper === "90'" ||
-    minuteUpper === "90" ||
-    minuteUpper === "90M" ||
-    minuteUpper === "90 MIN" ||
-    minuteUpper === "90MIN" ||
-    (statusUpper === "2H" && (minuteUpper.startsWith("90") || (!!match?.score && match.score !== "VS")));
+    minuteUpper.includes("FULL TIME");
 
   const isUpcoming =
     !isFinished &&

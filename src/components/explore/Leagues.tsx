@@ -56,11 +56,7 @@ const MatchCard = React.memo(function MatchCard({
     minUpper === "PEN" ||
     minUpper.includes("FINISH") ||
     minUpper.includes("ENDED") ||
-    minUpper === "90'" ||
-    minUpper === "90" ||
-    minUpper === "90M" ||
-    minUpper === "90 MIN" ||
-    (stUpper === "2H" && (minUpper.startsWith("90") || (match.score && match.score !== "VS")));
+    minUpper.includes("FULL TIME");
 
   const effectiveStatus = isFinished
     ? (stUpper === "AET" || minUpper === "AET" ? "AET" : stUpper === "PEN" || minUpper === "PEN" ? "PEN" : "FT")

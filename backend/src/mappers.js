@@ -36,12 +36,14 @@ function mapDateFixtures(apiResponse) {
       ? fixtureDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "19:00";
 
-    const isFinished =
-      FINISHED_STATUSES.has(statusShort) ||
-      (statusShort === "2H" && (item.fixture.status.elapsed >= 90 || (fixtureDate && Date.now() - fixtureDate.getTime() > 2 * 3600 * 1000)));
+    const isFinished = FINISHED_STATUSES.has(statusShort);
     const finalStatus = isFinished
       ? (statusShort === "AET" || statusShort === "PEN" ? statusShort : "FT")
       : statusShort;
+    const elapsedMinute = item.fixture.status.elapsed
+      ? (item.fixture.status.extra ? `${item.fixture.status.elapsed}+${item.fixture.status.extra}'` : `${item.fixture.status.elapsed}'`)
+      : statusShort;
+    const finalMinute = isFinished ? finalStatus : elapsedMinute;
 
     return {
       id: String(item.fixture.id),
@@ -62,11 +64,7 @@ function mapDateFixtures(apiResponse) {
         logo: item.teams.away.logo,
       },
       score,
-      minute: isFinished
-        ? finalStatus
-        : item.fixture.status.elapsed
-        ? `${item.fixture.status.elapsed}'`
-        : statusShort,
+      minute: finalMinute,
       status: finalStatus,
       time,
       date: item.fixture.date,

@@ -366,8 +366,9 @@ function normalizeApiResponse(rawResponse) {
       awayTeam: awayName,
       homeScore: homeScore,
       awayScore: awayScore,
-      score: `${homeScore} - ${awayScore}`,
-      minute: item.fixture?.status?.elapsed ? `${item.fixture.status.elapsed}'` : (item.status || 'LIVE'),
+      minute: item.fixture?.status?.elapsed
+        ? (item.fixture.status.extra ? `${item.fixture.status.elapsed}+${item.fixture.status.extra}'` : `${item.fixture.status.elapsed}'`)
+        : (item.status || 'LIVE'),
       status: item.fixture?.status?.short || item.status || 'LIVE',
       elapsed: item.fixture?.status?.elapsed ?? null
     };

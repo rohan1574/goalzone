@@ -14,7 +14,7 @@ export const useLiveClock = (initialMinute?: string | number, status?: string) =
   const stUpper = String(status || "").trim().toUpperCase();
   const minUpper = minStr.toUpperCase();
 
-  // 1. Finished match check
+  // 1. Finished match check (ONLY true full-time / finished statuses)
   const isFinished =
     FINISHED_SET.has(stUpper) ||
     FINISHED_SET.has(minUpper) ||
@@ -23,12 +23,7 @@ export const useLiveClock = (initialMinute?: string | number, status?: string) =
     stUpper.includes("FULL TIME") ||
     minUpper.includes("FINISH") ||
     minUpper.includes("ENDED") ||
-    minUpper === "90'" ||
-    minUpper === "90" ||
-    minUpper === "90M" ||
-    minUpper === "90 MIN" ||
-    minUpper === "90MIN" ||
-    (stUpper === "2H" && minUpper.startsWith("90"));
+    minUpper.includes("FULL TIME");
 
   const isHalfTime = stUpper === "HT" || minUpper === "HT";
   const isNotStarted = NOT_STARTED_SET.has(stUpper) || NOT_STARTED_SET.has(minUpper);
