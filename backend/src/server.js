@@ -47,6 +47,38 @@ if (!APISPORTS_KEY) {
 app.use(cors());
 app.use(express.json());
 
+// Clean up any stale empty lineup cache files from previous versions
+try {
+  const fs = require("fs");
+  const path = require("path");
+  const { CACHE_DIR } = require("./cache");
+  if (fs.existsSync(CACHE_DIR)) {
+    const files = fs.readdirSync(CACHE_DIR);
+    for (const f of files) {
+      if (f.startsWith("lineup_raw_fixture_") && f.endsWith(".json")) {
+        try {
+          const filePath = path.join(CACHE_DIR, f);
+          const raw = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+          const d = raw?.data;
+          if (!d || (Array.isArray(d.response) && d.response.length === 0)) {
+            fs.unlinkSync(filePath);
+            console.log(`[Cache Cleanup] Removed stale empty lineup file: ${f}`);
+          }
+        } catch (_) {}
+      }
+    }
+  }
+} catch (_) {}
+
+function isDataEmpty(data) {
+  if (!data) return true;
+  if (Array.isArray(data)) return data.length === 0;
+  if (Array.isArray(data.response)) return data.response.length === 0;
+  if (Array.isArray(data.starters)) return data.starters.length === 0;
+  if (data.lineup === null) return true;
+  return false;
+}
+
 // In-flight request deduplication map
 // Prevents duplicate API calls when the same cache key is requested simultaneously
 // (e.g., 10 users all open the same match page at the same moment)
@@ -65,12 +97,9 @@ function requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper) {
     try {
       const apiResponse = await apiGet(endpoint, params, "ondemand");
       const mappedData = mapper(apiResponse);
-      const isEmpty =
-        !mappedData ||
-        (Array.isArray(mappedData) && mappedData.length === 0) ||
-        (mappedData && mappedData.lineup === null);
-      // On empty result: cache for 5 min so we don't spam the API every request when no data is available
-      const effectiveTtl = isEmpty ? Math.min(ttlSeconds, 300) : ttlSeconds;
+      const isEmpty = isDataEmpty(mappedData);
+      // On empty result: cache for only 60s so upcoming/live matches get real lineups the moment they appear
+      const effectiveTtl = isEmpty ? Math.min(ttlSeconds, 60) : ttlSeconds;
       cache.set(cacheKey, mappedData, effectiveTtl);
       return mappedData;
     } catch (err) {
@@ -95,27 +124,30 @@ function requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper) {
  * Serves data from the cache, calling API-Football only when nothing usable is stored.
  * Most popular-league data is kept fresh by the background sync engine (syncEngine.js).
  *
- * - Fresh entry   → returned immediately.
- * - Stale entry   → returned immediately; refreshed in the background if quota allows.
- *                   Users never wait on, or see an error from, an expired entry.
- * - No entry      → fetched from the API if the on-demand quota tier allows it;
- *                   otherwise the empty result shape is returned (not cached).
+ * - Fresh entry   → returned immediately (if not empty, or if empty and within 60s cooldown).
+ * - Stale entry   → returned immediately if it has real data.
+ * - No entry / empty entry ready for recheck → fetched from the API.
  */
 async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
   const entry = cache.getEntry(cacheKey);
 
-  // 1. Fresh cache: return immediately
+  // 1. Fresh cache: return immediately if NOT empty
   if (entry && !entry.stale) {
+    if (!isDataEmpty(entry.data)) {
+      return entry.data;
+    }
+    // If empty but within 60s cooldown, return it to avoid hammering API
+    if (Date.now() - (entry.updatedAt || 0) < 60000) {
+      return entry.data;
+    }
+  }
+
+  // 2. Stale cache: return existing data immediately only if it has real content!
+  if (entry && !isDataEmpty(entry.data)) {
     return entry.data;
   }
 
-  // 2. Stale cache: return existing data immediately without hammering the API!
-  // This prevents thousands of user requests from triggering background API calls.
-  if (entry && (!Array.isArray(entry.data) || entry.data.length > 0)) {
-    return entry.data;
-  }
-
-  // 3. Cold cache (no entry on disk): fetch once from API and cache
+  // 3. Cold cache (no entry or expired empty entry): fetch once from API and cache
   try {
     return await requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper);
   } catch (err) {
@@ -971,8 +1003,11 @@ function getMockLineup(eventid, side) {
   }
 }
 
-async function getRawFixtureLineups(eventid) {
+async function getRawFixtureLineups(eventid, force = false) {
   const cacheKey = `lineup_raw_fixture_${eventid}`;
+  if (force) {
+    cache.clear(cacheKey);
+  }
   return fetchAndCache(
     cacheKey,
     "/fixtures/lineups",
@@ -984,6 +1019,7 @@ async function getRawFixtureLineups(eventid) {
 
 app.get("/football-get-hometeam-lineup", async (req, res) => {
   const eventid = req.query.eventid;
+  const force = req.query.force === "true" || req.query.refresh === "true";
   if (!eventid) {
     return res.status(400).json({ error: "Missing eventid parameter" });
   }
@@ -993,7 +1029,7 @@ app.get("/football-get-hometeam-lineup", async (req, res) => {
   }
 
   try {
-    const rawData = await getRawFixtureLineups(eventid);
+    const rawData = await getRawFixtureLineups(eventid, force);
     const data = translateLineup(rawData, "home");
     res.json(data);
   } catch (err) {
@@ -1006,6 +1042,7 @@ app.get("/football-get-hometeam-lineup", async (req, res) => {
 
 app.get("/football-get-awayteam-lineup", async (req, res) => {
   const eventid = req.query.eventid;
+  const force = req.query.force === "true" || req.query.refresh === "true";
   if (!eventid) {
     return res.status(400).json({ error: "Missing eventid parameter" });
   }
@@ -1015,7 +1052,7 @@ app.get("/football-get-awayteam-lineup", async (req, res) => {
   }
 
   try {
-    const rawData = await getRawFixtureLineups(eventid);
+    const rawData = await getRawFixtureLineups(eventid, force);
     const data = translateLineup(rawData, "away");
     res.json(data);
   } catch (err) {

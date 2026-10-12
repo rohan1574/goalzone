@@ -1,4 +1,3 @@
-
 import React from "react";
 import { View, Text, Image, TouchableOpacity, ActivityIndicator } from "react-native";
 import { ChevronDown, Bell } from "lucide-react-native";
@@ -68,7 +67,9 @@ const MatchCard = React.memo(function MatchCard({
           logo: match.away?.logo || "",
         },
         score: match.score || (match.status === "FT" || match.status === "Live" ? match.time : "VS"),
-        minute: match.minute || match.status || "NS",
+        minute: ["FT", "AET", "PEN", "CANC", "ABD", "AWD", "WO", "FINISHED", "ENDED"].includes(String(match.status || "").trim().toUpperCase())
+          ? (match.status || "FT")
+          : (match.minute || match.status || "NS"),
         status: match.status || "NS",
       });
     }
@@ -180,29 +181,7 @@ export const POPULAR_LEAGUE_IDS = new Set([
   '11',   // UEFA Nations League
   '15',   // FIFA Club World Cup
   '393',  // AFC Champions League
-  '239',  // Primera A Colombia
-  '203',  // Süper Lig Turkey
-  '40',   // Championship
-  '45',   // FA Cup
-  '48',   // EFL Cup
-  '143',  // Copa del Rey
-  '81',   // DFB-Pokal
-  '137',  // Coppa Italia
-  '66',   // Coupe de France
-  '16',   // CONCACAF Champions Cup
-  '179',  // Premiership Scotland
-  '235',  // Russian Premier League
-  '29',   // World Cup - Qualification Africa
-  '30',   // World Cup - Qualification Asia
-  '31',   // World Cup - Qualification CONCACAF
-  '32',   // World Cup - Qualification Europe
-  '34',   // World Cup - Qualification South America
-  '960',  // Euro Championship - Qualification
-  '528',  // AFC Champions League Elite
-  '529',  // AFC Champions League Two
-  '531',  // UEFA Super Cup
-  '541',  // Community Shield
-  '556'   // Supercopa de España
+  '239'   // Süper Lig
 ]);
 
 export default function Leagues({
@@ -216,11 +195,8 @@ export default function Leagues({
   const [displayLimit, setDisplayLimit] = React.useState(15);
 
   const filteredLeaguesList = React.useMemo(() => {
-    if (!leaguesList || leaguesList.length === 0) return [];
-    const popularOnly = leaguesList.filter((league) => POPULAR_LEAGUE_IDS.has(String(league.leagueId)));
-    // If there are popular league matches on this date, show them.
-    // If no popular league matches on this date, fallback to showing available league matches.
-    return popularOnly.length > 0 ? popularOnly : leaguesList;
+    if (!leaguesList) return [];
+    return leaguesList.filter((league) => POPULAR_LEAGUE_IDS.has(String(league.leagueId)));
   }, [leaguesList]);
 
   // Reset display limit when leaguesList changes (e.g. date changed)

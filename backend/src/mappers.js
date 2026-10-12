@@ -6,51 +6,9 @@
 
 // Leagues shown anywhere in the app (date lists, live scores, dashboard)
 const POPULAR_LEAGUE_IDS_SET = new Set([
-  '39',   // Premier League
-  '140',  // La Liga
-  '135',  // Serie A
-  '78',   // Bundesliga
-  '61',   // Ligue 1
-  '2',    // UEFA Champions League
-  '3',    // UEFA Europa League
-  '848',  // UEFA Conference League
-  '88',   // Eredivisie
-  '94',   // Primeira Liga
-  '71',   // Brasileirão Série A
-  '128',  // Liga Profesional Argentina
-  '253',  // MLS
-  '307',  // Saudi Pro League
-  '13',   // Copa Libertadores
-  '1',    // World Cup
-  '4',    // Euro Championship
-  '9',    // Copa America
-  '10',   // International Friendlies
-  '11',   // UEFA Nations League
-  '15',   // FIFA Club World Cup
-  '393',  // AFC Champions League
-  '239',  // Primera A Colombia
-  '203',  // Süper Lig Turkey
-  '40',   // Championship
-  '45',   // FA Cup
-  '48',   // EFL Cup
-  '143',  // Copa del Rey
-  '81',   // DFB-Pokal
-  '137',  // Coppa Italia
-  '66',   // Coupe de France
-  '16',   // CONCACAF Champions Cup
-  '179',  // Premiership Scotland
-  '235',  // Russian Premier League
-  '29',   // World Cup - Qualification Africa
-  '30',   // World Cup - Qualification Asia
-  '31',   // World Cup - Qualification CONCACAF
-  '32',   // World Cup - Qualification Europe
-  '34',   // World Cup - Qualification South America
-  '960',  // Euro Championship - Qualification
-  '528',  // AFC Champions League Elite
-  '529',  // AFC Champions League Two
-  '531',  // UEFA Super Cup
-  '541',  // Community Shield
-  '556'   // Supercopa de España
+  '39', '140', '135', '78', '61', '2', '3', '848', '94',
+  '71', '128', '253', '307', '13', '1', '4', '9', '10', '11', '15', '393', '239',
+  '40', '45', '48', '143', '16'
 ]);
 
 const NOT_STARTED_STATUSES = new Set(['NS', 'TBD', 'PST', 'CANC']);
@@ -97,7 +55,9 @@ function mapDateFixtures(apiResponse) {
         logo: item.teams.away.logo,
       },
       score,
-      minute: item.fixture.status.elapsed
+      minute: FINISHED_STATUSES.has(statusShort)
+        ? statusShort
+        : item.fixture.status.elapsed
         ? `${item.fixture.status.elapsed}'`
         : statusShort,
       status: statusShort,

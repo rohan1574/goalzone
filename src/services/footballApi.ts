@@ -20,7 +20,10 @@ export async function fetchWithBackendFallback(endpoint: string, params: any = {
     const hasContent = res.data && (
       (Array.isArray(res.data) && res.data.length > 0) ||
       (res.data.fixtures && Array.isArray(res.data.fixtures) && res.data.fixtures.length > 0) ||
-      (res.data.live && Array.isArray(res.data.live) && res.data.live.length > 0)
+      (res.data.live && Array.isArray(res.data.live) && res.data.live.length > 0) ||
+      (res.data.starters && Array.isArray(res.data.starters) && res.data.starters.length > 0) ||
+      (res.data.startXI && Array.isArray(res.data.startXI) && res.data.startXI.length > 0) ||
+      (res.data.lineup?.starters && Array.isArray(res.data.lineup.starters) && res.data.lineup.starters.length > 0)
     );
     if (hasContent) return res;
 
@@ -880,7 +883,7 @@ export const fetchCountries = async () => {
   }
 };
 
-export const fetchHomeTeamLineup = async (eventid: string | number) => {
+export const fetchHomeTeamLineup = async (eventid: string | number, force = false) => {
   if (!eventid) return null;
   const CACHE_KEY = `@goalzone_api_cache_home_lineup_${eventid}`;
   const CACHE_TIME_KEY = `@goalzone_api_cache_home_lineup_time_${eventid}`;
@@ -895,16 +898,18 @@ export const fetchHomeTeamLineup = async (eventid: string | number) => {
     );
 
   try {
-    const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
-    const cachedData = await AsyncStorage.getItem(CACHE_KEY);
+    if (!force) {
+      const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
+      const cachedData = await AsyncStorage.getItem(CACHE_KEY);
 
-    if (cachedTime && cachedData) {
-      const parsedTime = parseInt(cachedTime, 10);
-      const now = Date.now();
-      const parsed = JSON.parse(cachedData);
-      if (hasLineupData(parsed) && now - parsedTime < 300000) {
-        console.log(`[Cache] Using cached home lineup for event ${eventid}.`);
-        return parsed;
+      if (cachedTime && cachedData) {
+        const parsedTime = parseInt(cachedTime, 10);
+        const now = Date.now();
+        const parsed = JSON.parse(cachedData);
+        if (hasLineupData(parsed) && now - parsedTime < 300000) {
+          console.log(`[Cache] Using cached home lineup for event ${eventid}.`);
+          return parsed;
+        }
       }
     }
   } catch (err) {
@@ -915,8 +920,9 @@ export const fetchHomeTeamLineup = async (eventid: string | number) => {
     `[API] Fetching fresh home lineup for event ${eventid} from API...`,
   );
   try {
-    const response = await api.get("/football-get-hometeam-lineup", {
-      params: { eventid },
+    const response = await fetchWithBackendFallback("/football-get-hometeam-lineup", {
+      eventid,
+      ...(force ? { force: "true" } : {}),
     });
     const freshData = response.data || null;
 
@@ -937,7 +943,7 @@ export const fetchHomeTeamLineup = async (eventid: string | number) => {
   }
 };
 
-export const fetchAwayTeamLineup = async (eventid: string | number) => {
+export const fetchAwayTeamLineup = async (eventid: string | number, force = false) => {
   if (!eventid) return null;
   const CACHE_KEY = `@goalzone_api_cache_away_lineup_${eventid}`;
   const CACHE_TIME_KEY = `@goalzone_api_cache_away_lineup_time_${eventid}`;
@@ -952,16 +958,18 @@ export const fetchAwayTeamLineup = async (eventid: string | number) => {
     );
 
   try {
-    const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
-    const cachedData = await AsyncStorage.getItem(CACHE_KEY);
+    if (!force) {
+      const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
+      const cachedData = await AsyncStorage.getItem(CACHE_KEY);
 
-    if (cachedTime && cachedData) {
-      const parsedTime = parseInt(cachedTime, 10);
-      const now = Date.now();
-      const parsed = JSON.parse(cachedData);
-      if (hasLineupData(parsed) && now - parsedTime < 300000) {
-        console.log(`[Cache] Using cached away lineup for event ${eventid}.`);
-        return parsed;
+      if (cachedTime && cachedData) {
+        const parsedTime = parseInt(cachedTime, 10);
+        const now = Date.now();
+        const parsed = JSON.parse(cachedData);
+        if (hasLineupData(parsed) && now - parsedTime < 300000) {
+          console.log(`[Cache] Using cached away lineup for event ${eventid}.`);
+          return parsed;
+        }
       }
     }
   } catch (err) {
@@ -972,8 +980,9 @@ export const fetchAwayTeamLineup = async (eventid: string | number) => {
     `[API] Fetching fresh away lineup for event ${eventid} from API...`,
   );
   try {
-    const response = await api.get("/football-get-awayteam-lineup", {
-      params: { eventid },
+    const response = await fetchWithBackendFallback("/football-get-awayteam-lineup", {
+      eventid,
+      ...(force ? { force: "true" } : {}),
     });
     const freshData = response.data || null;
 

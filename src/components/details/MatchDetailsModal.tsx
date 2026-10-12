@@ -238,134 +238,153 @@ export default function MatchDetailsModal({
   useEffect(() => {
     if (!visible || !match?.id) return;
 
-    // Load Events
-    const loadEvents = async () => {
-      setLoadingEvents(true);
-      try {
-        const data = await fetchFixtureEvents(match.id);
-        setEvents(data || []);
-      } catch (err) {
-        console.error("Failed to load events:", err);
-      } finally {
-        setLoadingEvents(false);
-      }
-    };
+  // Load Events
+  const loadEvents = useCallback(async () => {
+    if (!match?.id) return;
+    setLoadingEvents(true);
+    try {
+      const data = await fetchFixtureEvents(match.id);
+      setEvents(data || []);
+    } catch (err) {
+      console.error("Failed to load events:", err);
+    } finally {
+      setLoadingEvents(false);
+    }
+  }, [match?.id]);
 
-    // Load Stats
-    const loadStats = async () => {
-      setLoadingStats(true);
-      try {
-        const statsData = await fetchFixtureStatistics(match.id);
-        setStats(statsData || []);
-      } catch (err) {
-        console.error("Failed to load statistics:", err);
-      } finally {
-        setLoadingStats(false);
-      }
-    };
+  // Load Stats
+  const loadStats = useCallback(async () => {
+    if (!match?.id) return;
+    setLoadingStats(true);
+    try {
+      const statsData = await fetchFixtureStatistics(match.id);
+      setStats(statsData || []);
+    } catch (err) {
+      console.error("Failed to load statistics:", err);
+    } finally {
+      setLoadingStats(false);
+    }
+  }, [match?.id]);
 
-    // Load Lineups
-    const loadLineups = async () => {
-      setLoadingLineup(true);
-      try {
-        const homeData = await fetchHomeTeamLineup(match.id);
-        const awayData = await fetchAwayTeamLineup(match.id);
-        setHomeLineup(homeData);
-        setAwayLineup(awayData);
-      } catch (err) {
-        console.error("Failed to load lineups:", err);
-      } finally {
-        setLoadingLineup(false);
-      }
-    };
+  // Load Lineups (supports force reload)
+  const loadLineups = useCallback(async (force = false) => {
+    if (!match?.id) return;
+    setLoadingLineup(true);
+    try {
+      const homeData = await fetchHomeTeamLineup(match.id, force);
+      const awayData = await fetchAwayTeamLineup(match.id, force);
+      setHomeLineup(homeData);
+      setAwayLineup(awayData);
+    } catch (err) {
+      console.error("Failed to load lineups:", err);
+    } finally {
+      setLoadingLineup(false);
+    }
+  }, [match?.id]);
 
-    // Load Standings
-    const loadStandings = async () => {
-      if (!match?.leagueId) return;
-      setLoadingStandings(true);
-      try {
-        const rawData = await fetchLeagueStandings(match.leagueId);
-        if (rawData && rawData.length > 0) {
-          const mapped = rawData.map((item: any, idx: number) => {
-            const teamObj = item.team || item;
-            const pos =
-              item.pos || item.position || item.rank || item.idx || idx + 1;
-            const name = teamObj.name || teamObj.teamName || "Team";
-            const logo =
-              teamObj.logo ||
-              teamObj.teamLogo ||
-              teamObj.logoUrl ||
-              `https://images.fotmob.com/image_resources/logo/teamlogo/${item.teamId || item.id}.png`;
-            const pl =
-              item.pl || item.played || item.playedCount || item.all?.played || 0;
-            const gd = String(
-              item.gd ??
-                item.goalDiff ??
-                item.goal_diff ??
-                item.goalsDiff ??
-                item.goalDifference ??
-                item.diff ??
-                item.all?.goalsDiff ??
-                "0"
-            );
-            const pts = item.pts || item.points || 0;
+  // Load Standings
+  const loadStandings = useCallback(async () => {
+    if (!match?.leagueId) return;
+    setLoadingStandings(true);
+    try {
+      const rawData = await fetchLeagueStandings(match.leagueId);
+      if (rawData && rawData.length > 0) {
+        const mapped = rawData.map((item: any, idx: number) => {
+          const teamObj = item.team || item;
+          const pos =
+            item.pos || item.position || item.rank || item.idx || idx + 1;
+          const name = teamObj.name || teamObj.teamName || "Team";
+          const logo =
+            teamObj.logo ||
+            teamObj.teamLogo ||
+            teamObj.logoUrl ||
+            `https://images.fotmob.com/image_resources/logo/teamlogo/${item.teamId || item.id}.png`;
+          const pl =
+            item.pl || item.played || item.playedCount || item.all?.played || 0;
+          const gd = String(
+            item.gd ??
+              item.goalDiff ??
+              item.goal_diff ??
+              item.goalsDiff ??
+              item.goalDifference ??
+              item.diff ??
+              item.all?.goalsDiff ??
+              "0"
+          );
+          const pts = item.pts || item.points || 0;
 
-            const isHome =
-              (teamObj.id && String(teamObj.id) === String(match.home.id)) ||
-              name.toLowerCase().includes(match.home.name.toLowerCase()) ||
-              match.home.name.toLowerCase().includes(name.toLowerCase());
-            const isAway =
-              (teamObj.id && String(teamObj.id) === String(match.away.id)) ||
-              name.toLowerCase().includes(match.away.name.toLowerCase()) ||
-              match.away.name.toLowerCase().includes(name.toLowerCase());
-            const active = !!(isHome || isAway);
+          const isHome =
+            (teamObj.id && String(teamObj.id) === String(match.home.id)) ||
+            name.toLowerCase().includes(match.home.name.toLowerCase()) ||
+            match.home.name.toLowerCase().includes(name.toLowerCase());
+          const isAway =
+            (teamObj.id && String(teamObj.id) === String(match.away.id)) ||
+            name.toLowerCase().includes(match.away.name.toLowerCase()) ||
+            match.away.name.toLowerCase().includes(name.toLowerCase());
+          const active = !!(isHome || isAway);
 
-            return { pos, name, logo, pl, gd, pts, active };
-          });
-          setStandings(mapped);
-        } else {
-          setStandings([]);
-        }
-      } catch (err) {
-        console.error("Failed to load standings:", err);
+          return { pos, name, logo, pl, gd, pts, active };
+        });
+        setStandings(mapped);
+      } else {
         setStandings([]);
-      } finally {
-        setLoadingStandings(false);
       }
-    };
+    } catch (err) {
+      console.error("Failed to load standings:", err);
+      setStandings([]);
+    } finally {
+      setLoadingStandings(false);
+    }
+  }, [match?.leagueId, match?.home?.id, match?.home?.name, match?.away?.id, match?.away?.name]);
 
-    // Load H2H
-    const loadH2H = async () => {
-      if (!match?.home?.id || !match?.away?.id) return;
-      setLoadingH2h(true);
-      try {
-        const data = await fetchFixtureH2H(match.home.id!, match.away.id!);
-        setH2hData(data);
-      } catch (err) {
-        console.error("Failed to load H2H:", err);
-      } finally {
-        setLoadingH2h(false);
-      }
-    };
+  // Load H2H
+  const loadH2H = useCallback(async () => {
+    if (!match?.home?.id || !match?.away?.id) return;
+    setLoadingH2h(true);
+    try {
+      const data = await fetchFixtureH2H(match.home.id!, match.away.id!);
+      setH2hData(data);
+    } catch (err) {
+      console.error("Failed to load H2H:", err);
+    } finally {
+      setLoadingH2h(false);
+    }
+  }, [match?.home?.id, match?.away?.id]);
 
+  const refreshAll = useCallback(() => {
     loadEvents();
     loadStats();
-    loadLineups();
+    loadLineups(true);
     loadStandings();
     loadH2H();
-  }, [visible, match?.id]);
+  }, [loadEvents, loadStats, loadLineups, loadStandings, loadH2H]);
+
+  useEffect(() => {
+    if (!visible || !match?.id) return;
+    loadEvents();
+    loadStats();
+    loadLineups(false);
+    loadStandings();
+    loadH2H();
+  }, [visible, match?.id, loadEvents, loadStats, loadLineups, loadStandings, loadH2H]);
 
   if (!match) return null;
 
   // Fallback Stadium
   const stadiumName = "ESTADIO NORBERTO TITO TOMAGHELLO";
 
+  const isFinished = [
+    "FT", "AET", "PEN", "FINISHED", "ENDED", "FULL TIME", "CANC", "ABD", "AWD", "WO"
+  ].includes(String(match.status || "").trim().toUpperCase());
+
   const isUpcoming =
-    (!match.score || match.score === "VS") &&
+    !isFinished &&
     (match.status === "NS" ||
       match.status === "Scheduled" ||
       match.status === "Upcoming" ||
-      match.status === "TBD");
+      match.status === "TBD" ||
+      match.status === "TIMED" ||
+      (!match.score || match.score === "VS"));
 
   // Fallback timeline events if API returned empty
   const getTimelineEvents = () => {
@@ -464,7 +483,7 @@ export default function MatchDetailsModal({
             LIVE SCORE
           </Text>
 
-          <TouchableOpacity className="p-1">
+          <TouchableOpacity onPress={refreshAll} className="p-1">
             <RotateCw size={18} color="#ECEDEE" />
           </TouchableOpacity>
         </View>
@@ -513,8 +532,8 @@ export default function MatchDetailsModal({
                 </Text>
                 <View className="bg-black/50 px-3 py-1 rounded-full mt-2">
                   <LiveMatchClock
-                    minute={match.minute}
-                    status={match.status}
+                    minute={isFinished ? (match.status || "FT") : match.minute}
+                    status={isFinished ? (match.status || "FT") : match.status}
                     textClass="text-[#02DB54] text-[11px] font-black uppercase"
                   />
                 </View>
@@ -779,10 +798,17 @@ export default function MatchDetailsModal({
                   </Text>
                   <Text className="text-gray-400 font-bold text-xs text-center">
                     {isUpcoming
-                      ? "Team lineups are usually announced 1 hour before kickoff."
-                      : "Lineup data could not be found for this match."
+                      ? "Team lineups are usually announced 20–60 minutes before kickoff."
+                      : "Lineup data is currently unavailable for this match."
                     }
                   </Text>
+                  <TouchableOpacity
+                    onPress={() => loadLineups(true)}
+                    className="mt-4 px-4 py-2 bg-[#02DB54]/10 border border-[#02DB54]/40 rounded-full flex-row items-center gap-1.5"
+                  >
+                    <RotateCw size={13} color="#02DB54" />
+                    <Text className="text-[#02DB54] text-xs font-bold">Check Again</Text>
+                  </TouchableOpacity>
                 </View>
               ) : (
                 <View>

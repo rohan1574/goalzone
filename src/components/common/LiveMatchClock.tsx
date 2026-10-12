@@ -1,19 +1,43 @@
 import React, { useState, useEffect } from "react";
 import { View, Text } from "react-native";
 
+const FINISHED_SET = new Set([
+  "FT", "AET", "PEN", "FINISHED", "ENDED", "FULL TIME", "CANC", "ABD", "AWD", "WO", "PST"
+]);
+
+const NOT_STARTED_SET = new Set([
+  "NS", "TBD", "TIMED", "SCHEDULED", "UPCOMING", "POSTPONED"
+]);
+
 export const useLiveClock = (initialMinute?: string | number, status?: string) => {
   const minStr = String(initialMinute || "").trim();
+  const stUpper = String(status || "").trim().toUpperCase();
+  const minUpper = minStr.toUpperCase();
+
+  // 1. Finished match: MUST display FT/AET/PEN, NEVER 90', and NEVER tick seconds
+  if (FINISHED_SET.has(stUpper)) {
+    return status || "FT";
+  }
+  if (FINISHED_SET.has(minUpper)) {
+    return minStr || "FT";
+  }
+
+  // 2. Half Time: display HT, NEVER tick seconds
+  if (stUpper === "HT" || minUpper === "HT") {
+    return "HT";
+  }
+
+  // 3. Not Started / Scheduled: display NS or time, NEVER tick seconds
+  if (NOT_STARTED_SET.has(stUpper) || NOT_STARTED_SET.has(minUpper)) {
+    return status || minStr || "NS";
+  }
 
   // Check for non-ticking statuses
   const isSpecial =
-    ["HT", "FT", "PST", "CANC", "NS", "TBD", "SUSP", "INT"].includes(
-      minStr.toUpperCase()
-    ) ||
+    ["HT", "FT", "AET", "PEN", "PST", "CANC", "NS", "TBD", "SUSP", "INT"].includes(minUpper) ||
     Boolean(
-      status &&
-        ["HT", "FT", "PST", "CANC", "NS", "TBD", "SUSP", "INT"].includes(
-          status.toUpperCase()
-        )
+      stUpper &&
+        ["HT", "FT", "AET", "PEN", "PST", "CANC", "NS", "TBD", "SUSP", "INT"].includes(stUpper)
     );
 
   const parseMinute = (val: string) => {
@@ -52,7 +76,7 @@ export const useLiveClock = (initialMinute?: string | number, status?: string) =
   }, [minStr, isSpecial]);
 
   if (isSpecial || !parsed) {
-    return minStr || status || "Live";
+    return status || minStr || "Live";
   }
 
   const currentMinute = parsed.base + extraSeconds;

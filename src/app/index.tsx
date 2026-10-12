@@ -766,10 +766,11 @@ export default function ExploreScreen() {
       const hLogo = hObj.logo || hObj.image || (hObj.id ? `https://images.fotmob.com/image_resources/logo/teamlogo/${hObj.id}.png` : "");
       const aLogo = aObj.logo || aObj.image || (aObj.id ? `https://images.fotmob.com/image_resources/logo/teamlogo/${aObj.id}.png` : "");
 
+      const isFinishedMatch = ["FT", "AET", "PEN", "CANC", "ABD", "AWD", "WO", "FINISHED", "ENDED"].includes(String(m.status || "").trim().toUpperCase());
       const matchStatus =
         m.status || (m.minute === "Live" || m.statusType === "live" ? "Live" : "NS");
       const matchScore = m.score || (m.homeScore !== undefined && m.awayScore !== undefined ? `${m.homeScore} - ${m.awayScore}` : "VS");
-      const matchMinute = m.minute || (matchStatus === "FT" ? "FT" : matchStatus === "NS" ? "NS" : "Live");
+      const matchMinute = isFinishedMatch ? (m.status || "FT") : (m.minute || (matchStatus === "FT" ? "FT" : matchStatus === "NS" ? "NS" : "Live"));
 
       const matchItem = {
         id: getMatchEventId(m) || `${lId}-${hName}-${aName}-${idx}`,
