@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Modal,
   View,
@@ -18,9 +18,13 @@ import {
   fetchFixtureStatistics,
   fetchFixtureEvents,
   fetchFixtureH2H,
+  fetchMatchLocation,
+  fetchPlayerRatings,
+  getMatchKickoffMs,
 } from "../../services/footballApi";
 import BannerAdComponent from "../ads/BannerAdComponent";
 import LiveMatchClock from "../common/LiveMatchClock";
+import MatchPrediction from "./MatchPrediction";
 
 interface Team {
   id?: string | number;
@@ -44,12 +48,111 @@ interface Match {
   score: string;
   minute: string;
   status: string;
+  venue?: string;
+  venueCity?: string;
+  round?: string;
 }
 
-// Helper to render individual player card on the pitch with player image & shirt number badge
-const PlayerCard = ({ player, isHome }: { player: any; isHome: boolean }) => {
+interface PlayerRating {
+  rating: number;
+  minutes: number | null;
+  captain: boolean;
+}
+
+interface MatchInfo {
+  venue: string;
+  city: string;
+  round: string;
+}
+
+// Live ratings are re-fetched on this interval while the Lineup tab is open
+const LIVE_RATINGS_REFRESH_MS = 90000;
+
+// Works out finished / upcoming from the status + minute strings the various match sources send
+const getMatchPhase = (match: Match | null) => {
+  const statusUpper = String(match?.status || "").trim().toUpperCase();
+  const minuteUpper = String(match?.minute || "").trim().toUpperCase();
+
+  const isFinished =
+    statusUpper === "FT" ||
+    statusUpper === "AET" ||
+    statusUpper === "PEN" ||
+    statusUpper.includes("FINISH") ||
+    statusUpper.includes("ENDED") ||
+    statusUpper.includes("FULL TIME") ||
+    minuteUpper === "FT" ||
+    minuteUpper === "AET" ||
+    minuteUpper === "PEN" ||
+    minuteUpper.includes("FINISH") ||
+    minuteUpper.includes("ENDED") ||
+    minuteUpper === "90'" ||
+    minuteUpper === "90" ||
+    minuteUpper === "90M" ||
+    minuteUpper === "90 MIN" ||
+    minuteUpper === "90MIN" ||
+    (statusUpper === "2H" && (minuteUpper.startsWith("90") || (!!match?.score && match.score !== "VS")));
+
+  const isUpcoming =
+    !isFinished &&
+    (match?.status === "NS" ||
+      match?.status === "Scheduled" ||
+      match?.status === "Upcoming" ||
+      match?.status === "TBD" ||
+      match?.status === "TIMED" ||
+      !match?.score ||
+      match.score === "VS");
+
+  return { statusUpper, minuteUpper, isFinished, isUpcoming };
+};
+
+// "Regular Season - 11" → "Round 11", "Group Stage - 2" → "Group Stage · Round 2", "Final" stays as-is
+const formatRound = (round?: string) => {
+  if (!round) return "";
+  const regular = round.match(/^Regular Season\s*-\s*(\d+)$/i);
+  if (regular) return `Round ${regular[1]}`;
+  return round.replace(/\s*-\s*(\d+)$/, " · Round $1");
+};
+
+// Rating scale colours (same bands most football apps use)
+const getRatingColors = (rating: number) => {
+  if (rating >= 8) return { bg: "#2563EB", text: "#FFFFFF" };
+  if (rating >= 7) return { bg: "#02DB54", text: "#000000" };
+  if (rating >= 6.5) return { bg: "#EAB308", text: "#000000" };
+  if (rating >= 6) return { bg: "#F97316", text: "#000000" };
+  return { bg: "#EF4444", text: "#FFFFFF" };
+};
+
+const getPlayerId = (player: any) => player?.id || player?.player?.id;
+
+const RatingBadge = ({ rating, isTop }: { rating: number; isTop?: boolean }) => {
+  const colors = getRatingColors(rating);
+  return (
+    <View
+      className="px-1 rounded border border-black flex-row items-center"
+      style={{ backgroundColor: colors.bg }}
+    >
+      {isTop && <Text style={{ color: colors.text }} className="font-black text-[7px] mr-0.5">★</Text>}
+      <Text style={{ color: colors.text }} className="font-black text-[8px]">
+        {rating.toFixed(1)}
+      </Text>
+    </View>
+  );
+};
+
+// Helper to render individual player card on the pitch with player image, shirt number & rating badges
+const PlayerCard = ({
+  player,
+  isHome,
+  rating,
+  isTopRated,
+}: {
+  player: any;
+  isHome: boolean;
+  rating?: PlayerRating;
+  isTopRated?: boolean;
+}) => {
   const [imgError, setImgError] = useState(false);
-  const playerId = player.id || player.player?.id;
+  const playerId = getPlayerId(player);
   const photoUrl = player.photo || (playerId ? `https://media.api-sports.io/football/players/${playerId}.png` : null);
   const number = player.shirtNumber || player.number || player.player?.number || "";
   const fullName = player.name || player.player?.name || "";
@@ -89,6 +192,16 @@ const PlayerCard = ({ player, isHome }: { player: any; isHome: boolean }) => {
             <Text className="text-black font-black text-[8px]">{number}</Text>
           </View>
         ) : null}
+        {rating ? (
+          <View className="absolute -top-1 -left-3">
+            <RatingBadge rating={rating.rating} isTop={isTopRated} />
+          </View>
+        ) : null}
+        {rating?.captain ? (
+          <View className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-white border border-black items-center justify-center">
+            <Text className="text-black font-black text-[7px]">C</Text>
+          </View>
+        ) : null}
       </View>
       <Text
         className="text-white font-extrabold text-[9px] mt-1 text-center"
@@ -101,64 +214,82 @@ const PlayerCard = ({ player, isHome }: { player: any; isHome: boolean }) => {
   );
 };
 
-// Helper to render substitute bench player row with image
-const SubPlayerRow = ({ player, isHome }: { player: any; isHome: boolean }) => {
+// Helper to render substitute bench player row with image (and rating if the sub came on)
+const SubPlayerRow = ({
+  player,
+  isHome,
+  rating,
+  isTopRated,
+}: {
+  player: any;
+  isHome: boolean;
+  rating?: PlayerRating;
+  isTopRated?: boolean;
+}) => {
   const [imgError, setImgError] = useState(false);
-  const playerId = player.id || player.player?.id;
+  const playerId = getPlayerId(player);
   const photoUrl = player.photo || (playerId ? `https://media.api-sports.io/football/players/${playerId}.png` : null);
   const number = player.shirtNumber || player.number || player.player?.number || "-";
   const name = player.name || player.player?.name || "";
+  const borderColor = isHome ? "#02DB54" : "#60A5FA";
+
+  const avatar = (
+    <View className="relative">
+      {photoUrl && !imgError ? (
+        <Image
+          source={{ uri: photoUrl }}
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: 11,
+            borderWidth: 1,
+            borderColor,
+            backgroundColor: "#1E293B",
+          }}
+          onError={() => setImgError(true)}
+          resizeMode="cover"
+        />
+      ) : (
+        <View className="w-5 h-5 rounded-full bg-white/10 items-center justify-center">
+          <Text className="text-white font-bold text-[9px]">{number}</Text>
+        </View>
+      )}
+    </View>
+  );
+  const badge = rating ? <RatingBadge rating={rating.rating} isTop={isTopRated} /> : null;
 
   return (
     <View className={`flex-row items-center gap-2 my-1 ${isHome ? "justify-start" : "justify-end"}`}>
-      {isHome && (
-        <View className="relative">
-          {photoUrl && !imgError ? (
-            <Image
-              source={{ uri: photoUrl }}
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: 11,
-                borderWidth: 1,
-                borderColor: "#02DB54",
-                backgroundColor: "#1E293B",
-              }}
-              onError={() => setImgError(true)}
-              resizeMode="cover"
-            />
-          ) : (
-            <View className="w-5 h-5 rounded-full bg-white/10 items-center justify-center">
-              <Text className="text-white font-bold text-[9px]">{number}</Text>
-            </View>
-          )}
-        </View>
-      )}
+      {isHome && avatar}
+      {!isHome && badge}
       <Text className={`text-gray-300 text-xs font-semibold flex-1 ${isHome ? "text-left" : "text-right"}`} numberOfLines={1}>
         {name}
       </Text>
-      {!isHome && (
-        <View className="relative">
-          {photoUrl && !imgError ? (
-            <Image
-              source={{ uri: photoUrl }}
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: 11,
-                borderWidth: 1,
-                borderColor: "#60A5FA",
-                backgroundColor: "#1E293B",
-              }}
-              onError={() => setImgError(true)}
-              resizeMode="cover"
-            />
-          ) : (
-            <View className="w-5 h-5 rounded-full bg-white/10 items-center justify-center">
-              <Text className="text-white font-bold text-[9px]">{number}</Text>
-            </View>
-          )}
+      {isHome && badge}
+      {!isHome && avatar}
+    </View>
+  );
+};
+
+// Timeline event icon: ball for goals, swap for subs, yellow/red card for bookings, VAR badge
+const EventIcon = ({ item }: { item: any }) => {
+  const detail = String(item.detail || "").toLowerCase();
+  return (
+    <View className="min-w-6 h-6 items-center justify-center">
+      {item.type === "goal" ? (
+        <Text className="text-base">{detail.includes("missed") ? "❌" : "⚽"}</Text>
+      ) : item.type === "subst" ? (
+        <View className="w-5 h-5 bg-green-500/20 rounded-full items-center justify-center">
+          <Text className="text-[10px]">🔄</Text>
         </View>
+      ) : item.type === "var" ? (
+        <View className="px-1 py-0.5 bg-white/10 rounded">
+          <Text className="text-white font-black text-[7px]" numberOfLines={1}>VAR</Text>
+        </View>
+      ) : detail.includes("red") || detail.includes("second yellow") ? (
+        <View className="w-3.5 h-4 bg-red-500 rounded-sm" />
+      ) : (
+        <View className="w-3.5 h-4 bg-yellow-400 rounded-sm" />
       )}
     </View>
   );
@@ -232,58 +363,108 @@ export default function MatchDetailsModal({
   const [loadingStats, setLoadingStats] = useState<boolean>(false);
   const [h2hData, setH2hData] = useState<any>(null);
   const [loadingH2h, setLoadingH2h] = useState<boolean>(false);
+  const [ratings, setRatings] = useState<Record<string, PlayerRating>>({});
+  const [matchInfo, setMatchInfo] = useState<MatchInfo | null>(null);
 
-  // 1. Fetch Timeline Events, Stats, Lineups, Standings, H2H
+  // Responses that arrive after the user has switched to another match are dropped
+  const activeMatchIdRef = useRef<string | undefined>(match?.id);
+  activeMatchIdRef.current = match?.id;
+  const isCurrent = (matchId: string) => activeMatchIdRef.current === matchId;
+
+  const { statusUpper: matchStatusUpper, minuteUpper: matchMinuteUpper, isFinished, isUpcoming } =
+    getMatchPhase(match);
+  const isLive = !!match && !isFinished && !isUpcoming;
+
+  // 1. Fetch Timeline Events, Stats, Lineups, Standings, H2H, Venue/Round, Ratings
   // Load Events
   const loadEvents = useCallback(async () => {
     if (!match?.id) return;
+    const matchId = match.id;
     setLoadingEvents(true);
     try {
-      const data = await fetchFixtureEvents(match.id);
-      setEvents(data || []);
+      const data = await fetchFixtureEvents(matchId);
+      if (isCurrent(matchId)) setEvents(data || []);
     } catch (err) {
       console.error("Failed to load events:", err);
     } finally {
-      setLoadingEvents(false);
+      if (isCurrent(matchId)) setLoadingEvents(false);
     }
   }, [match?.id]);
 
   // Load Stats
   const loadStats = useCallback(async () => {
     if (!match?.id) return;
+    const matchId = match.id;
     setLoadingStats(true);
     try {
-      const statsData = await fetchFixtureStatistics(match.id);
-      setStats(statsData || []);
+      const statsData = await fetchFixtureStatistics(matchId);
+      if (isCurrent(matchId)) setStats(statsData || []);
     } catch (err) {
       console.error("Failed to load statistics:", err);
     } finally {
-      setLoadingStats(false);
+      if (isCurrent(matchId)) setLoadingStats(false);
     }
   }, [match?.id]);
 
   // Load Lineups (supports force reload)
   const loadLineups = useCallback(async (force = false) => {
     if (!match?.id) return;
+    const matchId = match.id;
     setLoadingLineup(true);
     try {
-      const homeData = await fetchHomeTeamLineup(match.id, force);
-      const awayData = await fetchAwayTeamLineup(match.id, force);
-      setHomeLineup(homeData);
-      setAwayLineup(awayData);
+      const [homeData, awayData] = await Promise.all([
+        fetchHomeTeamLineup(matchId, force),
+        fetchAwayTeamLineup(matchId, force),
+      ]);
+      if (isCurrent(matchId)) {
+        setHomeLineup(homeData);
+        setAwayLineup(awayData);
+      }
     } catch (err) {
       console.error("Failed to load lineups:", err);
     } finally {
-      setLoadingLineup(false);
+      if (isCurrent(matchId)) setLoadingLineup(false);
+    }
+  }, [match?.id]);
+
+  // Load Player Ratings (final ratings are cached longer on the backend)
+  const loadRatings = useCallback(async () => {
+    if (!match?.id) return;
+    const matchId = match.id;
+    try {
+      const data = await fetchPlayerRatings(matchId, isFinished);
+      if (isCurrent(matchId)) setRatings(data);
+    } catch (err) {
+      console.error("Failed to load player ratings:", err);
+    }
+  }, [match?.id, isFinished]);
+
+  // Load Venue & Round
+  const loadMatchInfo = useCallback(async () => {
+    if (!match?.id) return;
+    const matchId = match.id;
+    try {
+      const data: any = await fetchMatchLocation(matchId);
+      if (isCurrent(matchId)) {
+        setMatchInfo({
+          venue: data?.venue || "",
+          city: data?.city || "",
+          round: data?.round || "",
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load match location:", err);
     }
   }, [match?.id]);
 
   // Load Standings
   const loadStandings = useCallback(async () => {
-    if (!match?.leagueId) return;
+    if (!match?.id || !match?.leagueId) return;
+    const matchId = match.id;
     setLoadingStandings(true);
     try {
       const rawData = await fetchLeagueStandings(match.leagueId);
+      if (!isCurrent(matchId)) return;
       if (rawData && rawData.length > 0) {
         const mapped = rawData.map((item: any, idx: number) => {
           const teamObj = item.team || item;
@@ -327,119 +508,81 @@ export default function MatchDetailsModal({
       }
     } catch (err) {
       console.error("Failed to load standings:", err);
-      setStandings([]);
+      if (isCurrent(matchId)) setStandings([]);
     } finally {
-      setLoadingStandings(false);
+      if (isCurrent(matchId)) setLoadingStandings(false);
     }
-  }, [match?.leagueId, match?.home?.id, match?.home?.name, match?.away?.id, match?.away?.name]);
+  }, [match?.id, match?.leagueId, match?.home?.id, match?.home?.name, match?.away?.id, match?.away?.name]);
 
   // Load H2H
   const loadH2H = useCallback(async () => {
-    if (!match?.home?.id || !match?.away?.id) return;
+    if (!match?.id || !match?.home?.id || !match?.away?.id) return;
+    const matchId = match.id;
     setLoadingH2h(true);
     try {
       const data = await fetchFixtureH2H(match.home.id!, match.away.id!);
-      setH2hData(data);
+      if (isCurrent(matchId)) setH2hData(data);
     } catch (err) {
       console.error("Failed to load H2H:", err);
     } finally {
-      setLoadingH2h(false);
+      if (isCurrent(matchId)) setLoadingH2h(false);
     }
-  }, [match?.home?.id, match?.away?.id]);
+  }, [match?.id, match?.home?.id, match?.away?.id]);
 
   const refreshAll = useCallback(() => {
     loadEvents();
     loadStats();
     loadLineups(true);
+    loadRatings();
+    loadMatchInfo();
     loadStandings();
     loadH2H();
-  }, [loadEvents, loadStats, loadLineups, loadStandings, loadH2H]);
+  }, [loadEvents, loadStats, loadLineups, loadRatings, loadMatchInfo, loadStandings, loadH2H]);
+
+  // Clear the previous match's data so it never flashes up under a different match
+  useEffect(() => {
+    setActiveTab("infor");
+    setEvents([]);
+    setStats([]);
+    setHomeLineup(null);
+    setAwayLineup(null);
+    setStandings([]);
+    setH2hData(null);
+    setRatings({});
+    setMatchInfo(null);
+  }, [match?.id]);
 
   useEffect(() => {
     if (!visible || !match?.id) return;
     loadEvents();
     loadStats();
     loadLineups(false);
+    loadMatchInfo();
     loadStandings();
     loadH2H();
-  }, [visible, match?.id, loadEvents, loadStats, loadLineups, loadStandings, loadH2H]);
+  }, [visible, match?.id, loadEvents, loadStats, loadLineups, loadMatchInfo, loadStandings, loadH2H]);
+
+  // Ratings load separately so they re-fetch (as final ratings) once a live match finishes
+  useEffect(() => {
+    if (!visible || !match?.id || isUpcoming) return;
+    loadRatings();
+  }, [visible, match?.id, isUpcoming, loadRatings]);
+
+  // Keep live ratings moving while the user is looking at the lineup
+  useEffect(() => {
+    if (!visible || !isLive || activeTab !== "lineup") return;
+    const interval = setInterval(loadRatings, LIVE_RATINGS_REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [visible, isLive, activeTab, loadRatings]);
 
   if (!match) return null;
 
-  // Fallback Stadium
-  const stadiumName = "ESTADIO NORBERTO TITO TOMAGHELLO";
+  const venueName = matchInfo?.venue || match.venue || "";
+  const venueCity = matchInfo?.city || match.venueCity || "";
+  const venueLabel = [venueName, venueCity].filter(Boolean).join(", ") || "Venue TBA";
+  const roundLabel = formatRound(matchInfo?.round || match.round);
 
-  const matchStatusUpper = String(match.status || "").trim().toUpperCase();
-  const matchMinuteUpper = String(match.minute || "").trim().toUpperCase();
-
-  const isFinished =
-    matchStatusUpper === "FT" ||
-    matchStatusUpper === "AET" ||
-    matchStatusUpper === "PEN" ||
-    matchStatusUpper.includes("FINISH") ||
-    matchStatusUpper.includes("ENDED") ||
-    matchStatusUpper.includes("FULL TIME") ||
-    matchMinuteUpper === "FT" ||
-    matchMinuteUpper === "AET" ||
-    matchMinuteUpper === "PEN" ||
-    matchMinuteUpper.includes("FINISH") ||
-    matchMinuteUpper.includes("ENDED") ||
-    matchMinuteUpper === "90'" ||
-    matchMinuteUpper === "90" ||
-    matchMinuteUpper === "90M" ||
-    matchMinuteUpper === "90 MIN" ||
-    matchMinuteUpper === "90MIN" ||
-    (matchStatusUpper === "2H" && (matchMinuteUpper.startsWith("90") || (match.score && match.score !== "VS")));
-
-  const isUpcoming =
-    !isFinished &&
-    (match.status === "NS" ||
-      match.status === "Scheduled" ||
-      match.status === "Upcoming" ||
-      match.status === "TBD" ||
-      match.status === "TIMED" ||
-      (!match.score || match.score === "VS"));
-
-  // Fallback timeline events if API returned empty
-  const getTimelineEvents = () => {
-    if (events && events.length > 0) {
-      return events;
-    }
-    if (isUpcoming) return [];
-
-    const scores = match.score.split("-").map((s) => parseInt(s.trim()));
-    const homeGoals = isNaN(scores[0]) ? 0 : scores[0];
-    const awayGoals = isNaN(scores[1]) ? 0 : scores[1];
-    if (homeGoals === 0 && awayGoals === 0) return [];
-
-    const fallbackList: any[] = [];
-
-    for (let i = 0; i < homeGoals; i++) {
-      fallbackList.push({
-        id: `h-g-${i}`,
-        type: "goal",
-        player: `Goalscorer H${i + 1}`,
-        minute: `${90 - i * 4}'`,
-        elapsed: 90 - i * 4,
-        teamId: match.home.id,
-        isHome: true,
-      });
-    }
-    for (let i = 0; i < awayGoals; i++) {
-      fallbackList.push({
-        id: `a-g-${i}`,
-        type: "goal",
-        player: `Goalscorer A${i + 1}`,
-        minute: `${80 - i * 10}'`,
-        elapsed: 80 - i * 10,
-        teamId: match.away.id,
-        isHome: false,
-      });
-    }
-    return fallbackList.sort((a, b) => b.elapsed - a.elapsed);
-  };
-
-  const timelineEvents = getTimelineEvents();
+  const timelineEvents = events;
 
   // Helper to extract lineup data flexibly — handles both flat and nested response structures
   const getLineupObj = (data: any, fallbackName: string) => {
@@ -476,6 +619,18 @@ export default function MatchDetailsModal({
   const awayLineupData = getLineupObj(awayLineup, match.away.name);
   const homeStarters = homeLineupData.starters;
   const awayStarters = awayLineupData.starters;
+
+  const getRating = (player: any): PlayerRating | undefined => {
+    const id = getPlayerId(player);
+    return id ? ratings[String(id)] : undefined;
+  };
+  // Highest-rated player of the match gets a star on their badge
+  const topRatedId = (Object.entries(ratings) as [string, PlayerRating][]).reduce<{ id: string; rating: number } | null>(
+    (best, [id, r]) => (!best || r.rating > best.rating ? { id, rating: r.rating } : best),
+    null,
+  )?.id;
+  const isTopRated = (player: any) => !!topRatedId && String(getPlayerId(player)) === topRatedId;
+
   // Use actual API stats only — no demo fallback
   const effectiveStats = stats;
 
@@ -583,11 +738,23 @@ export default function MatchDetailsModal({
             <View className="flex-row items-center justify-between mt-5 pt-3 border-t border-white/5 px-2">
               <View className="flex-row items-center gap-1.5 flex-1">
                 <MapPin size={13} color="#02DB54" />
-                <Text className="text-[#02DB54] text-[11px] font-black uppercase tracking-wider" numberOfLines={1}>
-                  {stadiumName}
+                <Text
+                  className="text-[#02DB54] text-[11px] font-black uppercase tracking-wider"
+                  numberOfLines={1}
+                  style={{ flexShrink: 1 }}
+                >
+                  {venueLabel}
                 </Text>
               </View>
-              <Text className="text-white text-[11px] font-extrabold">Round 11</Text>
+              {roundLabel ? (
+                <Text
+                  className="text-white text-[11px] font-extrabold ml-3"
+                  numberOfLines={1}
+                  style={{ flexShrink: 0, maxWidth: "45%" }}
+                >
+                  {roundLabel}
+                </Text>
+              ) : null}
             </View>
           </View>
 
@@ -631,6 +798,18 @@ export default function MatchDetailsModal({
           {/* TAB 1: INFOR (Match Timeline) */}
           {activeTab === "infor" && (
             <View className="mb-6">
+              {/* Community prediction poll */}
+              <MatchPrediction
+                key={match.id}
+                matchId={match.id}
+                home={match.home}
+                away={match.away}
+                score={match.score}
+                isUpcoming={isUpcoming}
+                isFinished={isFinished}
+                kickoff={getMatchKickoffMs(match)}
+              />
+
               {/* Section Header */}
               <View className="flex-row items-center justify-center mb-6">
                 <View className="flex-1 h-[1px] bg-white/10" />
@@ -684,19 +863,7 @@ export default function MatchDetailsModal({
 
                         {/* Icon & Minute Pill */}
                         <View className="flex-row items-center gap-2">
-                          {isHome && (
-                            <View className="w-6 h-6 items-center justify-center">
-                              {item.type === "goal" ? (
-                                <Text className="text-base">⚽</Text>
-                              ) : item.type === "subst" ? (
-                                <View className="w-5 h-5 bg-green-500/20 rounded-full items-center justify-center">
-                                  <Text className="text-[10px]">🔄</Text>
-                                </View>
-                              ) : (
-                                <View className="w-3.5 h-4 bg-yellow-400 rounded-sm" />
-                              )}
-                            </View>
-                          )}
+                          {isHome && <EventIcon item={item} />}
 
                           <View className="bg-white px-3 py-1 rounded-full border border-gray-200 min-w-[42px] items-center">
                             <Text className="text-black font-black text-[11px]">
@@ -704,19 +871,7 @@ export default function MatchDetailsModal({
                             </Text>
                           </View>
 
-                          {!isHome && (
-                            <View className="w-6 h-6 items-center justify-center">
-                              {item.type === "goal" ? (
-                                <Text className="text-base">⚽</Text>
-                              ) : item.type === "subst" ? (
-                                <View className="w-5 h-5 bg-green-500/20 rounded-full items-center justify-center">
-                                  <Text className="text-[10px]">🔄</Text>
-                                </View>
-                              ) : (
-                                <View className="w-3.5 h-4 bg-yellow-400 rounded-sm" />
-                              )}
-                            </View>
-                          )}
+                          {!isHome && <EventIcon item={item} />}
                         </View>
 
                         {/* Away Side Event */}
@@ -860,7 +1015,7 @@ export default function MatchDetailsModal({
                       {getFormationRows(homeStarters, homeLineupData.formation).map((row: any[], rIdx: number) => (
                         <View key={`h-row-${rIdx}`} className="flex-row justify-around items-center px-1 my-1">
                           {row.map((p: any, pIdx: number) => (
-                            <PlayerCard key={`h-p-${p.id || pIdx}`} player={p} isHome={true} />
+                            <PlayerCard key={`h-p-${p.id || pIdx}`} player={p} isHome={true} rating={getRating(p)} isTopRated={isTopRated(p)} />
                           ))}
                         </View>
                       ))}
@@ -880,7 +1035,7 @@ export default function MatchDetailsModal({
                       {getFormationRows(awayStarters, awayLineupData.formation).slice().reverse().map((row: any[], rIdx: number) => (
                         <View key={`a-row-${rIdx}`} className="flex-row justify-around items-center px-1 my-1">
                           {row.map((p: any, pIdx: number) => (
-                            <PlayerCard key={`a-p-${p.id || pIdx}`} player={p} isHome={false} />
+                            <PlayerCard key={`a-p-${p.id || pIdx}`} player={p} isHome={false} rating={getRating(p)} isTopRated={isTopRated(p)} />
                           ))}
                         </View>
                       ))}
@@ -904,7 +1059,7 @@ export default function MatchDetailsModal({
                             {homeLineupData.teamName}
                           </Text>
                           {homeLineupData.subs.map((s: any, idx: number) => (
-                            <SubPlayerRow key={idx} player={s} isHome={true} />
+                            <SubPlayerRow key={getPlayerId(s) || idx} player={s} isHome={true} rating={getRating(s)} isTopRated={isTopRated(s)} />
                           ))}
                         </View>
 
@@ -914,7 +1069,7 @@ export default function MatchDetailsModal({
                             {awayLineupData.teamName}
                           </Text>
                           {awayLineupData.subs.map((s: any, idx: number) => (
-                            <SubPlayerRow key={idx} player={s} isHome={false} />
+                            <SubPlayerRow key={getPlayerId(s) || idx} player={s} isHome={false} rating={getRating(s)} isTopRated={isTopRated(s)} />
                           ))}
                         </View>
                       </View>
@@ -946,7 +1101,7 @@ export default function MatchDetailsModal({
                   </View>
 
                   {/* Table Rows */}
-                  {standings.slice(0, 15).map((item, idx) => (
+                  {standings.map((item, idx) => (
                     <View
                       key={idx}
                       className={`flex-row items-center py-3 px-4 border-b border-white/5 ${
@@ -980,44 +1135,77 @@ export default function MatchDetailsModal({
 
           {/* TAB 5: H2H */}
           {activeTab === "h2h" && (
-            <View className="mb-6 space-y-4">
+            <View className="mb-6">
               {loadingH2h ? (
                 <ActivityIndicator color="#02DB54" className="my-6" />
+              ) : !h2hData || !h2hData.totalMatches ? (
+                <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
+                  <Text className="text-[#02DB54] font-black text-sm mb-1">No Previous Meetings</Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">These teams have no head-to-head record yet.</Text>
+                </View>
               ) : (
                 <>
-                  {/* Overall Wins Card */}
-                  <View className="bg-[#131517] rounded-2xl p-4 border border-white/10 my-2 flex-row justify-between items-center">
-                    <Text className="text-white font-extrabold text-sm flex-row items-center gap-2">
-                      📊 Home Wins
+                  {/* Overall record */}
+                  <View className="bg-[#131517] rounded-2xl p-4 border border-white/10 my-2">
+                    <Text className="text-gray-400 font-extrabold text-[11px] text-center mb-3">
+                      Last {h2hData.totalMatches} meetings
                     </Text>
-                    <View className="bg-[#86EFAC] py-2 px-4 rounded-xl">
-                      <Text className="text-black font-black text-xs">
-                        {h2hData?.homeWins ?? 3}
-                      </Text>
+                    <View className="flex-row justify-between items-center">
+                      {[
+                        { label: match.home?.name || "Home", value: h2hData.homeWins ?? 0, color: "#86EFAC" },
+                        { label: "Draws", value: h2hData.draws ?? 0, color: "#9CA3AF" },
+                        { label: match.away?.name || "Away", value: h2hData.awayWins ?? 0, color: "#93C5FD" },
+                      ].map((col) => (
+                        <View key={col.label} className="flex-1 items-center px-1">
+                          <Text className="font-black text-2xl" style={{ color: col.color }}>
+                            {col.value}
+                          </Text>
+                          <Text className="text-gray-300 font-bold text-[10px] mt-1 text-center" numberOfLines={1}>
+                            {col.label}
+                          </Text>
+                        </View>
+                      ))}
                     </View>
                   </View>
 
-                  <View className="bg-[#131517] rounded-2xl p-4 border border-white/10 my-2 flex-row justify-between items-center">
-                    <Text className="text-white font-extrabold text-sm">
-                      📊 Away Wins
-                    </Text>
-                    <View className="bg-[#86EFAC] py-2 px-4 rounded-xl">
-                      <Text className="text-black font-black text-xs">
-                        {h2hData?.awayWins ?? 2}
-                      </Text>
+                  {/* Recent meetings */}
+                  {Array.isArray(h2hData.matches) && h2hData.matches.length > 0 && (
+                    <View className="bg-[#131517] rounded-2xl border border-white/10 my-2 overflow-hidden">
+                      {h2hData.matches.map((m: any, idx: number) => (
+                        <View
+                          key={m.id || idx}
+                          className={`px-4 py-3 ${idx > 0 ? "border-t border-white/5" : ""}`}
+                        >
+                          <Text className="text-gray-500 font-bold text-[10px] mb-1.5" numberOfLines={1}>
+                            {[m.date, m.league].filter(Boolean).join(" · ")}
+                          </Text>
+                          <View className="flex-row items-center">
+                            <View className="flex-1 flex-row items-center justify-end gap-2">
+                              <Text className="text-white font-bold text-xs text-right flex-shrink" numberOfLines={1}>
+                                {m.home?.name}
+                              </Text>
+                              {m.home?.logo ? (
+                                <Image source={{ uri: m.home.logo }} className="w-5 h-5" resizeMode="contain" />
+                              ) : null}
+                            </View>
+                            <View className="bg-black/50 px-3 py-1 rounded-full mx-3 min-w-[52px] items-center">
+                              <Text className="text-white font-black text-xs">
+                                {m.home?.score ?? 0} - {m.away?.score ?? 0}
+                              </Text>
+                            </View>
+                            <View className="flex-1 flex-row items-center gap-2">
+                              {m.away?.logo ? (
+                                <Image source={{ uri: m.away.logo }} className="w-5 h-5" resizeMode="contain" />
+                              ) : null}
+                              <Text className="text-white font-bold text-xs flex-shrink" numberOfLines={1}>
+                                {m.away?.name}
+                              </Text>
+                            </View>
+                          </View>
+                        </View>
+                      ))}
                     </View>
-                  </View>
-
-                  <View className="bg-[#131517] rounded-2xl p-4 border border-white/10 my-2 flex-row justify-between items-center">
-                    <Text className="text-white font-extrabold text-sm">
-                      📊 Draws
-                    </Text>
-                    <View className="bg-[#86EFAC] py-2 px-4 rounded-xl">
-                      <Text className="text-black font-black text-xs">
-                        {h2hData?.draws ?? 1}
-                      </Text>
-                    </View>
-                  </View>
+                  )}
                 </>
               )}
             </View>

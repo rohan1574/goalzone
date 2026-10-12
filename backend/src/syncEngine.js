@@ -12,7 +12,6 @@ const {
   mapLocation,
   parseFixtureStats,
   parseFixtureEvents,
-  parsePredictions,
 } = require('./mappers');
 
 // ==========================================
@@ -178,7 +177,7 @@ async function syncDates({ force }) {
     // Venue info is already in this response: store it so match screens need no extra call
     for (const item of data.response || []) {
       if (!POPULAR_LEAGUE_IDS_SET.has(String(item.league.id))) continue;
-      const locKey = `location_${item.fixture.id}`;
+      const locKey = `location_v2_${item.fixture.id}`;
       if (!cache.get(locKey)) cache.set(locKey, mapLocation(item), 7 * 24 * 3600);
     }
     await sleep(300);
@@ -206,7 +205,7 @@ async function syncStandings({ force }) {
   for (const leagueId of SYNC_LEAGUE_IDS) {
     const bestSeason = cache.getEntry(`standings_best_season_${leagueId}`)?.data;
     const seasons = [...new Set([bestSeason, currentYear, currentYear - 1].filter(Boolean))];
-    const current = cache.getEntry(`standings_${leagueId}_${seasons[0]}`);
+    const current = cache.getEntry(`standings_v2_${leagueId}_${seasons[0]}`);
 
     const dirtyAt = dirtyStandings.get(leagueId);
     const isDirty = dirtyAt && now >= dirtyAt;
@@ -226,7 +225,7 @@ async function syncStandings({ force }) {
       calls++;
       const mapped = mapStandings(data);
       if (mapped.length > 0) {
-        cache.set(`standings_${leagueId}_${season}`, mapped, 12 * 3600);
+        cache.set(`standings_v2_${leagueId}_${season}`, mapped, 12 * 3600);
         cache.set(`standings_best_season_${leagueId}`, season, 7 * 24 * 3600);
         break;
       }

@@ -49,5 +49,6 @@ example
 /ios
 /android
 backend/.cache/
+backend/.data/
 
 

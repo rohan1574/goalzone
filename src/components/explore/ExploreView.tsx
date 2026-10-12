@@ -42,12 +42,11 @@ interface ExploreViewProps {
   onRefresh: () => void;
   liveMatches: Match[];
   leaguesList: LeagueGroup[];
-  activeNotifications: { [key: string]: boolean };
-  onToggleNotification: (id: string, matchName?: string) => void;
   width: number;
   onPressDetails: (match: Match) => void;
   loadingFixtures?: boolean;
   searchQuery?: string;
+  selectedDate?: Date;
 }
 
 export default function ExploreView({
@@ -55,12 +54,13 @@ export default function ExploreView({
   onRefresh,
   liveMatches,
   leaguesList,
-  activeNotifications,
-  onToggleNotification,
   width,
   onPressDetails,
   loadingFixtures,
+  searchQuery,
+  selectedDate,
 }: ExploreViewProps) {
+  const isSearching = !!searchQuery?.trim();
   return (
     <ScrollView
       className="flex-1"
@@ -74,18 +74,28 @@ export default function ExploreView({
         />
       }
     >
-      {/* Horizontal Carousel of Live Matches */}
-      <LiveMatches liveMatches={liveMatches} width={width} onPressDetails={onPressDetails} />
+      {/* Search scope hint: results come from the selected day's fixtures */}
+      {isSearching && (
+        <Text className="text-gray-400 text-xs font-bold px-4 mt-4">
+          Results for "{searchQuery!.trim()}" on{" "}
+          {selectedDate?.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })}
+          {" · "}pick another day to search it
+        </Text>
+      )}
+
+      {/* Horizontal Carousel of Live Matches (hidden while searching unless a live match matches) */}
+      {(!isSearching || liveMatches.length > 0) && (
+        <LiveMatches liveMatches={liveMatches} width={width} onPressDetails={onPressDetails} />
+      )}
 
      
 
       {/* Match Fixture lists categorized by League */}
       <Leagues
         leaguesList={leaguesList}
-        activeNotifications={activeNotifications}
-        onToggleNotification={onToggleNotification}
         onPressDetails={onPressDetails}
         loadingFixtures={loadingFixtures}
+        searchQuery={searchQuery}
       />
     </ScrollView>
   );

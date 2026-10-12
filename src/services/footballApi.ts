@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 // Contabo VPS hosted live backend URL with local fallback
-const BACKEND_URL = "http://62.84.190.145";
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "http://62.84.190.145";
 const LOCAL_BACKEND_URL_ANDROID = "http://10.0.2.2:3000";
 const LOCAL_BACKEND_URL_LOCALHOST = "http://localhost:3000";
 
@@ -49,11 +49,13 @@ export const toggleServerMatchNotification = async (
   token: string,
   matchId: string,
   action: "subscribe" | "unsubscribe"
-) => {
+): Promise<boolean> => {
   try {
     await api.post("/api/match-notifications", { token, matchId, action });
+    return true;
   } catch (err) {
     console.warn("[FCM Subscription Error]:", err);
+    return false;
   }
 };
 
@@ -321,6 +323,26 @@ export const formatLocalMatchTime = (match: any, defaultTime = "19:00"): string 
   }
 
   return defaultTime;
+};
+
+// Kickoff time in ms from whichever field the match source provides (null if unknown)
+export const getMatchKickoffMs = (match: any): number | null => {
+  if (match?.timestamp) return Number(match.timestamp) * 1000;
+  // League/team lists put a short "12/10" in `date` and the full ISO string in `rawDate`
+  const parsed = Date.parse(match?.rawDate || match?.date || "");
+  return isNaN(parsed) || new Date(parsed).getFullYear() < 2000 ? null : parsed;
+};
+
+// "Today 19:30", "Tomorrow 21:00", "Sat 18 Oct 16:00" in the user's own timezone
+export const formatKickoffLabel = (ms: number): string => {
+  const d = new Date(ms);
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (d.toDateString() === today.toDateString()) return `Today ${time}`;
+  if (d.toDateString() === tomorrow.toDateString()) return `Tomorrow ${time}`;
+  return `${d.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })} ${time}`;
 };
 
 export const getMatchLocalDateStr = (match: any, fallbackDate?: Date): string => {
@@ -699,21 +721,22 @@ export const fetchMatchLocation = async (eventid: string | number) => {
   }
 };
 
-export const fetchFootballNews = async () => {
-  const MEM_KEY = "@goalzone_mem_news";
-  const CACHE_KEY = "@goalzone_api_cache_news";
-  const CACHE_TIME_KEY = "@goalzone_api_cache_news_time";
+export const fetchFootballNews = async (force = false) => {
+  const MEM_KEY = "@goalzone_mem_news_v2";
+  // v2: backend switched to the football-only feed; older entries hold all-sports news
+  const CACHE_KEY = "@goalzone_api_cache_news_v2";
+  const CACHE_TIME_KEY = "@goalzone_api_cache_news_v2_time";
 
-  // 1. Instant in-memory check
-  const memData = getFromMemoryCache(MEM_KEY);
+  // 1. Instant in-memory check (skipped on pull-to-refresh)
+  const memData = force ? null : getFromMemoryCache(MEM_KEY);
   if (memData && memData.length > 0) {
     return memData;
   }
 
   // 2. Persistent storage check
   try {
-    const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
-    const cachedData = await AsyncStorage.getItem(CACHE_KEY);
+    const cachedTime = force ? null : await AsyncStorage.getItem(CACHE_TIME_KEY);
+    const cachedData = force ? null : await AsyncStorage.getItem(CACHE_KEY);
 
     if (cachedTime && cachedData) {
       const parsedTime = parseInt(cachedTime, 10);
@@ -750,6 +773,46 @@ export const fetchFootballNews = async () => {
     console.error("Error fetching news:", error);
     return [];
   }
+};
+
+export interface VideoHighlight {
+  id: string;
+  title: string;
+  published: string;
+  channel: string;
+  competition: string;
+  leagueId: string | null;
+  thumbnail: string;
+  url: string;
+}
+
+// Latest match highlights from official league / broadcaster YouTube channels. Throws on failure.
+export const fetchVideoHighlights = async (force = false): Promise<VideoHighlight[]> => {
+  const CACHE_KEY = "@goalzone_api_cache_highlights";
+  const CACHE_TIME_KEY = "@goalzone_api_cache_highlights_time";
+  const TTL = 15 * 60 * 1000;
+
+  if (!force) {
+    try {
+      const [cachedTime, cachedData] = await Promise.all([
+        AsyncStorage.getItem(CACHE_TIME_KEY),
+        AsyncStorage.getItem(CACHE_KEY),
+      ]);
+      if (cachedTime && cachedData && Date.now() - parseInt(cachedTime, 10) < TTL) {
+        return JSON.parse(cachedData);
+      }
+    } catch (err) {
+      console.warn("Error reading highlights cache:", err);
+    }
+  }
+
+  const response = await api.get("/football-get-highlights", { timeout: 20000 });
+  const videos: VideoHighlight[] = Array.isArray(response.data) ? response.data : [];
+  if (videos.length > 0) {
+    AsyncStorage.setItem(CACHE_KEY, JSON.stringify(videos)).catch(() => {});
+    AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString()).catch(() => {});
+  }
+  return videos;
 };
 
 export const fetchLeagueStandings = async (
@@ -1054,8 +1117,9 @@ export const fetchFixtureStatistics = async (eventid: string | number) => {
 
 export const fetchFixturePredictions = async (eventid: string | number) => {
   if (!eventid) return null;
-  const CACHE_KEY = `@goalzone_api_cache_predictions_${eventid}`;
-  const CACHE_TIME_KEY = `@goalzone_api_cache_predictions_time_${eventid}`;
+  // v2: older entries can hold the backend's former mock predictions
+  const CACHE_KEY = `@goalzone_api_cache_predictions_v2_${eventid}`;
+  const CACHE_TIME_KEY = `@goalzone_api_cache_predictions_v2_time_${eventid}`;
 
   try {
     const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
@@ -1108,6 +1172,95 @@ export const fetchFixtureEvents = async (eventid: string | number) => {
     console.error("Error fetching match events:", error);
     return [];
   }
+};
+
+// Returns { [playerId]: { rating, minutes, captain } } for every player that has a rating
+export const fetchPlayerRatings = async (
+  eventid: string | number,
+  finished = false,
+): Promise<Record<string, { rating: number; minutes: number | null; captain: boolean }>> => {
+  if (!eventid) return {};
+  try {
+    const response = await api.get("/football-get-player-ratings", {
+      params: { eventid, finished },
+    });
+    const list = Array.isArray(response.data) ? response.data : [];
+    const ratings: Record<string, { rating: number; minutes: number | null; captain: boolean }> = {};
+    list.forEach((item: any) => {
+      if (item?.id && typeof item.rating === "number") {
+        ratings[String(item.id)] = {
+          rating: item.rating,
+          minutes: item.minutes ?? null,
+          captain: !!item.captain,
+        };
+      }
+    });
+    return ratings;
+  } catch (error) {
+    // 404 until the backend with /football-get-player-ratings is deployed; ratings are optional
+    console.warn("Player ratings unavailable:", (error as any)?.message || error);
+    return {};
+  }
+};
+
+// Anonymous per-install id so each device gets one vote per match
+const DEVICE_ID_KEY = "@goalzone_device_id";
+let deviceIdPromise: Promise<string> | null = null;
+
+export const getDeviceId = (): Promise<string> => {
+  if (!deviceIdPromise) {
+    deviceIdPromise = (async () => {
+      try {
+        const stored = await AsyncStorage.getItem(DEVICE_ID_KEY);
+        if (stored) return stored;
+      } catch (err) {
+        console.warn("Error reading device id:", err);
+      }
+      const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
+      try {
+        await AsyncStorage.setItem(DEVICE_ID_KEY, id);
+      } catch (err) {
+        console.warn("Error saving device id:", err);
+      }
+      return id;
+    })();
+  }
+  return deviceIdPromise;
+};
+
+export type PredictionChoice = "home" | "draw" | "away";
+
+export interface MatchPredictionTally {
+  home: number;
+  draw: number;
+  away: number;
+  total: number;
+  myVote: PredictionChoice | null;
+}
+
+// Community "Who will win?" tally for a match, including this device's pick. Throws on failure.
+export const fetchMatchPrediction = async (
+  eventid: string | number,
+): Promise<MatchPredictionTally> => {
+  const deviceId = await getDeviceId();
+  const response = await api.get("/football-get-match-prediction", {
+    params: { eventid, deviceId },
+  });
+  return response.data;
+};
+
+// Casts (or changes) this device's pick and returns the updated tally. Throws on failure.
+export const submitMatchPrediction = async (
+  eventid: string | number,
+  choice: PredictionChoice,
+): Promise<MatchPredictionTally> => {
+  const deviceId = await getDeviceId();
+  const response = await api.post("/football-match-prediction", {
+    eventid: String(eventid),
+    deviceId,
+    choice,
+  });
+  return response.data;
 };
 
 export const fetchFixtureH2H = async (homeId: string | number, awayId: string | number) => {
@@ -1224,8 +1377,9 @@ export const fetchPopularTeams = async () => {
 
 export const fetchTeamFixtures = async (teamid: string | number) => {
   if (!teamid) return [];
-  const CACHE_KEY = `@goalzone_api_cache_team_fixtures_${teamid}`;
-  const CACHE_TIME_KEY = `@goalzone_api_cache_team_fixtures_time_${teamid}`;
+  // v2: now includes recent results and both teams for each fixture
+  const CACHE_KEY = `@goalzone_api_cache_team_fixtures_v2_${teamid}`;
+  const CACHE_TIME_KEY = `@goalzone_api_cache_team_fixtures_v2_time_${teamid}`;
 
   try {
     const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
@@ -1267,8 +1421,9 @@ export const fetchTeamFixtures = async (teamid: string | number) => {
 
 export const fetchTeamSquad = async (teamid: string | number) => {
   if (!teamid) return [];
-  const CACHE_KEY = `@goalzone_api_cache_team_squad_${teamid}`;
-  const CACHE_TIME_KEY = `@goalzone_api_cache_team_squad_time_${teamid}`;
+  // v2: players are objects (name, number, age, photo), older entries were plain names
+  const CACHE_KEY = `@goalzone_api_cache_team_squad_v2_${teamid}`;
+  const CACHE_TIME_KEY = `@goalzone_api_cache_team_squad_v2_time_${teamid}`;
 
   try {
     const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);

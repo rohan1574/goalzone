@@ -32,14 +32,71 @@ function getCachedLiveScores() {
 }
 
 // ==========================================
-// 2. STATE TRACKING FOR GOAL DETECTOR
+// 2. STATE TRACKING FOR GOAL & KICKOFF ALERTS
 // ==========================================
 /**
- * Keeps a duplicate copy of match scores from the previous poll cycle.
+ * Scores from the previous poll cycle, used to spot goals.
  * Key: matchId (string)
- * Value: { homeScore: number, awayScore: number, homeTeam: string, awayTeam: string }
+ * Value: { homeScore, awayScore, homeTeam, awayTeam, leagueId }
  */
 const previousMatchState = new Map();
+
+/**
+ * Kickoff alerts already sent: matchId -> sentAt (ms). Stops a repeat "Match Started"
+ * when the API briefly drops a live match from its feed and it reappears later.
+ */
+const kickoffSentAt = new Map();
+const KICKOFF_MEMORY_MS = 4 * 60 * 60 * 1000;
+
+// A match first seen in the live feed only counts as "just started" this early on.
+// With nothing live the poller can sleep up to 15 min, so the window has to cover that.
+const KICKOFF_WINDOW_MINUTES = 20;
+
+// Alert state is saved so a restart/deploy neither repeats alerts nor misses goals
+const ALERT_STATE_CACHE_KEY = 'live_alert_state';
+const ALERT_STATE_MAX_AGE_MS = 10 * 60 * 1000;
+
+function saveAlertState() {
+  cache.set(ALERT_STATE_CACHE_KEY, {
+    savedAt: Date.now(),
+    matches: [...previousMatchState.entries()],
+    kickoffs: [...kickoffSentAt.entries()],
+  }, 24 * 3600);
+}
+
+function loadAlertState() {
+  const saved = cache.getEntry(ALERT_STATE_CACHE_KEY)?.data;
+  if (!saved) return;
+  // Scores from before a long outage are too old to diff against (goals in between would be lost anyway)
+  if (Date.now() - saved.savedAt < ALERT_STATE_MAX_AGE_MS) {
+    for (const [id, state] of saved.matches || []) previousMatchState.set(id, state);
+  }
+  for (const [id, sentAt] of saved.kickoffs || []) {
+    if (Date.now() - sentAt < KICKOFF_MEMORY_MS) kickoffSentAt.set(id, sentAt);
+  }
+  console.log(`[Alerts] Restored state: ${previousMatchState.size} live matches, ${kickoffSentAt.size} kickoffs already sent`);
+}
+
+const isJustKickedOff = (match) =>
+  match.status === '1H' && (match.elapsed == null || match.elapsed <= KICKOFF_WINDOW_MINUTES);
+
+/**
+ * Compares this poll's matches with the previous poll and returns the alerts to send.
+ * Pure (no I/O) so the rules can be tested on their own.
+ */
+function detectMatchAlerts(matches, prevState, sentKickoffs) {
+  const alerts = [];
+  for (const match of matches) {
+    const old = prevState.get(match.id);
+    if (old) {
+      if (match.homeScore > old.homeScore) alerts.push({ type: 'goal', side: 'home', match });
+      if (match.awayScore > old.awayScore) alerts.push({ type: 'goal', side: 'away', match });
+    } else if (!sentKickoffs.has(match.id) && isJustKickedOff(match)) {
+      alerts.push({ type: 'kickoff', match });
+    }
+  }
+  return alerts;
+}
 
 // ==========================================
 // POLL PACING
@@ -81,115 +138,90 @@ function calculateNextPollInterval(liveMatchCount, quotaRemaining) {
 }
 
 // ==========================================
-// 3. FCM GOAL NOTIFICATION SYSTEM
+// 3. FCM GOAL & KICKOFF NOTIFICATIONS
 // ==========================================
 /**
- * Sends a real-time FCM notification to match topic when a goal is scored.
- * Target topic format: match_{matchId}
+ * Every app install with notifications allowed subscribes to "popular_matches".
+ * Older app versions could also subscribe to "match_{id}" via the (now removed) bell, so
+ * popular matches go out as one message to a topic *condition*: FCM then delivers it once
+ * per device even when the device is in both topics.
  */
-async function sendGoalNotification(matchId, scoringTeam, homeTeam, awayTeam, newHomeScore, newAwayScore, isPopular = false) {
-  const topics = [`match_${matchId}`];
-  if (isPopular) {
-    topics.push('popular_matches');
-  }
+async function sendMatchAlert({ matchId, isPopular, title, body, data, channelId, tag }) {
+  const target = isPopular
+    ? { condition: `'popular_matches' in topics || 'match_${matchId}' in topics` }
+    : { topic: `match_${matchId}` };
 
-  for (const topicName of topics) {
-    const message = {
-      topic: topicName,
-      notification: {
-        title: `⚽ GOAL! ${scoringTeam}`,
-        body: `${homeTeam} ${newHomeScore} - ${newAwayScore} ${awayTeam}`
-      },
-      data: {
-        type: 'GOAL_ALERT',
-        matchId: String(matchId),
-        homeScore: String(newHomeScore),
-        awayScore: String(newAwayScore),
-        scoringTeam: scoringTeam
-      },
-      android: {
-        priority: 'high',
-        collapseKey: `match_${matchId}`,
-        notification: {
-          sound: 'default',
-          channelId: 'goal_alerts',
-          tag: `match_${matchId}`
-        }
-      },
-      apns: {
-        headers: {
-          'apns-collapse-id': `match_${matchId}`
-        },
-        payload: {
-          aps: {
-            sound: 'default',
-            contentAvailable: true
-          }
-        }
-      }
-    };
+  const message = {
+    ...target,
+    notification: { title, body },
+    data: { ...data, matchId: String(matchId) },
+    android: {
+      priority: 'high',
+      collapseKey: tag,
+      notification: { sound: 'default', channelId, tag },
+    },
+    apns: {
+      headers: { 'apns-collapse-id': tag },
+      payload: { aps: { sound: 'default', contentAvailable: true } },
+    },
+  };
 
-    try {
-      const messaging = getMessaging();
-      const response = await messaging.send(message);
-      console.log(`[FCM Goal Alert] Notification sent to topic "${topicName}": ${response}`);
-    } catch (err) {
-      console.error(`[FCM Error] Failed to send goal alert for topic "${topicName}":`, err.message);
-    }
+  try {
+    const response = await getMessaging().send(message);
+    console.log(`[FCM] ${data.type} for match ${matchId} sent (${isPopular ? 'popular' : 'match topic'}): ${response}`);
+  } catch (err) {
+    console.error(`[FCM Error] Failed to send ${data.type} for match ${matchId}:`, err.message);
   }
 }
 
-/**
- * Sends a real-time FCM notification to match topic when a match kicks off.
- * Target topic format: match_{matchId} and popular_matches
- */
-async function sendKickoffNotification(matchId, homeTeam, awayTeam, isPopular = false) {
-  const topics = [`match_${matchId}`];
-  if (isPopular) {
-    topics.push('popular_matches');
-  }
+// Latest goal by this team in the API's live event list, e.g. { player: "Saka", minute: "34'" }.
+// Only trusted when the team's goal events add up to its score — the event feed can lag
+// behind the score, and then the "latest" event would name an earlier scorer.
+function findLatestGoal(rawFixture, teamId, teamScore) {
+  const goals = (rawFixture?.events || []).filter(
+    (e) => e.type === 'Goal' && e.detail !== 'Missed Penalty' && e.team?.id === teamId,
+  );
+  if (goals.length !== teamScore) return null;
+  const goal = goals[goals.length - 1];
+  if (!goal?.player?.name) return null;
+  const minute = goal.time?.extra ? `${goal.time.elapsed}+${goal.time.extra}'` : `${goal.time?.elapsed}'`;
+  const suffix = goal.detail === 'Penalty' ? ' (pen)' : goal.detail === 'Own Goal' ? ' (OG)' : '';
+  return { player: `${goal.player.name}${suffix}`, minute };
+}
 
-  for (const topicName of topics) {
-    const message = {
-      topic: topicName,
-      notification: {
-        title: `⚡ Match Started!`,
-        body: `${homeTeam} vs ${awayTeam} has kicked off! ⚽`
-      },
-      data: {
-        type: 'MATCH_STARTED',
-        matchId: String(matchId)
-      },
-      android: {
-        priority: 'high',
-        collapseKey: `kickoff_${matchId}`,
-        notification: {
-          sound: 'default',
-          channelId: 'match_alerts',
-          tag: `kickoff_${matchId}`
-        }
-      },
-      apns: {
-        headers: {
-          'apns-collapse-id': `kickoff_${matchId}`
-        },
-        payload: {
-          aps: {
-            sound: 'default',
-            contentAvailable: true
-          }
-        }
-      }
-    };
+function sendGoalNotification(match, side, rawFixture, isPopular) {
+  const scoringTeam = side === 'home' ? match.homeTeam : match.awayTeam;
+  const scoringTeamId = side === 'home' ? rawFixture?.teams?.home?.id : rawFixture?.teams?.away?.id;
+  const goal = findLatestGoal(rawFixture, scoringTeamId, side === 'home' ? match.homeScore : match.awayScore);
+  const scoreLine = `${match.homeTeam} ${match.homeScore} - ${match.awayScore} ${match.awayTeam}`;
 
-    try {
-      const messaging = getMessaging();
-      const response = await messaging.send(message);
-      console.log(`[FCM Kickoff Alert] Notification sent to topic "${topicName}": ${response}`);
-    } catch (err) {
-      console.error(`[FCM Error] Failed to send kickoff alert for topic "${topicName}":`, err.message);
-    }
-  }
+  return sendMatchAlert({
+    matchId: match.id,
+    isPopular,
+    title: `⚽ GOAL! ${scoringTeam}`,
+    body: goal ? `${goal.player} ${goal.minute} · ${scoreLine}` : scoreLine,
+    data: {
+      type: 'GOAL_ALERT',
+      homeScore: String(match.homeScore),
+      awayScore: String(match.awayScore),
+      scoringTeam,
+    },
+    channelId: 'goal_alerts',
+    // Same tag per match: a newer goal replaces the previous one in the shade
+    tag: `match_${match.id}`,
+  });
+}
+
+function sendKickoffNotification(match, isPopular) {
+  return sendMatchAlert({
+    matchId: match.id,
+    isPopular,
+    title: '⚡ Match Started!',
+    body: `${match.homeTeam} vs ${match.awayTeam} has kicked off! ⚽`,
+    data: { type: 'MATCH_STARTED' },
+    channelId: 'match_alerts',
+    tag: `kickoff_${match.id}`,
+  });
 }
 
 
@@ -265,7 +297,8 @@ function normalizeApiResponse(rawResponse) {
       awayScore: awayScore,
       score: `${homeScore} - ${awayScore}`,
       minute: item.fixture?.status?.elapsed ? `${item.fixture.status.elapsed}'` : (item.status || 'LIVE'),
-      status: item.fixture?.status?.short || item.status || 'LIVE'
+      status: item.fixture?.status?.short || item.status || 'LIVE',
+      elapsed: item.fixture?.status?.elapsed ?? null
     };
   });
 }
@@ -284,50 +317,26 @@ async function fetchAndProcessLiveScores() {
     // Filter strictly to popular leagues (never show obscure/unknown regional leagues)
     const displayMatches = normalizedMatches.filter((m) => POPULAR_LEAGUE_IDS.has(String(m.leagueId)));
 
-    // Goal Detection & State Comparison
-    for (const match of normalizedMatches) {
-      const matchId = match.id;
-      activeMatchIds.add(matchId);
-
-      const oldState = previousMatchState.get(matchId);
+    // Goal & kickoff alerts (all leagues go to their match topic, popular ones to everyone)
+    const rawById = new Map(
+      (Array.isArray(data?.response) ? data.response : []).map((item) => [String(item.fixture?.id), item]),
+    );
+    for (const alert of detectMatchAlerts(normalizedMatches, previousMatchState, kickoffSentAt)) {
+      const { match } = alert;
       const isPopular = POPULAR_LEAGUE_IDS.has(String(match.leagueId));
-
-      if (oldState) {
-        // Check Home Goal
-        if (match.homeScore > oldState.homeScore) {
-          console.log(`[Goal Detected] ${match.homeTeam} scored! Match ID: ${matchId}`);
-          sendGoalNotification(
-            matchId,
-            match.homeTeam,
-            match.homeTeam,
-            match.awayTeam,
-            match.homeScore,
-            match.awayScore,
-            isPopular
-          );
-        }
-
-        // Check Away Goal
-        if (match.awayScore > oldState.awayScore) {
-          console.log(`[Goal Detected] ${match.awayTeam} scored! Match ID: ${matchId}`);
-          sendGoalNotification(
-            matchId,
-            match.awayTeam,
-            match.homeTeam,
-            match.awayTeam,
-            match.homeScore,
-            match.awayScore,
-            isPopular
-          );
-        }
-      } else if (previousMatchState.size > 0) {
-        // Newly started match detected!
-        console.log(`[Kickoff Detected] ${match.homeTeam} vs ${match.awayTeam} started! Match ID: ${matchId}`);
-        sendKickoffNotification(matchId, match.homeTeam, match.awayTeam, isPopular);
+      if (alert.type === 'goal') {
+        console.log(`[Goal Detected] ${alert.side === 'home' ? match.homeTeam : match.awayTeam} scored! Match ID: ${match.id}`);
+        sendGoalNotification(match, alert.side, rawById.get(match.id), isPopular);
+      } else {
+        console.log(`[Kickoff Detected] ${match.homeTeam} vs ${match.awayTeam} started! Match ID: ${match.id}`);
+        kickoffSentAt.set(match.id, Date.now());
+        sendKickoffNotification(match, isPopular);
       }
+    }
 
-      // Update State Tracking for Next Cycle
-      previousMatchState.set(matchId, {
+    for (const match of normalizedMatches) {
+      activeMatchIds.add(match.id);
+      previousMatchState.set(match.id, {
         homeScore: match.homeScore,
         awayScore: match.awayScore,
         homeTeam: match.homeTeam,
@@ -346,6 +355,10 @@ async function fetchAndProcessLiveScores() {
     }
     // Matches that left the live feed: sync engine fetches their final score & events
     if (endedPopularIds.length > 0) onMatchesEnded(endedPopularIds);
+    for (const [matchId, sentAt] of kickoffSentAt.entries()) {
+      if (Date.now() - sentAt > KICKOFF_MEMORY_MS) kickoffSentAt.delete(matchId);
+    }
+    saveAlertState();
 
     // MEMORY MANAGEMENT: Complete Atomic Overwrite (Re-assignment)
     cachedLiveScores = Object.freeze({
@@ -404,6 +417,7 @@ function startLiveScorePolling() {
   if (isPollingRunning) return;
   isPollingRunning = true;
   console.log('[Poll Engine] Starting dynamic live score background polling system...');
+  loadAlertState();
   pollCycle();
 }
 
@@ -421,5 +435,7 @@ module.exports = {
   startLiveScorePolling,
   stopLiveScorePolling,
   fetchAndProcessLiveScores,
-  getDailyQuotaStatus
+  getDailyQuotaStatus,
+  detectMatchAlerts,
+  findLatestGoal
 };

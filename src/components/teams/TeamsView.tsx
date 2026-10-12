@@ -1,67 +1,63 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ChevronDown, ChevronUp, Star } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import { ChevronDown, ChevronUp, Search, Star, X } from "lucide-react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
-  ScrollView,
+  SectionList,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import Svg, { Path } from "react-native-svg";
 import { fetchCountries } from "../../services/footballApi";
+import RemoteLogo from "../common/RemoteLogo";
 import LeagueDetailsModal, { League } from "../leagues/LeagueDetailsModal";
 import TeamDetailsModal, { Team } from "./TeamDetailsModal";
 
 const STORAGE_KEY = "@goalzone_favorite_internationals";
+const TOURNAMENTS = "International Tournaments";
+const NATIONAL_TEAMS = "National Teams";
 
+// Continental / worldwide "countries" the API uses for international competitions
+const INTERNATIONAL_REGIONS = new Set([
+  "world", "international", "uefa", "europe", "south america", "conmebol",
+  "north america", "concacaf", "asia", "afc", "africa", "caf", "oceania", "ofc",
+]);
+
+// Club competitions that belong to a country; everything else in the league list is international
 const getCategoryForLeague = (name: string, country?: string) => {
+  if (country && INTERNATIONAL_REGIONS.has(country.toLowerCase())) return TOURNAMENTS;
   if (country && country !== "Unknown") return country;
   const lower = name.toLowerCase();
-  if (
-    lower.includes("premier") ||
-    lower.includes("fa cup") ||
-    lower.includes("efl") ||
-    lower.includes("championship")
-  )
+  if (lower.includes("premier") || lower.includes("fa cup") || lower.includes("efl") || lower.includes("championship"))
     return "England";
-  if (
-    lower.includes("la liga") ||
-    lower.includes("copa del rey") ||
-    lower.includes("santander")
-  )
-    return "Spain";
-  if (lower.includes("serie a") || lower.includes("coppa italia"))
-    return "Italy";
+  if (lower.includes("la liga") || lower.includes("copa del rey") || lower.includes("santander")) return "Spain";
+  if (lower.includes("serie a") || lower.includes("coppa italia")) return "Italy";
   if (lower.includes("bundesliga") || lower.includes("dfb")) return "Germany";
-  if (lower.includes("ligue 1") || lower.includes("coupe de france"))
-    return "France";
+  if (lower.includes("ligue 1") || lower.includes("coupe de france")) return "France";
   if (lower.includes("mls") || lower.includes("major league")) return "USA";
-  if (lower.includes("saudi") || lower.includes("pro league"))
-    return "Saudi Arabia";
-  return "International Tournaments";
+  if (lower.includes("saudi") || lower.includes("pro league")) return "Saudi Arabia";
+  return TOURNAMENTS;
 };
 
-type InternationalItem =
-  | (Team & { type: "team" })
-  | (League & { type: "league" });
+type Item = (Team & { type: "team" }) | (League & { type: "league" });
+interface Section {
+  title: string;
+  isFav?: boolean;
+  data: Item[];
+}
 
 interface TeamsViewProps {
   apiTeams?: any[];
   apiLeagues?: any[];
+  onPressDetails?: (match: any) => void;
 }
 
-function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
-  const [favorites, setFavorites] = useState<string[]>(["8066"]);
-  const [loading, setLoading] = useState(false);
-  const [countries, setCountries] = useState<any[]>([]);
-
-  const [favSectionExpanded, setFavSectionExpanded] = useState(true);
-  const [allSectionExpanded, setAllSectionExpanded] = useState(true);
-  const [expandedCategories, setExpandedCategories] = useState<{
-    [key: string]: boolean;
-  }>({});
+function TeamsView({ apiLeagues, onPressDetails }: TeamsViewProps) {
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [countries, setCountries] = useState<any[] | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
@@ -69,390 +65,216 @@ function TeamsView({ apiTeams, apiLeagues }: TeamsViewProps) {
   const [leagueDetailsVisible, setLeagueDetailsVisible] = useState(false);
 
   useEffect(() => {
-    // Defer heavy data loading to next idle frame so component renders first
-    const id = setTimeout(() => {
-      loadInitialData();
-    }, 100);
-    return () => clearTimeout(id);
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((s) => {
+        if (s) setFavorites(JSON.parse(s));
+      })
+      .catch(() => {});
+    fetchCountries()
+      .then((list) => setCountries(list || []))
+      .catch(() => setCountries([]));
   }, []);
 
-  const loadInitialData = async () => {
-    // Only show full loading if we have no teams from props
-    if (!apiTeams || apiTeams.length === 0) {
-      setLoading(true);
-    }
-    try {
-      const [favs, countriesList] = await Promise.all([
-        AsyncStorage.getItem(STORAGE_KEY),
-        fetchCountries(),
-      ]);
+  const toggleFavorite = useCallback((id: string) => {
+    setFavorites((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
 
-      if (favs !== null) {
-        setFavorites(JSON.parse(favs));
-      }
+  const toggleSection = useCallback((title: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      next.has(title) ? next.delete(title) : next.add(title);
+      return next;
+    });
+  }, []);
 
-      setCountries(countriesList || []);
-    } catch (e) {
-      console.warn("Failed to load initial data", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const items = useMemo<Item[]>(() => {
+    const tournaments: Item[] = (apiLeagues || [])
+      .map((item: any) => {
+        const id = String(item.id || item.leagueId || item.league_id || "");
+        const name = item.name || item.leagueName || item.league_name || "League";
+        return {
+          type: "league" as const,
+          id,
+          name,
+          logo: item.logo || item.leagueLogo || item.logoUrl || (id ? `https://media.api-sports.io/football/leagues/${id}.png` : ""),
+          category: getCategoryForLeague(name, item.country || item.countryName || item.region),
+        };
+      })
+      .filter((l) => l.id && l.category === TOURNAMENTS);
 
-  const toggleFavorite = async (id: string) => {
-    let updated = [...favorites];
-    if (updated.includes(id)) {
-      updated = updated.filter((favId) => favId !== id);
+    const teams: Item[] = (countries || [])
+      // "World" is the API's bucket for international competitions, not a national team
+      .filter((c: any) => c?.name && c.code)
+      .map((c: any) => ({
+        type: "team" as const,
+        id: c.name, // country name: TeamDetailsModal resolves it to the national team id
+        name: String(c.name).replace(/-/g, " "),
+        logo: c.flag || `https://media.api-sports.io/flags/${String(c.code).toLowerCase()}.svg`,
+        category: NATIONAL_TEAMS,
+        country: c.name,
+      }));
+
+    return [...tournaments, ...teams];
+  }, [apiLeagues, countries]);
+
+  const sections = useMemo<Section[]>(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const visible = q ? items.filter((i) => i.name.toLowerCase().includes(q)) : items;
+    const favs = visible.filter((i) => favorites.includes(i.id));
+    const groups = [TOURNAMENTS, NATIONAL_TEAMS]
+      .map((title) => {
+        const data = visible.filter((i) => i.category === title);
+        return { title, data: collapsed.has(title) && !q ? [] : data, total: data.length };
+      })
+      .filter((s) => s.total > 0)
+      .map(({ title, data }) => ({ title, data }));
+    return favs.length > 0 ? [{ title: "Favorites", isFav: true, data: favs }, ...groups] : groups;
+  }, [items, favorites, collapsed, searchQuery]);
+
+  const openItem = useCallback((item: Item) => {
+    if (item.type === "team") {
+      setSelectedTeam(item);
+      setTeamDetailsVisible(true);
     } else {
-      updated.push(id);
+      setSelectedLeague(item);
+      setLeagueDetailsVisible(true);
     }
-    setFavorites(updated);
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.warn("Failed to save favorite internationals", e);
-    }
-  };
+  }, []);
 
-  const toggleCategory = (cat: string) => {
-    setExpandedCategories((prev) => ({
-      ...prev,
-      [cat]: !prev[cat],
-    }));
-  };
+  const renderItem = useCallback(
+    ({ item }: { item: Item }) => {
+      const isFav = favorites.includes(item.id);
+      const isTeam = item.type === "team";
+      return (
+        <TouchableOpacity
+          className="relative bg-[#131415] mx-4 mb-2 rounded-2xl px-4 py-3 border border-white/5 flex-row items-center overflow-hidden"
+          onPress={() => openItem(item)}
+          activeOpacity={0.75}
+        >
+          <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#02DB54]" />
+          <RemoteLogo uri={item.logo} label={item.name} plate={!isTeam} />
+          <View className="flex-1 ml-3">
+            <Text className="text-white text-sm font-extrabold" numberOfLines={1}>
+              {item.name}
+            </Text>
+            <Text className="text-gray-500 text-[10px] font-bold mt-0.5">
+              {isTeam ? "National team" : "International tournament"}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => toggleFavorite(item.id)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            className="p-1.5"
+            accessibilityLabel={isFav ? `Remove ${item.name} from favorites` : `Add ${item.name} to favorites`}
+          >
+            <Star size={18} color={isFav ? "#FFC800" : "#9BA1A6"} fill={isFav ? "#FFC800" : "none"} />
+          </TouchableOpacity>
+        </TouchableOpacity>
+      );
+    },
+    [favorites, toggleFavorite, openItem],
+  );
 
-  // International teams (Countries) from API or apiTeams fallback
-  const internationalTeamsList: Team[] = React.useMemo(() => {
-    if (countries && countries.length > 0) {
-      return countries.map((item: any) => ({
-        id: item.name, // Use country name as ID to resolve in Modal
-        name: item.name,
-        logo:
-          item.flag ||
-          `https://media.api-sports.io/flags/${item.code?.toLowerCase()}.svg`,
-        category: "Countries",
-        country: item.name,
-      }));
-    }
-    if (apiTeams && apiTeams.length > 0) {
-      return apiTeams.map((item: any) => ({
-        id: String(item.id),
-        name: item.name,
-        logo: item.logo || `https://images.fotmob.com/image_resources/logo/teamlogo/${item.id}.png`,
-        category: item.category || "Popular Teams",
-        country: item.country || item.name,
-      }));
-    }
-    return [];
-  }, [countries, apiTeams]);
-
-  // International tournaments (only) from API leagues
-  const internationalLeaguesList: League[] = React.useMemo(() => {
-    if (apiLeagues && apiLeagues.length > 0) {
-      return apiLeagues
-        .map((item: any) => {
-          const id = String(
-            item.id ||
-              item.leagueId ||
-              item.league_id ||
-              Math.random().toString(),
-          );
-          const name =
-            item.name || item.leagueName || item.league_name || "League";
-          const logo =
-            item.logo ||
-            item.leagueLogo ||
-            item.logoUrl ||
-            `https://images.fotmob.com/image_resources/logo/leaguelogo/${id}.png`;
-          const country = getCategoryForLeague(
-            name,
-            item.country || item.countryName || item.region,
-          );
-          return { id, name, logo, category: country };
-        })
-        .filter(
-          (item: League) => item.category === "International Tournaments",
-        );
-    }
-    return [];
-  }, [apiLeagues]);
-
-  // Combined list with a discriminator
-  const itemsList: InternationalItem[] = React.useMemo(() => {
-    const teams: InternationalItem[] = internationalTeamsList.map((t) => ({
-      ...t,
-      type: "team",
-    }));
-    const leagues: InternationalItem[] = internationalLeaguesList.map((l) => ({
-      ...l,
-      type: "league",
-    }));
-    return [...teams, ...leagues];
-  }, [internationalTeamsList, internationalLeaguesList]);
-
-  const categories = Array.from(new Set(itemsList.map((t) => t.category)));
-  const favoriteItemsList = itemsList.filter((t) => favorites.includes(t.id));
-
-  if (loading) {
-    return (
-      <View className="flex-1 bg-[#0D0E0F] items-center justify-center">
-        <ActivityIndicator size="large" color="#02DB54" />
-      </View>
-    );
-  }
-
-  if (itemsList.length === 0) {
-    return (
-      <View className="flex-1 bg-[#0D0E0F]">
-        <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-[#ffffff05]">
-          <Text className="text-white text-22 font-black tracking-[1.5px]">
-            TEAMS
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: Section }) => {
+      const isCollapsed = !section.isFav && collapsed.has(section.title) && !searchQuery.trim();
+      return (
+        <TouchableOpacity
+          className="flex-row justify-between items-center px-4 py-3 bg-[#0D0E0F]"
+          onPress={() => !section.isFav && toggleSection(section.title)}
+          activeOpacity={section.isFav ? 1 : 0.7}
+        >
+          <Text className="text-white text-sm font-black">
+            {section.isFav ? "⭐ Favorites" : section.title}
           </Text>
-        </View>
-        <View className="flex-1 items-center justify-center px-6">
-          <ActivityIndicator size="large" color="#02DB54" />
-          <Text className="text-gray-400 text-xs font-bold mt-3 text-center">
-            Loading international teams & tournaments...
-          </Text>
-        </View>
-      </View>
-    );
-  }
+          {!section.isFav &&
+            (isCollapsed ? <ChevronDown size={16} color="#9BA1A6" /> : <ChevronUp size={16} color="#9BA1A6" />)}
+        </TouchableOpacity>
+      );
+    },
+    [collapsed, toggleSection, searchQuery],
+  );
+
+  const stillLoading = countries === null && items.length === 0;
 
   return (
     <View className="flex-1 bg-[#0D0E0F]">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-[#ffffff05]">
-        <Text className="text-white text-22 font-black tracking-[1.5px]">
-          INTERNATIONAL
-        </Text>
+      <View className="px-4 py-3 border-b border-[#ffffff05]">
+        <View className="flex-row items-center justify-between mb-2">
+          <Text className="text-white text-[18px] font-black tracking-[1.5px]">INTERNATIONAL</Text>
+          {items.length > 0 ? (
+            <Text className="text-[#02DB54] text-xs font-bold">
+              {items.filter((i) => i.type === "team").length} teams
+            </Text>
+          ) : null}
+        </View>
+        <View className="flex-row items-center bg-[#131415] rounded-2xl px-3 border border-white/5 h-9">
+          <Search size={14} color="#9BA1A6" />
+          <TextInput
+            placeholder="Search countries or tournaments..."
+            placeholderTextColor="#9BA1A6"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            className="flex-1 text-white ml-2"
+            // A fixed line height + Android's default padding clip the text inside the 36px bar
+            style={{ height: 36, fontSize: 12, paddingVertical: 0, includeFontPadding: false, textAlignVertical: "center" }}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")} accessibilityLabel="Clear search">
+              <X size={14} color="#9BA1A6" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
-      <ScrollView
-        className="flex-1 px-4 pt-4"
-        contentContainerStyle={{ paddingBottom: 150 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* SECTION 1: Favorites */}
-        <View className="mb-5">
-          <TouchableOpacity
-            className="flex-row justify-between items-center py-2 mb-3"
-            onPress={() => setFavSectionExpanded(!favSectionExpanded)}
-            activeOpacity={0.8}
-          >
-            <Text className="text-white text-sm font-black">Favorites</Text>
-            {favSectionExpanded ? (
-              <ChevronDown size={18} color="#9BA1A6" />
-            ) : (
-              <ChevronUp size={18} color="#9BA1A6" />
-            )}
-          </TouchableOpacity>
-
-          {favSectionExpanded && (
-            <View className="gap-3">
-              {favoriteItemsList.length > 0 ? (
-                favoriteItemsList.map((item) => {
-                  const isTeam = item.type === "team";
-                  const isFav = favorites.includes(item.id);
-                  return (
-                    <TouchableOpacity
-                      key={`${item.type}-${item.id}`}
-                      className="relative bg-[#131415] rounded-2xl px-4 py-3.5 border border-white/5 flex-row items-center overflow-hidden"
-                      onPress={() => {
-                        if (isTeam) {
-                          setSelectedTeam(item as Team);
-                          setTeamDetailsVisible(true);
-                        } else {
-                          setSelectedLeague(item as League);
-                          setLeagueDetailsVisible(true);
-                        }
-                      }}
-                    >
-                      <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#02DB54] rounded-l-2xl" />
-                      <Image
-                        source={{ uri: item.logo }}
-                        className={
-                          isTeam ? "w-8 h-8 rounded-xl" : "w-8 h-8 rounded-full"
-                        }
-                      />
-                      <View className="flex-1 ml-3">
-                        <Text
-                          className="text-white text-sm font-extrabold"
-                          numberOfLines={1}
-                        >
-                          {item.name}
-                        </Text>
-                        <Text className="text-gray-500 text-[10px] font-bold mt-0.5">
-                          {isTeam
-                            ? `National Team • ${(item as Team).country}`
-                            : "International Tournament"}
-                        </Text>
-                      </View>
-                      <TouchableOpacity
-                        onPress={() => toggleFavorite(item.id)}
-                        className="p-1.5"
-                      >
-                        <Star size={18} color="#FFC800" fill="#FFC800" />
-                      </TouchableOpacity>
-                    </TouchableOpacity>
-                  );
-                })
-              ) : (
-                <Text className="text-gray-400 text-xs font-bold text-center py-3">
-                  No favorites added yet.
-                </Text>
-              )}
-            </View>
-          )}
+      {stillLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#02DB54" />
+          <Text className="text-gray-400 text-xs font-bold mt-3">Loading teams...</Text>
         </View>
-
-        {/* SECTION 2: All international items */}
-        <View className="mb-5">
-          <TouchableOpacity
-            className="flex-row justify-between items-center py-2 mb-3"
-            onPress={() => setAllSectionExpanded(!allSectionExpanded)}
-            activeOpacity={0.8}
-          >
-            <Text className="text-white text-sm font-black">
-              All international
-            </Text>
-            {allSectionExpanded ? (
-              <ChevronDown size={18} color="#9BA1A6" />
-            ) : (
-              <ChevronUp size={18} color="#9BA1A6" />
-            )}
-          </TouchableOpacity>
-
-          {allSectionExpanded && (
-            <View className="bg-[#131415] rounded-3xl border border-white/5 p-1">
-              {categories.map((category) => {
-                const categoryItems = itemsList.filter(
-                  (t) => t.category === category,
-                );
-                const isCatExpanded = expandedCategories[category] !== false;
-
-                return (
-                  <View key={category} className="border-b border-white/3">
-                    <TouchableOpacity
-                      className="flex-row justify-between items-center px-3 py-3.5"
-                      onPress={() => toggleCategory(category)}
-                      activeOpacity={0.8}
-                    >
-                      <View className="flex-row items-center gap-2.5">
-                        <Svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                        >
-                          <Path
-                            d="M12 2L2 7l10 5 10-5-10-5z"
-                            stroke="#9BA1A6"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <Path
-                            d="M2 17l10 5 10-5"
-                            stroke="#9BA1A6"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <Path
-                            d="M2 12l10 5 10-5"
-                            stroke="#9BA1A6"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </Svg>
-                        <Text className="text-white text-sm font-black">
-                          {category}
-                        </Text>
-                      </View>
-                      {isCatExpanded ? (
-                        <ChevronUp size={16} color="#9BA1A6" />
-                      ) : (
-                        <ChevronDown size={16} color="#9BA1A6" />
-                      )}
-                    </TouchableOpacity>
-
-                    {isCatExpanded && (
-                      <View className="px-2 pb-3 gap-2">
-                        {categoryItems.map((item) => {
-                          const isTeam = item.type === "team";
-                          const isFav = favorites.includes(item.id);
-                          return (
-                            <TouchableOpacity
-                              key={`${item.type}-${item.id}`}
-                              className="relative bg-[#131415] rounded-2xl px-4 py-3.5 border border-white/5 flex-row items-center overflow-hidden"
-                              onPress={() => {
-                                if (isTeam) {
-                                  setSelectedTeam(item as Team);
-                                  setTeamDetailsVisible(true);
-                                } else {
-                                  setSelectedLeague(item as League);
-                                  setLeagueDetailsVisible(true);
-                                }
-                              }}
-                            >
-                              <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#02DB54] rounded-l-2xl" />
-                              <Image
-                                source={{ uri: item.logo }}
-                                className={
-                                  isTeam
-                                    ? "w-8 h-8 rounded-xl"
-                                    : "w-8 h-8 rounded-full"
-                                }
-                              />
-                              <View className="flex-1 ml-3">
-                                <Text
-                                  className="text-white text-sm font-extrabold"
-                                  numberOfLines={1}
-                                >
-                                  {item.name}
-                                </Text>
-                                <Text className="text-gray-500 text-[10px] font-bold mt-0.5">
-                                  {isTeam
-                                    ? `National Team • ${(item as Team).country}`
-                                    : "International Tournament"}
-                                </Text>
-                              </View>
-                              <TouchableOpacity
-                                onPress={() => toggleFavorite(item.id)}
-                                className="p-1.5"
-                              >
-                                <Star
-                                  size={18}
-                                  color={isFav ? "#FFC800" : "#9BA1A6"}
-                                  fill={isFav ? "#FFC800" : "none"}
-                                />
-                              </TouchableOpacity>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    )}
-                  </View>
-                );
-              })}
-            </View>
-          )}
+      ) : items.length === 0 ? (
+        <View className="items-center py-16 px-8">
+          <Text className="text-[#02DB54] font-black text-sm mb-1">Teams Unavailable</Text>
+          <Text className="text-gray-400 text-xs text-center">
+            We couldn't load national teams right now. Please try again later.
+          </Text>
         </View>
-        <View className="h-[100px]" />
-      </ScrollView>
+      ) : sections.length === 0 ? (
+        <View className="items-center py-16">
+          <Text className="text-gray-400 text-sm font-bold">No results for "{searchQuery}"</Text>
+        </View>
+      ) : (
+        <SectionList
+          sections={sections}
+          keyExtractor={(item, idx) => `${item.type}-${item.id}-${idx}`}
+          renderItem={renderItem}
+          renderSectionHeader={renderSectionHeader}
+          contentContainerStyle={{ paddingBottom: 150, paddingTop: 8 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          initialNumToRender={20}
+          maxToRenderPerBatch={15}
+          windowSize={8}
+          stickySectionHeadersEnabled={false}
+        />
+      )}
 
-      {/* Modals */}
       <TeamDetailsModal
         visible={teamDetailsVisible}
         team={selectedTeam}
         onClose={() => setTeamDetailsVisible(false)}
+        onPressDetails={onPressDetails}
       />
       <LeagueDetailsModal
         visible={leagueDetailsVisible}
         league={selectedLeague}
         onClose={() => setLeagueDetailsVisible(false)}
+        onPressDetails={onPressDetails}
       />
     </View>
   );

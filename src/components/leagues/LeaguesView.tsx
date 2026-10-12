@@ -3,7 +3,6 @@ import {
   SectionList,
   View,
   Text,
-  Image,
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
@@ -11,6 +10,7 @@ import {
 import { Search, Star, ChevronDown, ChevronUp, X } from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LeagueDetailsModal, { League } from "./LeagueDetailsModal";
+import RemoteLogo from "../common/RemoteLogo";
 
 const STORAGE_KEY = "@goalzone_favorite_leagues";
 
@@ -98,7 +98,7 @@ function LeaguesView({ apiLeagues, onPressDetails }: LeaguesViewProps) {
   }, [filteredLeagues, favorites, collapsedCats]);
 
   const renderItem = useCallback(
-    ({ item, section }: { item: LeagueItem; section: Section }) => {
+    ({ item }: { item: LeagueItem }) => {
       const isFav = favorites.includes(item.id);
       return (
         <TouchableOpacity
@@ -107,13 +107,16 @@ function LeaguesView({ apiLeagues, onPressDetails }: LeaguesViewProps) {
           activeOpacity={0.75}
         >
           <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#02DB54] rounded-l-2xl" />
-          <Image source={{ uri: item.logo }} className="w-6 h-6 rounded-full" resizeMode="contain" />
+          <RemoteLogo uri={item.logo} label={item.name} size={28} plate />
           <Text className="text-white text-sm font-extrabold ml-3 flex-1" numberOfLines={1}>{item.name}</Text>
-          {!section.isFav && (
-            <TouchableOpacity onPress={() => toggleFavorite(item.id)} hitSlop={{ top:8, bottom:8, left:8, right:8 }} className="p-1">
-              <Star size={16} color={isFav ? "#FFC800" : "#9BA1A6"} fill={isFav ? "#FFC800" : "none"} />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            onPress={() => toggleFavorite(item.id)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            className="p-1"
+            accessibilityLabel={isFav ? `Remove ${item.name} from favorites` : `Add ${item.name} to favorites`}
+          >
+            <Star size={16} color={isFav ? "#FFC800" : "#9BA1A6"} fill={isFav ? "#FFC800" : "none"} />
+          </TouchableOpacity>
         </TouchableOpacity>
       );
     },
@@ -137,11 +140,23 @@ function LeaguesView({ apiLeagues, onPressDetails }: LeaguesViewProps) {
     [collapsedCats, toggleCat]
   );
 
+  // undefined = dashboard still loading; [] = loaded but the backend had no leagues
   if (!apiLeagues || apiLeagues.length === 0) {
     return (
-      <View className="flex-1 bg-[#0D0E0F] items-center justify-center">
-        <ActivityIndicator size="large" color="#02DB54" />
-        <Text className="text-gray-400 text-xs mt-3">Loading leagues...</Text>
+      <View className="flex-1 bg-[#0D0E0F] items-center justify-center px-8">
+        {apiLeagues ? (
+          <>
+            <Text className="text-[#02DB54] font-black text-sm mb-1">Leagues Unavailable</Text>
+            <Text className="text-gray-400 text-xs text-center">
+              We couldn't load the league list. Pull to refresh on the Explore tab and try again.
+            </Text>
+          </>
+        ) : (
+          <>
+            <ActivityIndicator size="large" color="#02DB54" />
+            <Text className="text-gray-400 text-xs mt-3">Loading leagues...</Text>
+          </>
+        )}
       </View>
     );
   }
@@ -161,7 +176,9 @@ function LeaguesView({ apiLeagues, onPressDetails }: LeaguesViewProps) {
             placeholderTextColor="#9BA1A6"
             value={searchQuery}
             onChangeText={setSearchQuery}
-            className="flex-1 text-white text-xs ml-2"
+            className="flex-1 text-white ml-2"
+            // A fixed line height + Android's default padding clip the text inside the 36px bar
+            style={{ height: 36, fontSize: 12, paddingVertical: 0, includeFontPadding: false, textAlignVertical: "center" }}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery("")}>

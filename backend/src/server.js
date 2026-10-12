@@ -11,6 +11,7 @@ const {
   stopLiveScorePolling,
 } = require("./liveScoreManager");
 const { cache } = require("./cache");
+const predictionStore = require("./predictionStore");
 // cacheWarmer is replaced by syncEngine — kept only for the /admin/warm route
 const { apiGet, getQuotaStatus } = require("./apiClient");
 const {
@@ -26,10 +27,10 @@ const {
   mapLeagueFixtures,
   mapStandings,
   mapLocation,
+  mapPlayerRatings,
   parseFixtureStats,
   parseFixtureEvents,
   parsePredictions,
-  getMockPredictions,
 } = require("./mappers");
 
 // Initialize Firebase Admin SDK
@@ -84,7 +85,7 @@ function isDataEmpty(data) {
 // (e.g., 10 users all open the same match page at the same moment)
 const inFlightRequests = new Map();
 
-function requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper) {
+function requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper, { keepOnEmpty = null } = {}) {
   // Deduplicate: if an identical request is already in-flight, wait for it instead of making another
   if (inFlightRequests.has(cacheKey)) {
     console.log(`[API Dedup] Waiting on in-flight request for key: ${cacheKey}`);
@@ -98,6 +99,11 @@ function requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper) {
       const apiResponse = await apiGet(endpoint, params, "ondemand");
       const mappedData = mapper(apiResponse);
       const isEmpty = isDataEmpty(mappedData);
+      // A background refresh that comes back empty keeps the data we already had (re-checked in 5 min)
+      if (isEmpty && keepOnEmpty !== null) {
+        cache.set(cacheKey, keepOnEmpty, Math.min(ttlSeconds, 300));
+        return keepOnEmpty;
+      }
       // On empty result: cache for only 60s so upcoming/live matches get real lineups the moment they appear
       const effectiveTtl = isEmpty ? Math.min(ttlSeconds, 60) : ttlSeconds;
       cache.set(cacheKey, mappedData, effectiveTtl);
@@ -125,7 +131,8 @@ function requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper) {
  * Most popular-league data is kept fresh by the background sync engine (syncEngine.js).
  *
  * - Fresh entry   → returned immediately (if not empty, or if empty and within 60s cooldown).
- * - Stale entry   → returned immediately if it has real data.
+ * - Stale entry   → returned immediately if it has real data, and refreshed in the background
+ *                   (the background sync engine is off, so nothing else would ever update it).
  * - No entry / empty entry ready for recheck → fetched from the API.
  */
 async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
@@ -142,8 +149,13 @@ async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
     }
   }
 
-  // 2. Stale cache: return existing data immediately only if it has real content!
+  // 2. Stale cache: return existing data immediately only if it has real content,
+  //    and refresh it in the background so the next request gets current data
   if (entry && !isDataEmpty(entry.data)) {
+    if (!inFlightRequests.has(cacheKey)) {
+      requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper, { keepOnEmpty: entry.data })
+        .catch(() => {}); // quota / network errors: keep serving the stale copy
+    }
     return entry.data;
   }
 
@@ -175,13 +187,20 @@ app.post("/api/match-notifications", async (req, res) => {
   try {
     const { getMessaging } = require("./firebase");
     const messaging = getMessaging();
-    if (action === "unsubscribe") {
-      await messaging.unsubscribeFromTopic([token], topicName);
-      console.log(`[FCM] Unsubscribed token from topic "${topicName}"`);
-    } else {
-      await messaging.subscribeToTopic([token], topicName);
-      console.log(`[FCM] Subscribed token to topic "${topicName}"`);
+    const verb = action === "unsubscribe" ? "unsubscribe" : "subscribe";
+    const result = verb === "unsubscribe"
+      ? await messaging.unsubscribeFromTopic([token], topicName)
+      : await messaging.subscribeToTopic([token], topicName);
+
+    // Per-token failures (e.g. missing IAM permission, invalid token) come back in the
+    // result rather than as a thrown error, so they have to be checked explicitly
+    if (result.failureCount > 0) {
+      const error = result.errors?.[0]?.error;
+      console.error(`[FCM Topic Error] Failed to ${verb} token for topic "${topicName}": ${error?.code} ${error?.message}`);
+      return res.status(502).json({ error: `Failed to ${verb}`, code: error?.code, message: error?.message });
     }
+
+    console.log(`[FCM] ${verb === "unsubscribe" ? "Unsubscribed token from" : "Subscribed token to"} topic "${topicName}"`);
     res.json({ success: true, topic: topicName });
   } catch (err) {
     console.error(`[FCM Topic Error]`, err.message);
@@ -596,6 +615,34 @@ app.get("/football-get-fixtures-by-league", async (req, res) => {
   }
 });
 
+// /fixtures?team= → one fixture row as the team screen uses it
+function mapTeamFixture(item, teamid) {
+  const fixtureDate = item.fixture.date ? new Date(item.fixture.date) : new Date();
+  const time = fixtureDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const date = `${String(fixtureDate.getDate()).padStart(2, "0")}/${String(fixtureDate.getMonth() + 1).padStart(2, "0")}`;
+  const isHome = String(item.teams.home.id) === String(teamid);
+  const opponent = isHome ? item.teams.away : item.teams.home;
+  const hasScore = item.goals?.home !== null && item.goals?.home !== undefined;
+
+  return {
+    id: String(item.fixture.id),
+    status: item.fixture.status.short || "NS",
+    time,
+    date,
+    rawDate: item.fixture.date,
+    timestamp: item.fixture.timestamp,
+    isHome,
+    opponent: opponent.name,
+    opponentLogo: opponent.logo,
+    score: hasScore ? `${item.goals.home} - ${item.goals.away}` : "VS",
+    league: item.league?.name || "",
+    leagueId: item.league?.id ? String(item.league.id) : "",
+    leagueLogo: item.league?.logo || "",
+    home: { id: item.teams.home.id, name: item.teams.home.name, logo: item.teams.home.logo },
+    away: { id: item.teams.away.id, name: item.teams.away.name, logo: item.teams.away.logo },
+  };
+}
+
 app.get("/football-get-fixtures-by-team", async (req, res) => {
   const teamid = req.query.teamid;
   if (!teamid) {
@@ -603,45 +650,21 @@ app.get("/football-get-fixtures-by-team", async (req, res) => {
   }
 
   const todayStr = new Date().toISOString().split("T")[0];
-  const cacheKey = `fixtures_team_${teamid}_${todayStr}`;
+  const mapList = (apiResponse) => (apiResponse.response || []).map((item) => mapTeamFixture(item, teamid));
 
   try {
-    const data = await fetchAndCache(
-      cacheKey,
-      "/fixtures",
-      { team: teamid, next: 20 },
-      86400, // 24 hours cache (previously 30 min)
-      (apiResponse) => {
-        const list = apiResponse.response || [];
-        return list.map((item) => {
-          const fixtureDate = item.fixture.date
-            ? new Date(item.fixture.date)
-            : new Date();
-          const time = fixtureDate.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-          const date = `${String(fixtureDate.getDate()).padStart(2, "0")}/${String(fixtureDate.getMonth() + 1).padStart(2, "0")}`;
-
-          const isHome = String(item.teams.home.id) === String(teamid);
-          const opponent = isHome ? item.teams.away : item.teams.home;
-
-          return {
-            id: String(item.fixture.id),
-            status: item.fixture.status.short || "NS",
-            time,
-            date,
-            rawDate: item.fixture.date,
-            timestamp: item.fixture.timestamp,
-            isHome,
-            opponent: opponent.name,
-            opponentLogo: opponent.logo,
-          };
-        });
-      },
-    );
-
-    res.json(data);
+    // Upcoming matches plus the last few results: national teams often have nothing scheduled
+    const [upcoming, results] = await Promise.all([
+      // v2: adds home/away team objects, league info and score
+      fetchAndCache(`fixtures_team_v2_${teamid}_${todayStr}`, "/fixtures", { team: teamid, next: 20 }, 86400, mapList),
+      fetchAndCache(`results_team_${teamid}_${todayStr}`, "/fixtures", { team: teamid, last: 5 }, 86400, mapList)
+        .catch(() => []),
+    ]);
+    const seen = new Set(upcoming.map((m) => m.id));
+    res.json([
+      ...upcoming,
+      ...results.filter((m) => !seen.has(m.id)).sort((a, b) => b.timestamp - a.timestamp),
+    ]);
   } catch (err) {
     res
       .status(500)
@@ -655,7 +678,8 @@ app.get("/football-get-team-squad", async (req, res) => {
     return res.status(400).json({ error: "Missing teamid parameter" });
   }
 
-  const cacheKey = `squad_team_${teamid}`;
+  // v2: players are objects (name, number, age, photo) instead of plain names
+  const cacheKey = `squad_v2_team_${teamid}`;
 
   try {
     const data = await fetchAndCache(
@@ -676,11 +700,18 @@ app.get("/football-get-team-squad", async (req, res) => {
         };
 
         players.forEach((p) => {
+          const player = {
+            id: p.id,
+            name: p.name,
+            number: p.number ?? null,
+            age: p.age ?? null,
+            photo: p.photo || (p.id ? `https://media.api-sports.io/football/players/${p.id}.png` : null),
+          };
           const pos = p.position;
-          if (pos === "Goalkeeper") positions.Goalkeepers.push(p.name);
-          else if (pos === "Defender") positions.Defenders.push(p.name);
-          else if (pos === "Midfielder") positions.Midfielders.push(p.name);
-          else if (pos === "Attacker") positions.Forwards.push(p.name);
+          if (pos === "Goalkeeper") positions.Goalkeepers.push(player);
+          else if (pos === "Defender") positions.Defenders.push(player);
+          else if (pos === "Midfielder") positions.Midfielders.push(player);
+          else if (pos === "Attacker") positions.Forwards.push(player);
         });
 
         return Object.keys(positions).map((pos) => ({
@@ -1084,7 +1115,8 @@ app.get("/football-get-standing-all", async (req, res) => {
   let lastError = null;
 
   for (const season of seasonsToTry) {
-    const cacheKey = `standings_${leagueid}_${season}`;
+    // v2: rows also carry win/draw/lose, form and qualification zone
+    const cacheKey = `standings_v2_${leagueid}_${season}`;
     try {
       const data = await fetchAndCache(
         cacheKey,
@@ -1130,10 +1162,11 @@ app.get("/football-get-match-location", async (req, res) => {
   }
 
   if (!/^\d+$/.test(String(eventid))) {
-    return res.json({ venue: "Football Arena", city: "" });
+    return res.json({ venue: "", city: "", round: "" });
   }
 
-  const cacheKey = `location_${eventid}`;
+  // v2: entries now also carry the round (older entries only had venue/city)
+  const cacheKey = `location_v2_${eventid}`;
   try {
     const data = await fetchAndCache(
       cacheKey,
@@ -1148,6 +1181,87 @@ app.get("/football-get-match-location", async (req, res) => {
     res
       .status(500)
       .json({ error: "Failed to fetch match location", message: err.message });
+  }
+});
+
+// ==========================================
+// 6.1 PLAYER RATINGS
+// ==========================================
+// Ratings move during a live match, so unlike fetchAndCache this refetches once the
+// entry goes stale and only falls back to the stale copy when the API call fails.
+app.get("/football-get-player-ratings", async (req, res) => {
+  const eventid = req.query.eventid;
+  if (!eventid) {
+    return res.status(400).json({ error: "Missing eventid parameter" });
+  }
+
+  if (!/^\d+$/.test(String(eventid))) {
+    return res.json([]);
+  }
+
+  const finished = req.query.finished === "true";
+  const cacheKey = `player_ratings_${eventid}`;
+  const entry = cache.getEntry(cacheKey);
+  if (entry && !entry.stale) {
+    return res.json(entry.data);
+  }
+
+  try {
+    const data = await requestFromApi(
+      cacheKey,
+      "/fixtures/players",
+      { fixture: eventid },
+      finished ? 86400 : 120, // final ratings never change; live ones every couple of minutes
+      mapPlayerRatings,
+    );
+    res.json(data);
+  } catch (err) {
+    if (entry) return res.json(entry.data);
+    if (err.isQuotaError) return res.json([]);
+    res.status(500).json({
+      error: "Failed to fetch player ratings",
+      message: err.message,
+    });
+  }
+});
+
+// ==========================================
+// 6.2 COMMUNITY PREDICTIONS ("Who will win?")
+// ==========================================
+app.get("/football-get-match-prediction", async (req, res) => {
+  const { eventid, deviceId } = req.query;
+  if (!predictionStore.isValidMatchId(eventid)) {
+    return res.status(400).json({ error: "Missing or invalid eventid parameter" });
+  }
+
+  try {
+    const tally = await predictionStore.getTally(
+      eventid,
+      predictionStore.isValidDeviceId(deviceId) ? deviceId : null,
+    );
+    res.json(tally);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load predictions", message: err.message });
+  }
+});
+
+app.post("/football-match-prediction", async (req, res) => {
+  const { eventid, deviceId, choice } = req.body || {};
+  if (!predictionStore.isValidMatchId(eventid)) {
+    return res.status(400).json({ error: "Missing or invalid eventid" });
+  }
+  if (!predictionStore.isValidDeviceId(deviceId)) {
+    return res.status(400).json({ error: "Missing or invalid deviceId" });
+  }
+  if (!predictionStore.isValidChoice(choice)) {
+    return res.status(400).json({ error: "choice must be one of home, draw, away" });
+  }
+
+  try {
+    const tally = await predictionStore.castVote(eventid, deviceId, choice);
+    res.json(tally);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to save prediction", message: err.message });
   }
 });
 
@@ -1174,16 +1288,42 @@ app.get("/football-get-all-countries", async (req, res) => {
 // ==========================================
 // 7. FOOTBALL NEWS RSS
 // ==========================================
+// Decodes the HTML entities RSS/Atom feeds put in titles ("&quot;", "&#39;", "&amp;")
+const decodeEntities = (text) =>
+  String(text || "")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&");
+
+// "Mon, 12 Oct 2026 16:35:00 BST" → ISO. Neither V8 nor Hermes parse zone names like "BST".
+const RSS_ZONES = { GMT: "+0000", UTC: "+0000", BST: "+0100", CET: "+0100", CEST: "+0200" };
+function rssDateToIso(value) {
+  const m = String(value || "").match(/(\d{1,2}) (\w{3}) (\d{4}) (\d{2}):(\d{2})(?::(\d{2}))? ?([+-]\d{4}|[A-Z]{2,4})?/);
+  if (!m) return "";
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const month = months.indexOf(m[2]);
+  if (month < 0) return "";
+  const zone = /^[+-]/.test(m[7] || "") ? m[7] : RSS_ZONES[m[7]] || "+0000";
+  const offsetMin = (zone[0] === "-" ? -1 : 1) * (parseInt(zone.slice(1, 3), 10) * 60 + parseInt(zone.slice(3), 10));
+  const utc = Date.UTC(+m[3], month, +m[1], +m[4], +m[5], +(m[6] || 0)) - offsetMin * 60000;
+  return new Date(utc).toISOString();
+}
+
 app.get("/football-get-news", async (req, res) => {
-  const cacheKey = "football_news";
+  // v2: Sky Sports football feed (11095); the old feed (12040) was all sports
+  const cacheKey = "football_news_v2";
+  const entry = cache.getEntry(cacheKey);
+  if (entry && !entry.stale) {
+    return res.json(entry.data);
+  }
 
   try {
-    const cachedData = cache.get(cacheKey);
-    if (cachedData) {
-      return res.json(cachedData);
-    }
-
-    const response = await axios.get("https://www.skysports.com/rss/12040", {
+    const response = await axios.get("https://www.skysports.com/rss/11095", {
       headers: {
         Accept: "application/xml, text/xml, */*",
       },
@@ -1215,7 +1355,7 @@ app.get("/football-get-news", async (req, res) => {
             /<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/,
           )?.[1]
           ?.trim() || "";
-      description = description.replace(/<[^>]*>/g, "");
+      description = decodeEntities(description.replace(/<[^>]*>/g, ""));
       const pubDate =
         itemXml
           .match(
@@ -1240,7 +1380,8 @@ app.get("/football-get-news", async (req, res) => {
 
       items.push({
         id: link || Math.random().toString(),
-        title,
+        title: decodeEntities(title),
+        published: rssDateToIso(pubDate),
         description,
         thumbnail,
         date: pubDate,
@@ -1248,13 +1389,121 @@ app.get("/football-get-news", async (req, res) => {
       });
     }
 
-    cache.set(cacheKey, items, 300);
+    cache.set(cacheKey, items, 600);
     res.json(items);
   } catch (err) {
+    // Sky Sports unreachable: keep serving the last news we had
+    if (entry) return res.json(entry.data);
     res
       .status(500)
       .json({ error: "Failed to fetch football news", message: err.message });
   }
+});
+
+// ==========================================
+// 7.1 VIDEO HIGHLIGHTS (official YouTube channels)
+// ==========================================
+// YouTube's public per-channel Atom feeds: no API key or quota, ~15 latest uploads each
+const HIGHLIGHT_CHANNELS = [
+  { id: "UCG5qGWdu8nIRZqJ_GgDwQ-w", competition: "Premier League", leagueId: "39" },
+  { id: "UCTv-XvfzLX3i4IGWAm4sbmA", competition: "La Liga", leagueId: "140" },
+  { id: "UCBJeMCIeLQos7wacox4hmLQ", competition: "Serie A", leagueId: "135" },
+  { id: "UC6UL29enLNe4mqwTfAyeNuw", competition: "Bundesliga", leagueId: "78" },
+  { id: "UCQsH5XtIc9hONE1BQjucM0g", competition: "Ligue 1", leagueId: "61" },
+  { id: "UCyGa1YEx9ST66rYrJTGIKOw", competition: "UEFA", leagueId: "2" },
+  { id: "UCZ7wY7MRDSygp63HIEfdQZA", competition: "Sky Sports", leagueId: null },
+];
+
+// Match highlights / summaries / goal round-ups in the languages these channels use
+const HIGHLIGHT_KEYWORDS = /highlight|resumen|résumé|resume|sintesi|all goals|every .*goals?|tous les buts|all .* goals/i;
+// "2-2", "(0-2)", "3 - 1" score lines in titles
+const SCORE_IN_TITLE = /\b\d{1,2}\s?-\s?\d{1,2}\b/;
+// Serie A uploads every match twice; the Italian copy ("sintesi", "Enilive") duplicates the English one
+const NOT_HIGHLIGHTS = /rueda de prensa|press conference|previa|preview|interview|exclusive|reacts?\b|sintesi|enilive/i;
+
+// "SC FREIBURG - SCHALKE 04" / "Hearts 5-0 St Mirren" → one key per fixture, so re-uploads collapse
+const fixtureKey = (video) => {
+  const segment = video.title
+    .split("|")
+    .map((part) => part.trim())
+    .find((part) => /[A-Za-zÀ-ÿ.]\s?-\s?[A-Za-zÀ-ÿ0-9]|\d\s?-\s?\d/.test(part));
+  if (!segment) return null;
+  const teams = segment
+    .replace(/\(?\b\d{1,2}\s?-\s?\d{1,2}\b\)?/g, " ")
+    .replace(/-/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+  return teams ? `${video.competition}:${teams}` : null;
+};
+
+const xmlValue = (xml, tag) =>
+  xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`))?.[1]?.trim() || "";
+
+function parseHighlightsFeed(xml, channel) {
+  const entries = xml.split("<entry>").slice(1);
+  return entries
+    .map((entry) => {
+      const videoId = xmlValue(entry, "yt:videoId");
+      const link = entry.match(/<link rel="alternate" href="([^"]+)"/)?.[1] || "";
+      return {
+        id: videoId,
+        title: decodeEntities(xmlValue(entry, "title")),
+        published: xmlValue(entry, "published"),
+        isShort: link.includes("/shorts/"),
+        channel: decodeEntities(xmlValue(entry.split("<author>")[1] || "", "name")),
+        competition: channel.competition,
+        leagueId: channel.leagueId,
+        // mqdefault is 16:9 (hqdefault has black bars)
+        thumbnail: videoId ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg` : "",
+        url: videoId ? `https://www.youtube.com/watch?v=${videoId}` : "",
+      };
+    })
+    .filter(
+      (v) =>
+        v.id &&
+        !v.isShort &&
+        !NOT_HIGHLIGHTS.test(v.title) &&
+        (HIGHLIGHT_KEYWORDS.test(v.title) || SCORE_IN_TITLE.test(v.title)),
+    )
+    .map(({ isShort, ...v }) => v);
+}
+
+app.get("/football-get-highlights", async (req, res) => {
+  const cacheKey = "video_highlights";
+  const entry = cache.getEntry(cacheKey);
+  if (entry && !entry.stale) {
+    return res.json(entry.data);
+  }
+
+  const results = await Promise.allSettled(
+    HIGHLIGHT_CHANNELS.map((channel) =>
+      axios
+        .get(`https://www.youtube.com/feeds/videos.xml?channel_id=${channel.id}`, { timeout: 10000 })
+        .then((r) => parseHighlightsFeed(String(r.data || ""), channel)),
+    ),
+  );
+  const videos = results
+    .filter((r) => r.status === "fulfilled")
+    .flatMap((r) => r.value)
+    .sort((a, b) => Date.parse(b.published) - Date.parse(a.published))
+    // Newest first, so the first video seen for a fixture is the one kept
+    .filter(function (video) {
+      const key = fixtureKey(video);
+      if (!key) return true;
+      if (this.has(key)) return false;
+      this.add(key);
+      return true;
+    }, new Set());
+
+  if (videos.length === 0) {
+    // Every feed failed: fall back to the last list we had
+    if (entry) return res.json(entry.data);
+    return res.status(502).json({ error: "Failed to fetch video highlights" });
+  }
+
+  cache.set(cacheKey, videos, 1800);
+  res.json(videos);
 });
 
 // ==========================================
@@ -1339,24 +1588,35 @@ app.get("/football-get-match-events", async (req, res) => {
 // ==========================================
 // 8.2 HEAD TO HEAD (H2H)
 // ==========================================
+const H2H_PLAYED_STATUSES = new Set(["FT", "AET", "PEN"]);
+
 function parseH2H(apiResponse, homeId, awayId) {
-  const list = apiResponse?.response || [];
+  // Only meetings with a final result count (an upcoming fixture has null goals, not 0-0)
+  const list = (apiResponse?.response || [])
+    .filter((item) => H2H_PLAYED_STATUSES.has(item.fixture?.status?.short))
+    .sort((a, b) => (b.fixture?.timestamp || 0) - (a.fixture?.timestamp || 0));
+
   let homeWins = 0;
   let awayWins = 0;
   let draws = 0;
+  let totalGoals = 0;
+  let homeCleanSheets = 0;
+  let awayCleanSheets = 0;
 
   const matches = list.map((item) => {
     const isHome = String(item.teams?.home?.id) === String(homeId);
     const homeScore = item.goals?.home ?? 0;
     const awayScore = item.goals?.away ?? 0;
+    // Goals scored by the requested home / away team, whichever side they played on
+    const homeTeamGoals = isHome ? homeScore : awayScore;
+    const awayTeamGoals = isHome ? awayScore : homeScore;
 
-    if (homeScore > awayScore) {
-      if (isHome) homeWins++; else awayWins++;
-    } else if (awayScore > homeScore) {
-      if (isHome) awayWins++; else homeWins++;
-    } else {
-      draws++;
-    }
+    if (homeTeamGoals > awayTeamGoals) homeWins++;
+    else if (awayTeamGoals > homeTeamGoals) awayWins++;
+    else draws++;
+    totalGoals += homeScore + awayScore;
+    if (awayTeamGoals === 0) homeCleanSheets++;
+    if (homeTeamGoals === 0) awayCleanSheets++;
 
     return {
       id: String(item.fixture?.id),
@@ -1377,11 +1637,17 @@ function parseH2H(apiResponse, homeId, awayId) {
     };
   });
 
+  const total = list.length;
   return {
-    totalMatches: list.length,
+    totalMatches: total,
     homeWins,
     awayWins,
     draws,
+    avgGoals: total ? Math.round((totalGoals / total) * 10) / 10 : null,
+    cleanSheets: {
+      home: total ? Math.round((homeCleanSheets / total) * 100) : null,
+      away: total ? Math.round((awayCleanSheets / total) * 100) : null,
+    },
     matches: matches.slice(0, 5)
   };
 }
@@ -1393,7 +1659,8 @@ app.get("/football-get-h2h", async (req, res) => {
   }
 
   const h2hParam = `${homeId}-${awayId}`;
-  const cacheKey = `h2h_${h2hParam}`;
+  // v2: adds avgGoals / cleanSheets and ignores unplayed fixtures
+  const cacheKey = `h2h_v2_${h2hParam}`;
   try {
     const data = await fetchAndCache(
       cacheKey,
@@ -1417,11 +1684,12 @@ app.get("/football-get-predictions", async (req, res) => {
     return res.status(400).json({ error: "Missing eventid parameter" });
   }
 
-  if (isNaN(Number(eventid))) {
-    return res.json(getMockPredictions(eventid));
+  if (!/^\d+$/.test(String(eventid))) {
+    return res.json(null);
   }
 
-  const cacheKey = `predictions_event_${eventid}`;
+  // v2: no more mock fallback; older entries may hold mock numbers
+  const cacheKey = `predictions_v2_${eventid}`;
   try {
     const data = await fetchAndCache(
       cacheKey,

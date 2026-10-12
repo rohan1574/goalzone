@@ -71,6 +71,9 @@ function mapDateFixtures(apiResponse) {
       time,
       date: item.fixture.date,
       timestamp: item.fixture.timestamp,
+      venue: item.fixture.venue?.name || "",
+      venueCity: item.fixture.venue?.city || "",
+      round: item.league.round || "",
     };
   });
 }
@@ -121,17 +124,44 @@ function mapStandings(apiResponse) {
     logoUrl: item.team.logo,
     pos: item.rank,
     played: item.all.played,
+    win: item.all.win,
+    draw: item.all.draw,
+    lose: item.all.lose,
     goalsDiff: item.goalsDiff,
     points: item.points,
+    form: item.form || "",
+    description: item.description || "",
   }));
 }
 
-/** /fixtures?id= (venue part) → /football-get-match-location */
+/** /fixtures?id= (venue + round part) → /football-get-match-location */
 function mapLocation(fixtureItem) {
   return {
-    venue: fixtureItem?.fixture?.venue?.name || "Football Arena",
+    venue: fixtureItem?.fixture?.venue?.name || "",
     city: fixtureItem?.fixture?.venue?.city || "",
+    round: fixtureItem?.league?.round || "",
   };
+}
+
+/** /fixtures/players → /football-get-player-ratings (one entry per player who has a rating) */
+function mapPlayerRatings(apiResponse) {
+  const teams = apiResponse.response || [];
+  const ratings = [];
+  teams.forEach((teamEntry) => {
+    (teamEntry.players || []).forEach((item) => {
+      const games = item.statistics?.[0]?.games || {};
+      const rating = parseFloat(games.rating);
+      if (!item.player?.id || isNaN(rating)) return;
+      ratings.push({
+        id: item.player.id,
+        teamId: teamEntry.team?.id,
+        rating: Math.round(rating * 10) / 10,
+        minutes: games.minutes ?? null,
+        captain: !!games.captain,
+      });
+    });
+  });
+  return ratings;
 }
 
 /** /fixtures/statistics → /football-get-match-statistics */
@@ -210,34 +240,48 @@ function parseFixtureEvents(apiResponse) {
   }));
 }
 
-function getMockPredictions(eventid) {
-  return {
-    advice: "Double chance : home team or draw",
-    percent: {
-      home: "40%",
-      draw: "35%",
-      away: "25%",
-    },
-    winner: "Home Team",
-  };
-}
+const COMPARISON_LABELS = {
+  form: "Form",
+  att: "Attack",
+  def: "Defence",
+  poisson_distribution: "Poisson model",
+  h2h: "Head to head",
+  goals: "Goals",
+  total: "Overall",
+};
+const percentNumber = (value) => {
+  const n = parseFloat(String(value ?? "").replace("%", ""));
+  return isNaN(n) ? null : n;
+};
 
-/** /predictions → /football-get-predictions */
+/**
+ * /predictions → /football-get-predictions.
+ * Returns null when API-Football has no prediction for the fixture (the app shows "not available").
+ */
 function parsePredictions(apiResponse) {
-  const list = apiResponse.response || [];
-  if (list.length === 0) return getMockPredictions("generic");
+  const item = (apiResponse.response || [])[0];
+  const pred = item?.predictions;
+  if (!pred) return null;
 
-  const pred = list[0]?.predictions;
-  if (!pred) return getMockPredictions("generic");
+  const comparison = Object.entries(item.comparison || {})
+    .map(([key, value]) => ({
+      key,
+      label: COMPARISON_LABELS[key] || key,
+      home: percentNumber(value?.home),
+      away: percentNumber(value?.away),
+    }))
+    .filter((row) => row.home !== null && row.away !== null);
 
   return {
-    advice: pred.advice || "No advice available",
+    advice: pred.advice || null,
     percent: {
-      home: pred.percent?.home || "33%",
-      draw: pred.percent?.draw || "34%",
-      away: pred.percent?.away || "33%",
+      home: percentNumber(pred.percent?.home) ?? 0,
+      draw: percentNumber(pred.percent?.draw) ?? 0,
+      away: percentNumber(pred.percent?.away) ?? 0,
     },
-    winner: pred.winner?.name || "Draw",
+    winner: pred.winner?.name || null,
+    winnerComment: pred.winner?.comment || null,
+    comparison,
   };
 }
 
@@ -249,8 +293,8 @@ module.exports = {
   mapLeagueFixtures,
   mapStandings,
   mapLocation,
+  mapPlayerRatings,
   parseFixtureStats,
   parseFixtureEvents,
   parsePredictions,
-  getMockPredictions,
 };

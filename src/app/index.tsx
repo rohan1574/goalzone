@@ -61,7 +61,6 @@ import BannerAdComponent from "../components/ads/BannerAdComponent";
 import BottomNavBar, { TabType } from "../components/bottom/BottomNavBar";
 import MatchDetailsModal from "../components/details/MatchDetailsModal";
 import ExploreView from "../components/explore/ExploreView";
-import { POPULAR_LEAGUE_IDS } from "../components/explore/Leagues";
 import Header from "../components/explore/Header";
 import HighlightView from "../components/highlight/HighlightView";
 import LeaguesView from "../components/leagues/LeaguesView";
@@ -230,11 +229,6 @@ export default function ExploreScreen() {
   const [mountedTabs, setMountedTabs] = useState<Set<TabType>>(
     new Set(["explore", "leagues", "highlight", "teams", "prediction"])
   );
-  const [activeNotifications, setActiveNotifications] = useState<{
-    [key: string]: boolean;
-  }>({
-    "epl-1": true,
-  });
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [dateFixtures, setDateFixtures] = useState<any[]>([]);
@@ -394,18 +388,23 @@ export default function ExploreScreen() {
     setDateFixtures([]);
     setLoadingFixtures(true);
 
+    // When dates are tapped quickly, a slower response for an earlier date must not win
+    let cancelled = false;
     const loadFixtures = async () => {
       try {
         const data = await fetchFixturesByDate(yyyymmdd);
-        setDateFixtures(data || []);
+        if (!cancelled) setDateFixtures(data || []);
       } catch (err) {
         console.error("Failed to load fixtures for date:", err);
       } finally {
-        setLoadingFixtures(false);
+        if (!cancelled) setLoadingFixtures(false);
       }
     };
 
     loadFixtures();
+    return () => {
+      cancelled = true;
+    };
   }, [selectedDate, isToday, apiData?.fixtures]);
 
   const loadData = async (force = false) => {
@@ -434,22 +433,69 @@ export default function ExploreScreen() {
   useEffect(() => {
     warmupFixturesCache(); // loads existing AsyncStorage cache into memory, no API calls
     loadData(false);
+  }, []);
 
-    // If permission was ALREADY granted previously by user, silently ensure popular subscription
+  // Goal & kickoff push alerts: every install that allows notifications is subscribed to
+  // the "popular_matches" topic (the backend sends alerts for all popular-league matches).
+  // Asked once onboarding is done so the system prompt doesn't land on top of the splash.
+  useEffect(() => {
+    if (!isOnboardingCompleted) return;
+    // The token listener also fires for the token fetched below; only subscribe each token once
+    let subscribedToken: string | null = null;
+    const subscribe = async (token: string) => {
+      if (token === subscribedToken) return;
+      subscribedToken = token;
+      // Retry on the next token event / app launch if the server couldn't subscribe it
+      if (!(await toggleServerMatchNotification(token, "popular", "subscribe"))) {
+        subscribedToken = null;
+      }
+    };
+
     (async () => {
       try {
-        const { status } = await Notifications.getPermissionsAsync();
-        if (status === "granted") {
-          const tokenObj = await Notifications.getDevicePushTokenAsync();
-          if (tokenObj?.data) {
-            await toggleServerMatchNotification(String(tokenObj.data), "popular", "subscribe");
-          }
+        let { status, canAskAgain } = await Notifications.getPermissionsAsync();
+        if (status !== "granted" && canAskAgain) {
+          ({ status } = await Notifications.requestPermissionsAsync());
         }
-      } catch (_) {
-        // Silent background fallback
+        if (status !== "granted") return;
+        const tokenObj = await Notifications.getDevicePushTokenAsync();
+        if (tokenObj?.data) await subscribe(String(tokenObj.data));
+      } catch (err) {
+        console.warn("Push notification registration failed:", err);
       }
     })();
-  }, []);
+
+    // FCM can rotate the device token; the new token must be subscribed again
+    const tokenSubscription = Notifications.addPushTokenListener((token) => {
+      if (token?.data) subscribe(String(token.data));
+    });
+    return () => tokenSubscription.remove();
+  }, [isOnboardingCompleted]);
+
+  // Tapping a goal / kickoff alert opens that match (also works when the tap launched the app)
+  const lastNotificationResponse = Notifications.useLastNotificationResponse();
+  useEffect(() => {
+    if (!lastNotificationResponse) return;
+    const { request } = lastNotificationResponse.notification;
+    const matchId =
+      request.content.data?.matchId ??
+      (request.trigger as any)?.remoteMessage?.data?.matchId;
+    Notifications.clearLastNotificationResponse();
+    if (!matchId) return;
+
+    (async () => {
+      const isTarget = (m: any) => String(getMatchEventId(m) || m?.id) === String(matchId);
+      let match = getAllCachedFixtures().find(isTarget);
+      try {
+        // The live feed has the current score, so prefer it while the match is on
+        match = (await fetchLiveMatches())?.find(isTarget) || match;
+      } catch (_) {}
+      if (match) {
+        setSelectedMatch(match);
+        setDetailsVisible(true);
+      }
+    })();
+  }, [lastNotificationResponse]);
 
   // Real-time live score auto-update without manual refresh (polls every 15s silently)
   useEffect(() => {
@@ -490,53 +536,6 @@ export default function ExploreScreen() {
                 const newScore = liveMatch.score || getMatchScore(liveMatch).display || m.score;
                 const newMinute = liveMatch.minute || getMatchStatus(liveMatch) || m.minute;
 
-                // Match is in 22 popular leagues OR user enabled bell
-                const matchLeagueId = String(
-                  m.leagueId ||
-                  m.league?.id ||
-                  liveMatch.leagueId ||
-                  liveMatch.league?.id ||
-                  getMatchLeagueId(m) ||
-                  getMatchLeagueId(liveMatch) ||
-                  ""
-                );
-                const isPopular = POPULAR_LEAGUE_IDS.has(matchLeagueId);
-                const shouldNotify = !!activeNotifications[mId] || isPopular;
-
-                // Send goal alert notification if bell is active or in popular leagues
-                if (
-                  shouldNotify &&
-                  m.score &&
-                  newScore !== m.score &&
-                  newScore !== "0 - 0" &&
-                  newScore !== "VS"
-                ) {
-                  Notifications.scheduleNotificationAsync({
-                    content: {
-                      title: "⚽ GOAL!",
-                      body: `${m.home?.name || "Home"} ${newScore} ${m.away?.name || "Away"}`,
-                      sound: true,
-                    },
-                    trigger: null,
-                  }).catch(() => {});
-                }
-
-                // Send kickoff alert if bell is active or in popular leagues and match just started
-                if (
-                  shouldNotify &&
-                  (m.status === "NS" || !m.status) &&
-                  (liveMatch.status === "Live" || liveMatch.minute)
-                ) {
-                  Notifications.scheduleNotificationAsync({
-                    content: {
-                      title: "⚡ Match Started!",
-                      body: `${m.home?.name || "Home"} vs ${m.away?.name || "Away"} has kicked off! ⚽`,
-                      sound: true,
-                    },
-                    trigger: null,
-                  }).catch(() => {});
-                }
-
                 if (m.score !== newScore || m.minute !== newMinute) {
                   hasChanged = true;
                   return {
@@ -565,73 +564,9 @@ export default function ExploreScreen() {
     loadData(true);
   }, []);
 
-  const handlePrevDate = React.useCallback(() => {
-    setSelectedDate((prevDate) => {
-      const nextDate = new Date(prevDate);
-      nextDate.setDate(prevDate.getDate() - 1);
-      return nextDate;
-    });
+  const handleSelectDate = React.useCallback((date: Date) => {
+    setSelectedDate(new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12));
   }, []);
-
-  const handleNextDate = React.useCallback(() => {
-    setSelectedDate((prevDate) => {
-      const nextDate = new Date(prevDate);
-      nextDate.setDate(prevDate.getDate() + 1);
-      return nextDate;
-    });
-  }, []);
-
-  const toggleNotification = React.useCallback(
-    (matchId: string, matchName?: string) => {
-      setActiveNotifications((prev) => {
-        const isCurrentlyActive = !!prev[matchId];
-        const nextState = !isCurrentlyActive;
-
-        if (nextState) {
-          Notifications.requestPermissionsAsync()
-            .then(async ({ status }) => {
-              if (status === "granted") {
-                Notifications.scheduleNotificationAsync({
-                  content: {
-                    title: "🔔 Match Notification Enabled",
-                    body: matchName
-                      ? `Goal & kickoff alerts enabled for ${matchName}`
-                      : "You will receive goal & kickoff alerts for this match.",
-                    sound: true,
-                  },
-                  trigger: null,
-                }).catch(() => {});
-
-                // Subscribe device token to server topic for real-time goal & kickoff push alerts
-                try {
-                  const tokenObj = await Notifications.getDevicePushTokenAsync();
-                  if (tokenObj?.data) {
-                    toggleServerMatchNotification(String(tokenObj.data), matchId, "subscribe");
-                    toggleServerMatchNotification(String(tokenObj.data), "popular", "subscribe");
-                  }
-                } catch (_) {}
-              }
-            })
-            .catch(() => {});
-        } else {
-          // Unsubscribe device token when bell is turned off
-          Notifications.getDevicePushTokenAsync()
-            .then((tokenObj) => {
-              if (tokenObj?.data) {
-                toggleServerMatchNotification(String(tokenObj.data), matchId, "unsubscribe");
-              }
-            })
-            .catch(() => {});
-        }
-
-        return {
-          ...prev,
-          [matchId]: nextState,
-        };
-      });
-    },
-    [],
-  );
 
   const handlePressDetails = React.useCallback((match: any) => {
     setSelectedMatch(match);
@@ -914,10 +849,8 @@ export default function ExploreScreen() {
 
     try {
       const matchedGroups: any[] = [];
-      // Strictly limit search to the 15 leagues of the selected date ONLY
-      const activeDate15Leagues = leaguesList.slice(0, 15);
-
-      activeDate15Leagues.forEach((group: any) => {
+      // Search every league of the selected date
+      leaguesList.forEach((group: any) => {
         if (!group || !group.matches) return;
         const lName = (group.leagueName || "").toLowerCase();
         const lMatch = lName.includes(q);
@@ -1009,8 +942,7 @@ export default function ExploreScreen() {
       {activeTab === "explore" && (
         <Header
           selectedDate={selectedDate}
-          onPrevDate={handlePrevDate}
-          onNextDate={handleNextDate}
+          onSelectDate={handleSelectDate}
           onRefresh={handleRefresh}
           showDateSelector={true}
           searchQuery={searchQuery}
@@ -1026,12 +958,11 @@ export default function ExploreScreen() {
           onRefresh={handleRefresh}
           liveMatches={filteredLiveMatches}
           leaguesList={filteredLeaguesList}
-          activeNotifications={activeNotifications}
-          onToggleNotification={toggleNotification}
           width={width}
           loadingFixtures={loadingFixtures}
           onPressDetails={handlePressDetails}
-          searchQuery={searchQuery}
+          searchQuery={debouncedSearchQuery}
+          selectedDate={selectedDate}
         />
       </View>
 
@@ -1048,21 +979,21 @@ export default function ExploreScreen() {
       {/* Highlight: Lazy mount on first visit, then persist */}
       {mountedTabs.has("highlight") && (
         <View style={{ flex: 1, display: activeTab === "highlight" ? "flex" : "none" }}>
-          <HighlightView />
+          <HighlightView isActive={activeTab === "highlight"} />
         </View>
       )}
 
       {/* Teams: Lazy mount on first visit, then persist */}
       {mountedTabs.has("teams") && (
         <View style={{ flex: 1, display: activeTab === "teams" ? "flex" : "none" }}>
-          <TeamsView apiTeams={apiData?.teams} apiLeagues={apiData?.leagues} />
+          <TeamsView apiTeams={apiData?.teams} apiLeagues={apiData?.leagues} onPressDetails={handlePressDetails} />
         </View>
       )}
 
       {/* Prediction: Lazy mount on first visit, then persist */}
       {mountedTabs.has("prediction") && (
         <View style={{ flex: 1, display: activeTab === "prediction" ? "flex" : "none" }}>
-          <PredictionView initialFixtures={apiData?.fixtures} />
+          <PredictionView initialFixtures={apiData?.fixtures} isActive={activeTab === "prediction"} />
         </View>
       )}
 

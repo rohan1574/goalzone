@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, ActivityIndicator } from "react-native";
-import { ChevronDown, Bell } from "lucide-react-native";
+import { ChevronDown } from "lucide-react-native";
 import LiveMatchClock from "../common/LiveMatchClock";
 
 interface LeagueMatch {
@@ -23,8 +23,6 @@ interface LeagueGroup {
 
 interface LeaguesProps {
   leaguesList: LeagueGroup[];
-  activeNotifications: { [key: string]: boolean };
-  onToggleNotification: (id: string, matchName?: string) => void;
   onPressDetails?: (match: any) => void;
   loadingFixtures?: boolean;
   searchQuery?: string;
@@ -35,16 +33,12 @@ const MatchCard = React.memo(function MatchCard({
   leagueName,
   leagueId,
   leagueLogo,
-  isBellActive,
-  onToggleNotification,
   onPressDetails,
 }: {
   match: LeagueMatch;
   leagueName: string;
   leagueId: string;
   leagueLogo: string;
-  isBellActive: boolean;
-  onToggleNotification: (id: string, matchName?: string) => void;
   onPressDetails?: (match: any) => void;
 }) {
   const stUpper = String(match.status || "").trim().toUpperCase();
@@ -97,15 +91,6 @@ const MatchCard = React.memo(function MatchCard({
       });
     }
   }, [match, leagueName, leagueId, leagueLogo, onPressDetails, isFinished, effectiveStatus]);
-
-  const handleBellPress = React.useCallback(
-    (e: any) => {
-      e.stopPropagation();
-      const matchName = `${match.home?.name || 'Home'} vs ${match.away?.name || 'Away'}`;
-      onToggleNotification(match.id, matchName);
-    },
-    [match, onToggleNotification],
-  );
 
   return (
     <TouchableOpacity
@@ -164,19 +149,6 @@ const MatchCard = React.memo(function MatchCard({
         </View>
       </View>
 
-      {/* Right column: Notification Bell Icon */}
-      <TouchableOpacity
-        onPress={handleBellPress}
-        className={`p-2.5 rounded-full ${
-          isBellActive ? "bg-[#02DB54]/15" : "bg-white/5"
-        }`}
-      >
-        <Bell
-          size={18}
-          color={isBellActive ? "#02DB54" : "#ECEDEE"}
-          fill={isBellActive ? "#02DB54" : "none"}
-        />
-      </TouchableOpacity>
     </TouchableOpacity>
   );
 });
@@ -209,8 +181,6 @@ export const POPULAR_LEAGUE_IDS = new Set([
 
 export default function Leagues({
   leaguesList,
-  activeNotifications,
-  onToggleNotification,
   onPressDetails,
   loadingFixtures,
   searchQuery,
@@ -289,8 +259,6 @@ export default function Leagues({
               leagueName={league?.leagueName || ""}
               leagueId={league?.leagueId || ""}
               leagueLogo={league?.leagueLogo || ""}
-              isBellActive={!!(match?.id && activeNotifications[match.id])}
-              onToggleNotification={onToggleNotification}
               onPressDetails={onPressDetails}
             />
           ))}

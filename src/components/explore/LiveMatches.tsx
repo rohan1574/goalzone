@@ -71,7 +71,7 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
             </Text>
           </View>
           <Text className="text-gray-400 text-xs text-center font-medium">
-            No live matches at the moment. Check the fixtures below for today's schedule.
+            Nothing is being played right now. Check the fixtures below.
           </Text>
         </View>
       ) : (

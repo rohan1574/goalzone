@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
   View,
@@ -9,9 +9,14 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Bell } from "lucide-react-native";
-import { fetchLeagueStandings, fetchLeagueFixtures, formatLocalMatchTime } from "../../services/footballApi";
-import * as Notifications from "expo-notifications";
+import { ArrowLeft, Clock } from "lucide-react-native";
+import {
+  fetchLeagueStandings,
+  fetchLeagueFixtures,
+  getMatchKickoffMs,
+  formatKickoffLabel,
+} from "../../services/footballApi";
+import RemoteLogo from "../common/RemoteLogo";
 
 export interface League {
   id: string;
@@ -27,6 +32,86 @@ interface LeagueDetailsModalProps {
   onPressDetails?: (match: any) => void;
 }
 
+interface FixtureRow {
+  id: string;
+  status: string;
+  score: string;
+  kickoff: number | null;
+  home: { id?: string | number; name: string; logo: string; short: string };
+  away: { id?: string | number; name: string; logo: string; short: string };
+}
+
+interface TableRow {
+  pos: number;
+  name: string;
+  logo: string;
+  pl: number;
+  w: number | null;
+  d: number | null;
+  l: number | null;
+  gd: string;
+  pts: number;
+  form: string;
+  zone: string;
+}
+
+const FINISHED = new Set(["FT", "AET", "PEN"]);
+const NOT_STARTED = new Set(["NS", "TBD"]);
+const POSTPONED = new Set(["PST", "CANC", "ABD", "SUSP"]);
+
+// Colour for a standings zone, from API-Football's "description" text
+const zoneColor = (zone: string) => {
+  const z = zone.toLowerCase();
+  if (!z) return null;
+  if (z.includes("relegation")) return "#EF4444";
+  if (z.includes("champions league") || z.includes("libertadores")) return "#02DB54";
+  if (z.includes("europa league") || z.includes("sudamericana")) return "#60A5FA";
+  if (z.includes("conference") || z.includes("ecl")) return "#2DD4BF";
+  if (z.includes("promotion") || z.includes("play")) return "#EAB308";
+  return "#9CA3AF";
+};
+
+const FORM_COLORS: Record<string, string> = { W: "#02DB54", D: "#9CA3AF", L: "#EF4444" };
+
+const toTeam = (obj: any) => {
+  const name = obj?.name || obj?.teamName || "TBD";
+  const id = obj?.id || obj?.teamId;
+  return {
+    id,
+    name,
+    logo: obj?.logo || obj?.teamLogo || obj?.logoUrl || (id ? `https://media.api-sports.io/football/teams/${id}.png` : ""),
+    short: name.substring(0, 3).toUpperCase(),
+  };
+};
+
+const mapFixtures = (raw: any[]): FixtureRow[] =>
+  raw.map((m: any, idx: number) => ({
+    id: String(m.id || m.fixture?.id || `fix-${idx}`),
+    status: String(m.status || m.fixture?.status?.short || "NS").toUpperCase(),
+    score: m.score || (m.goals ? `${m.goals.home ?? 0} - ${m.goals.away ?? 0}` : "VS"),
+    kickoff: getMatchKickoffMs(m),
+    home: toTeam(m.home || m.teams?.home || m.homeTeam),
+    away: toTeam(m.away || m.teams?.away || m.awayTeam),
+  }));
+
+const mapTable = (raw: any[]): TableRow[] =>
+  raw.map((item: any, idx: number) => {
+    const teamObj = item.team || item;
+    return {
+      pos: item.pos || item.position || item.rank || idx + 1,
+      name: teamObj.name || teamObj.teamName || "Team",
+      logo: teamObj.logo || teamObj.teamLogo || teamObj.logoUrl || "",
+      pl: item.pl ?? item.played ?? item.all?.played ?? 0,
+      w: item.win ?? item.all?.win ?? null,
+      d: item.draw ?? item.all?.draw ?? null,
+      l: item.lose ?? item.all?.lose ?? null,
+      gd: String(item.gd ?? item.goalsDiff ?? item.goalDiff ?? item.all?.goalsDiff ?? 0),
+      pts: item.pts ?? item.points ?? 0,
+      form: String(item.form || "").slice(-5),
+      zone: item.description || "",
+    };
+  });
+
 export default function LeagueDetailsModal({
   visible,
   league,
@@ -34,552 +119,247 @@ export default function LeagueDetailsModal({
   onPressDetails,
 }: LeagueDetailsModalProps) {
   const [activeTab, setActiveTab] = useState<"fixtures" | "table">("fixtures");
-  const [activeNotifications, setActiveNotifications] = useState<{ [key: string]: boolean }>({});
+  const [fixtures, setFixtures] = useState<FixtureRow[]>([]);
+  const [loadingFixtures, setLoadingFixtures] = useState(true);
+  const [table, setTable] = useState<TableRow[]>([]);
+  const [loadingTable, setLoadingTable] = useState(true);
 
-
-  const toggleNotification = (matchId: string, matchName?: string) => {
-    setActiveNotifications((prev) => {
-      const isCurrentlyActive = !!prev[matchId];
-      const nextState = !isCurrentlyActive;
-
-      if (nextState) {
-        Notifications.requestPermissionsAsync()
-          .then(({ status }) => {
-            if (status === "granted") {
-              Notifications.scheduleNotificationAsync({
-                content: {
-                  title: "🔔 Match Notification Enabled",
-                  body: matchName
-                    ? `Alerts enabled for ${matchName}`
-                    : "You will receive notifications for this match.",
-                  sound: true,
-                },
-                trigger: null,
-              }).catch(() => {});
-            }
-          })
-          .catch(() => {});
-      }
-
-      return {
-        ...prev,
-        [matchId]: nextState,
-      };
-    });
-  };
-
-  // Mock data database for fixtures and standings by league ID
-  const mockLeagueData: {
-    [key: string]: {
-      fixtures: Array<{
-        id: string;
-        time: string;
-        date: string;
-        home: { name: string; logo: string };
-        away: { name: string; logo: string };
-      }>;
-      table: Array<{
-        pos: number;
-        name: string;
-        logo: string;
-        pl: number;
-        gd: string;
-        pts: number;
-      }>;
-    };
-  } = {
-    "world-cup": {
-      fixtures: [
-        {
-          id: "wc-1",
-          time: "00:00",
-          date: "14/06",
-          home: { name: "Argentina", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8066.png" },
-          away: { name: "France", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8490.png" },
-        },
-        {
-          id: "wc-2",
-          time: "18:00",
-          date: "15/06",
-          home: { name: "Brazil", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8550.png" },
-          away: { name: "England", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8489.png" },
-        },
-      ],
-      table: [
-        { pos: 1, name: "Argentina", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8066.png", pl: 3, gd: "+5", pts: 9 },
-        { pos: 2, name: "France", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8490.png", pl: 3, gd: "+3", pts: 6 },
-        { pos: 3, name: "Brazil", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8550.png", pl: 3, gd: "+1", pts: 3 },
-        { pos: 4, name: "England", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8489.png", pl: 3, gd: "-9", pts: 0 },
-      ],
-    },
-    "laliga": {
-      fixtures: [
-        {
-          id: "ll-1",
-          time: "01:00",
-          date: "26/08",
-          home: { name: "Valencia", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10205.png" },
-          away: { name: "Real Betis", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png" },
-        },
-        {
-          id: "ll-2",
-          time: "01:00",
-          date: "27/08",
-          home: { name: "Real Sociedad", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8560.png" },
-          away: { name: "Real Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png" },
-        },
-        {
-          id: "ll-3",
-          time: "00:30",
-          date: "28/08",
-          home: { name: "Celta de Vigo", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9910.png" },
-          away: { name: "Osasuna", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8371.png" },
-        },
-        {
-          id: "ll-4",
-          time: "01:00",
-          date: "28/08",
-          home: { name: "FC Barcelona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png" },
-          away: { name: "Athletic Club", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8315.png" },
-        },
-        {
-          id: "ll-5",
-          time: "23:00",
-          date: "28/08",
-          home: { name: "Racing Santander", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8696.png" },
-          away: { name: "Elche", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10268.png" },
-        },
-        {
-          id: "ll-6",
-          time: "01:30",
-          date: "29/08",
-          home: { name: "Deportivo Alaves", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png" },
-          away: { name: "Sevilla", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8302.png" },
-        },
-      ],
-      table: [
-        { pos: 1, name: "FC Barcelona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png", pl: 2, gd: "+5", pts: 6 },
-        { pos: 2, name: "Real Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png", pl: 2, gd: "+3", pts: 6 },
-        { pos: 3, name: "Atletico Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9906.png", pl: 2, gd: "+2", pts: 4 },
-        { pos: 4, name: "Girona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/7765.png", pl: 2, gd: "+2", pts: 4 },
-        { pos: 5, name: "Athletic Club", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8315.png", pl: 2, gd: "+1", pts: 4 },
-        { pos: 6, name: "Real Sociedad", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8560.png", pl: 2, gd: "0", pts: 3 },
-        { pos: 7, name: "Real Betis", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png", pl: 2, gd: "0", pts: 2 },
-        { pos: 8, name: "Villarreal", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10205.png", pl: 2, gd: "0", pts: 2 },
-        { pos: 9, name: "Valencia", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10205.png", pl: 2, gd: "0", pts: 2 },
-        { pos: 10, name: "Deportivo Alaves", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8586.png", pl: 2, gd: "0", pts: 1 },
-        { pos: 11, name: "Osasuna", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8371.png", pl: 2, gd: "-1", pts: 1 },
-        { pos: 12, name: "Getafe", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8278.png", pl: 2, gd: "-1", pts: 1 },
-        { pos: 13, name: "Celta de Vigo", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9910.png", pl: 2, gd: "-1", pts: 1 },
-        { pos: 14, name: "Sevilla", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8302.png", pl: 2, gd: "-1", pts: 1 },
-        { pos: 15, name: "Mallorca", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8661.png", pl: 2, gd: "-2", pts: 1 },
-        { pos: 16, name: "Las Palmas", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8370.png", pl: 2, gd: "-2", pts: 1 },
-        { pos: 17, name: "Rayo Vallecano", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8372.png", pl: 2, gd: "-2", pts: 1 },
-        { pos: 18, name: "Leganes", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9866.png", pl: 2, gd: "-3", pts: 0 },
-        { pos: 19, name: "Real Valladolid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10281.png", pl: 2, gd: "-3", pts: 0 },
-        { pos: 20, name: "Espanyol", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8558.png", pl: 2, gd: "-4", pts: 0 },
-      ],
-    },
-    "epl": {
-      fixtures: [
-        {
-          id: "ep-1",
-          time: "19:00",
-          date: "23/08",
-          home: { name: "Manchester City", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png" },
-          away: { name: "AFC Bournemouth", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8086.png" },
-        },
-        {
-          id: "ep-2",
-          time: "19:00",
-          date: "23/08",
-          home: { name: "Brighton & Hove Albion", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png" },
-          away: { name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png" },
-        },
-      ],
-      table: [
-        { pos: 1, name: "Manchester City", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png", pl: 1, gd: "+2", pts: 3 },
-        { pos: 2, name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png", pl: 1, gd: "+1", pts: 3 },
-        { pos: 3, name: "Brighton", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png", pl: 1, gd: "-1", pts: 0 },
-        { pos: 4, name: "AFC Bournemouth", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8086.png", pl: 1, gd: "-2", pts: 0 },
-      ],
-    },
-    "39": {
-      fixtures: [
-        {
-          id: "ep-1",
-          time: "19:00",
-          date: "23/08",
-          home: { name: "Manchester City", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png" },
-          away: { name: "AFC Bournemouth", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8086.png" },
-        },
-        {
-          id: "ep-2",
-          time: "19:00",
-          date: "23/08",
-          home: { name: "Brighton & Hove Albion", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png" },
-          away: { name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png" },
-        },
-      ],
-      table: [
-        { pos: 1, name: "Manchester City", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8457.png", pl: 1, gd: "+2", pts: 3 },
-        { pos: 2, name: "Chelsea", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8455.png", pl: 1, gd: "+1", pts: 3 },
-        { pos: 3, name: "Brighton", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10204.png", pl: 1, gd: "-1", pts: 0 },
-        { pos: 4, name: "AFC Bournemouth", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8086.png", pl: 1, gd: "-2", pts: 0 },
-      ],
-    },
-    "140": {
-      fixtures: [
-        {
-          id: "ll-1",
-          time: "01:00",
-          date: "26/08",
-          home: { name: "Valencia", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/10205.png" },
-          away: { name: "Real Betis", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8639.png" },
-        },
-        {
-          id: "ll-2",
-          time: "01:00",
-          date: "27/08",
-          home: { name: "Real Sociedad", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8560.png" },
-          away: { name: "Real Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png" },
-        },
-        {
-          id: "ll-3",
-          time: "00:30",
-          date: "28/08",
-          home: { name: "Celta de Vigo", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9910.png" },
-          away: { name: "Osasuna", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8371.png" },
-        },
-        {
-          id: "ll-4",
-          time: "01:00",
-          date: "28/08",
-          home: { name: "FC Barcelona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png" },
-          away: { name: "Athletic Club", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8315.png" },
-        },
-      ],
-      table: [
-        { pos: 1, name: "FC Barcelona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8634.png", pl: 2, gd: "+5", pts: 6 },
-        { pos: 2, name: "Real Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8633.png", pl: 2, gd: "+3", pts: 6 },
-        { pos: 3, name: "Atletico Madrid", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9906.png", pl: 2, gd: "+2", pts: 4 },
-        { pos: 4, name: "Girona", logo: "https://images.fotmob.com/image_resources/logo/teamlogo/7765.png", pl: 2, gd: "+2", pts: 4 },
-      ],
-    },
-  };
-
-  const [apiFixtures, setApiFixtures] = useState<any[]>([]);
-  const [loadingFixtures, setLoadingFixtures] = useState(false);
-  const [apiTable, setApiTable] = useState<any[]>([]);
-  const [loadingTable, setLoadingTable] = useState(false);
+  // Drop responses for a league the user has already closed / switched away from
+  const loadedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    if (visible && league) {
-      loadStandings();
-      loadFixtures();
-    }
-  }, [visible, league]);
-
-  const loadFixtures = async () => {
-    if (!league) return;
+    if (!visible || !league) return;
+    const leagueId = league.id;
+    loadedFor.current = leagueId;
+    setActiveTab("fixtures");
+    setFixtures([]);
+    setTable([]);
     setLoadingFixtures(true);
-    try {
-      const rawData = await fetchLeagueFixtures(league.id);
-      if (rawData && rawData.length > 0) {
-        const mapped = rawData.map((m: any, idx: number) => {
-          const id = String(m.id || m.fixture?.id || m.event_id || `fix-${idx}`);
-          const hObj = m.home || m.teams?.home || m.homeTeam || {};
-          const aObj = m.away || m.teams?.away || m.awayTeam || {};
-
-          const hName = hObj.name || hObj.teamName || "Home";
-          const hId = hObj.id || hObj.teamId;
-          const hLogo = hObj.logo || hObj.teamLogo || hObj.logoUrl || (hId ? `https://media.api-sports.io/football/teams/${hId}.png` : "");
-
-          const aName = aObj.name || aObj.teamName || "Away";
-          const aId = aObj.id || aObj.teamId;
-          const aLogo = aObj.logo || aObj.teamLogo || aObj.logoUrl || (aId ? `https://media.api-sports.io/football/teams/${aId}.png` : "");
-
-          const status = m.status || m.fixture?.status?.short || "NS";
-          const score = m.score || (m.goals ? `${m.goals.home ?? 0} - ${m.goals.away ?? 0}` : (status === "FT" || status === "Live" ? m.time : "VS"));
-          const time = formatLocalMatchTime(m, m.time || "00:00");
-          const date = m.date || m.fixture?.date || "";
-          const minute = m.minute || status;
-
-          return {
-            id,
-            status,
-            score,
-            minute,
-            time,
-            date,
-            home: { id: hId, name: hName, logo: hLogo, short: hName.substring(0, 3).toUpperCase() },
-            away: { id: aId, name: aName, logo: aLogo, short: aName.substring(0, 3).toUpperCase() },
-          };
-        });
-        setApiFixtures(mapped);
-      } else {
-        setApiFixtures([]);
-      }
-    } catch (e) {
-      console.warn("Failed to load league fixtures, fallback to mock:", e);
-      setApiFixtures([]);
-    } finally {
-      setLoadingFixtures(false);
-    }
-  };
-
-  const loadStandings = async () => {
-    if (!league) return;
     setLoadingTable(true);
-    try {
-      const rawData = await fetchLeagueStandings(league.id);
-      if (rawData && rawData.length > 0) {
-        const mapped = rawData.map((item: any, idx: number) => {
-          const teamObj = item.team || item;
-          const pos = item.pos || item.position || item.rank || item.idx || (idx + 1);
-          const name = teamObj.name || teamObj.teamName || "Team";
-          const logo = teamObj.logo || teamObj.teamLogo || teamObj.logoUrl || `https://images.fotmob.com/image_resources/logo/teamlogo/${item.teamId || item.id}.png`;
-          const pl = item.pl || item.played || item.playedCount || item.all?.played || 0;
-          const gd = String(
-            item.gd ?? 
-            item.goalDiff ?? 
-            item.goal_diff ?? 
-            item.goalsDiff ?? 
-            item.goalDifference ?? 
-            item.diff ?? 
-            item.all?.goalsDiff ?? 
-            "0"
-          );
-          const pts = item.pts || item.points || 0;
 
-          return { pos, name, logo, pl, gd, pts };
-        });
-        setApiTable(mapped);
-      } else {
-        setApiTable([]);
-      }
-    } catch (e) {
-      console.warn("Failed to load standings, fallback to mock:", e);
-      setApiTable([]);
-    } finally {
-      setLoadingTable(false);
-    }
-  };
+    fetchLeagueFixtures(leagueId)
+      .then((raw) => {
+        if (loadedFor.current === leagueId) setFixtures(mapFixtures(raw || []));
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (loadedFor.current === leagueId) setLoadingFixtures(false);
+      });
 
-  const activeData = mockLeagueData[league?.id || "140"] || mockLeagueData["140"] || mockLeagueData["laliga"];
-  const fixturesData = apiFixtures.length > 0 ? apiFixtures : activeData.fixtures;
-  const tableData = apiTable.length > 0 ? apiTable : activeData.table;
+    fetchLeagueStandings(leagueId)
+      .then((raw) => {
+        if (loadedFor.current === leagueId) setTable(mapTable(raw || []));
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (loadedFor.current === leagueId) setLoadingTable(false);
+      });
+  }, [visible, league?.id]);
 
   if (!league) return null;
 
+  const openMatch = (match: FixtureRow) => {
+    if (!onPressDetails) return;
+    onPressDetails({
+      id: match.id,
+      league: league.name,
+      leagueId: league.id,
+      leagueLogo: league.logo,
+      home: match.home,
+      away: match.away,
+      score: NOT_STARTED.has(match.status) ? "VS" : match.score,
+      minute: match.status,
+      status: match.status,
+      timestamp: match.kickoff ? Math.floor(match.kickoff / 1000) : undefined,
+    });
+  };
+
+  const zones = Array.from(new Set(table.map((r) => r.zone).filter(Boolean)));
+  const hasWdl = table.some((r) => r.w !== null);
+
   return (
-    <Modal
-      animationType="slide"
-      transparent={false}
-      visible={visible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="slide" transparent={false} visible={visible} onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0E0F" }}>
-        {/* Header Section */}
-        <View className="flex-row items-center justify-between px-4 py-3.5 border-b border-[#ffffff05]">
+        {/* Header */}
+        <View className="flex-row items-center px-4 py-3.5 border-b border-[#ffffff05]">
           <TouchableOpacity onPress={onClose} className="p-1">
             <ArrowLeft size={24} color="#ECEDEE" />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-black text-center flex-1">{league.name}</Text>
-          <View className="w-10" />
+          <View className="flex-1 flex-row items-center justify-center gap-2.5 px-2">
+            <RemoteLogo uri={league.logo} label={league.name} size={30} plate />
+            <View className="flex-shrink">
+              <Text className="text-white text-lg font-black" numberOfLines={1}>{league.name}</Text>
+              {league.category ? (
+                <Text className="text-gray-400 text-[10px] font-bold uppercase tracking-wider" numberOfLines={1}>
+                  {league.category}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+          <View className="w-8" />
         </View>
 
-        {/* Tab Selection */}
+        {/* Tabs */}
         <View className="flex-row bg-[#131415] rounded-3xl mx-4 my-4 p-1 border border-white/5">
-          <TouchableOpacity
-            onPress={() => setActiveTab("fixtures")}
-            className={`flex-1 py-2.5 rounded-2xl items-center justify-center ${
-              activeTab === "fixtures" ? "bg-[#02DB54]/10 border border-[#02DB54]" : ""
-            }`}
-          >
-            <Text
-              className={`text-sm font-black ${
-                activeTab === "fixtures" ? "text-white" : "text-[#9BA1A6]"
-              }`}
-            >
-              Fixtures
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveTab("table")}
-            className={`flex-1 py-2.5 rounded-2xl items-center justify-center ${
-              activeTab === "table" ? "bg-[#02DB54]/10 border border-[#02DB54]" : ""
-            }`}
-          >
-            <Text
-              className={`text-sm font-black ${
-                activeTab === "table" ? "text-white" : "text-[#9BA1A6]"
-              }`}
-            >
-              Table
-            </Text>
-          </TouchableOpacity>
+          {(["fixtures", "table"] as const).map((tab) => {
+            const selected = activeTab === tab;
+            return (
+              <TouchableOpacity
+                key={tab}
+                onPress={() => setActiveTab(tab)}
+                className={`flex-1 py-2.5 rounded-2xl items-center justify-center ${selected ? "bg-[#02DB54]/10 border border-[#02DB54]" : ""}`}
+              >
+                <Text className={`text-sm font-black ${selected ? "text-white" : "text-[#9BA1A6]"}`}>
+                  {tab === "fixtures" ? "Fixtures" : "Table"}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        <ScrollView
-          className="flex-1 px-4"
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
           {activeTab === "fixtures" ? (
-            <View className="gap-3">
-              {loadingFixtures ? (
-                <View className="py-10 items-center justify-center">
-                  <ActivityIndicator size="small" color="#02DB54" />
-                </View>
-              ) : (
-                fixturesData.map((match) => {
-                  const isNotified = activeNotifications[match.id];
-                  const handleCardPress = () => {
-                    if (onPressDetails && league) {
-                      const hName = match.home?.name || "Home";
-                      const aName = match.away?.name || "Away";
-                      const stUpper = String(match.status || "").trim().toUpperCase();
-                      const minUpper = String(match.minute || "").trim().toUpperCase();
-                      const isFinished =
-                        stUpper === "FT" ||
-                        stUpper === "AET" ||
-                        stUpper === "PEN" ||
-                        stUpper.includes("FINISH") ||
-                        stUpper.includes("ENDED") ||
-                        stUpper.includes("FULL TIME") ||
-                        minUpper === "FT" ||
-                        minUpper === "AET" ||
-                        minUpper === "PEN" ||
-                        minUpper.includes("FINISH") ||
-                        minUpper.includes("ENDED") ||
-                        minUpper === "90'" ||
-                        minUpper === "90" ||
-                        minUpper === "90M" ||
-                        minUpper === "90 MIN" ||
-                        (stUpper === "2H" && (minUpper.startsWith("90") || (match.score && match.score !== "VS")));
-                      const effectiveStatus = isFinished
-                        ? (stUpper === "AET" || minUpper === "AET" ? "AET" : stUpper === "PEN" || minUpper === "PEN" ? "PEN" : "FT")
-                        : (match.status || "NS");
-                      onPressDetails({
-                        id: String(match.id),
-                        league: league.name,
-                        leagueId: league.id,
-                        leagueLogo: league.logo,
-                        home: {
-                          id: match.home?.id,
-                          name: hName,
-                          short: match.home?.short || hName.substring(0, 3).toUpperCase(),
-                          logo: match.home?.logo || "",
-                        },
-                        away: {
-                          id: match.away?.id,
-                          name: aName,
-                          short: match.away?.short || aName.substring(0, 3).toUpperCase(),
-                          logo: match.away?.logo || "",
-                        },
-                        score: match.score || (isFinished || match.status === "Live" ? match.time : "VS"),
-                        minute: effectiveStatus,
-                        status: effectiveStatus,
-                      });
-                    }
-                  };
-
+            loadingFixtures ? (
+              <ActivityIndicator size="small" color="#02DB54" className="py-10" />
+            ) : fixtures.length === 0 ? (
+              <View className="py-12 px-4 items-center bg-[#131415] rounded-3xl border border-white/5">
+                <Text className="text-[#02DB54] font-black text-sm mb-1">No Upcoming Fixtures</Text>
+                <Text className="text-gray-400 font-bold text-xs text-center">
+                  This competition has no scheduled matches right now.
+                </Text>
+              </View>
+            ) : (
+              <View className="gap-3">
+                {fixtures.map((match) => {
+                  const finished = FINISHED.has(match.status);
+                  const live = !finished && !NOT_STARTED.has(match.status) && !POSTPONED.has(match.status);
+                  const statusLabel = finished
+                    ? match.status
+                    : POSTPONED.has(match.status)
+                    ? "Postponed"
+                    : live
+                    ? "Live"
+                    : "Upcoming";
                   return (
                     <TouchableOpacity
                       key={match.id}
                       activeOpacity={0.7}
-                      onPress={handleCardPress}
-                      className="relative bg-[#131415] rounded-3xl px-4 py-4.5 border border-white/5 overflow-hidden flex-row items-center justify-between"
+                      onPress={() => openMatch(match)}
+                      disabled={!onPressDetails}
+                      className="relative bg-[#131415] rounded-3xl px-4 py-4 border border-white/5 overflow-hidden flex-row items-center"
                     >
-                      {/* Left glow accent indicator */}
                       <View className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#02DB54] rounded-l-3xl" />
 
-                      {/* Time & Date Column */}
-                      <View className="w-[18%] items-start justify-center">
-                        <Text className="text-[#9BA1A6] text-[11px] font-bold tracking-wider mb-0.5">{match.status || 'NS'}</Text>
-                        <Text className="text-white text-sm font-black mb-0.5">{match.time}</Text>
-                        <Text className="text-[#9BA1A6] text-[9px] font-semibold">{match.date}</Text>
+                      <View className="w-[30%] pr-2">
+                        <Text
+                          className={`text-[10px] font-black uppercase tracking-wider mb-1 ${live ? "text-red-400" : "text-[#9BA1A6]"}`}
+                        >
+                          {statusLabel}
+                        </Text>
+                        {finished || live ? (
+                          <Text className="text-white text-base font-black">{match.score}</Text>
+                        ) : match.kickoff ? (
+                          <View className="flex-row items-center gap-1">
+                            <Clock size={10} color="#9BA1A6" />
+                            <Text className="text-white text-[11px] font-bold flex-shrink" numberOfLines={2}>
+                              {formatKickoffLabel(match.kickoff)}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Text className="text-white text-xs font-bold">TBD</Text>
+                        )}
                       </View>
 
-                      {/* Divider Line */}
-                      <View className="w-[1px] h-10 bg-white/10 mx-1" />
+                      <View className="w-[1px] h-10 bg-white/10" />
 
-                      {/* Match details (Teams) */}
-                      <View className="flex-1 px-3 justify-center gap-2">
-                        <View className="flex-row items-center gap-2.5">
-                          <Image
-                            source={match.home?.logo ? { uri: match.home.logo } : undefined}
-                            className="w-6 h-6"
-                            resizeMode="contain"
-                          />
-                          <Text className="text-white text-sm font-extrabold" numberOfLines={1}>
-                            {match.home?.name || "Home"}
-                          </Text>
-                        </View>
-                        <View className="flex-row items-center gap-2.5">
-                          <Image
-                            source={match.away?.logo ? { uri: match.away.logo } : undefined}
-                            className="w-6 h-6"
-                            resizeMode="contain"
-                          />
-                          <Text className="text-white text-sm font-extrabold" numberOfLines={1}>
-                            {match.away?.name || "Away"}
-                          </Text>
-                        </View>
+                      <View className="flex-1 pl-3 gap-2">
+                        {[match.home, match.away].map((team, i) => (
+                          <View key={i} className="flex-row items-center gap-2.5">
+                            {team.logo ? (
+                              <Image source={{ uri: team.logo }} className="w-6 h-6" resizeMode="contain" />
+                            ) : (
+                              <View className="w-6 h-6 rounded-full bg-white/10" />
+                            )}
+                            <Text className="text-white text-sm font-extrabold flex-1" numberOfLines={1}>
+                              {team.name}
+                            </Text>
+                          </View>
+                        ))}
                       </View>
-
-                      {/* Bell Notification Button */}
-                      <TouchableOpacity
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          toggleNotification(match.id);
-                        }}
-                        className={`p-2.5 rounded-full ${
-                          isNotified ? "bg-[#02DB54]/15" : "bg-white/5"
-                        }`}
-                      >
-                        <Bell
-                          size={18}
-                          color={isNotified ? "#02DB54" : "#ECEDEE"}
-                          fill={isNotified ? "#02DB54" : "none"}
-                        />
-                      </TouchableOpacity>
                     </TouchableOpacity>
                   );
-                })
-              )}
+                })}
+              </View>
+            )
+          ) : loadingTable ? (
+            <ActivityIndicator size="small" color="#02DB54" className="py-10" />
+          ) : table.length === 0 ? (
+            <View className="py-12 px-4 items-center bg-[#131415] rounded-3xl border border-white/5">
+              <Text className="text-[#02DB54] font-black text-sm mb-1">No Table Available</Text>
+              <Text className="text-gray-400 font-bold text-xs text-center">
+                Standings aren't available for this competition.
+              </Text>
             </View>
           ) : (
-            <View className="bg-[#131415] rounded-3xl p-4 border border-white/5">
-              <View className="flex-row border-b border-white/10 pb-2 mb-2 items-center">
-                <Text className="text-[#9BA1A6] font-bold text-xs text-center w-[10%]">Pos</Text>
-                <Text className="text-[#9BA1A6] font-bold text-xs text-left flex-1">Team</Text>
-                <Text className="text-[#9BA1A6] font-bold text-xs text-center w-[12%]">PL</Text>
-                <Text className="text-[#9BA1A6] font-bold text-xs text-center w-[15%]">GD</Text>
-                <Text className="text-[#9BA1A6] font-bold text-xs text-center w-[15%]">PTS</Text>
+            <View className="bg-[#131415] rounded-3xl p-3 border border-white/5">
+              <View className="flex-row border-b border-white/10 pb-2 mb-1 items-center">
+                <Text className="text-[#9BA1A6] font-bold text-[11px] text-center w-7">#</Text>
+                <Text className="text-[#9BA1A6] font-bold text-[11px] flex-1 ml-1">Team</Text>
+                {(hasWdl ? ["P", "W", "D", "L", "GD"] : ["P", "GD"]).map((h) => (
+                  <Text key={h} className="text-[#9BA1A6] font-bold text-[11px] text-center w-7">{h}</Text>
+                ))}
+                <Text className="text-[#9BA1A6] font-bold text-[11px] text-center w-9">PTS</Text>
               </View>
-              
-              {loadingTable ? (
-                <View className="py-10 items-center justify-center">
-                  <ActivityIndicator size="small" color="#02DB54" />
-                </View>
-              ) : (
-                tableData.map((row, idx) => (
-                  <View key={row.id || row.pos || idx} className="flex-row py-2.5 border-b border-white/5 items-center">
-                    <Text className="text-[#02DB54] font-black text-xs text-center w-[10%]">{row.pos}</Text>
-                    <View className="flex-row items-center gap-2.5 flex-1">
-                      <Image source={{ uri: row.logo }} className="w-5 h-5" resizeMode="contain" />
-                      <Text className="text-white text-xs font-extrabold" numberOfLines={1}>
-                        {row.name}
-                      </Text>
+
+              {table.map((row, idx) => {
+                const color = zoneColor(row.zone);
+                return (
+                  <View key={`${row.pos}-${idx}`} className="py-2 border-b border-white/5">
+                    <View className="flex-row items-center">
+                      <View className="w-7 items-center">
+                        <Text
+                          className="font-black text-xs"
+                          style={{ color: color || "#FFFFFF" }}
+                        >
+                          {row.pos}
+                        </Text>
+                      </View>
+                      <View className="flex-row items-center gap-2 flex-1 ml-1">
+                        {row.logo ? <Image source={{ uri: row.logo }} className="w-5 h-5" resizeMode="contain" /> : null}
+                        <Text className="text-white text-xs font-extrabold flex-1" numberOfLines={1}>{row.name}</Text>
+                      </View>
+                      {(hasWdl ? [row.pl, row.w, row.d, row.l, row.gd] : [row.pl, row.gd]).map((v, i) => (
+                        <Text key={i} className="text-gray-300 text-xs font-bold text-center w-7">{v ?? "-"}</Text>
+                      ))}
+                      <Text className="text-white text-xs font-black text-center w-9">{row.pts}</Text>
                     </View>
-                    <Text className="text-gray-300 text-xs font-bold text-center w-[12%]">{row.pl}</Text>
-                    <Text className="text-gray-300 text-xs font-bold text-center w-[15%]">{row.gd}</Text>
-                    <Text className="text-white text-xs font-black text-center w-[15%]">{row.pts}</Text>
+                    {row.form ? (
+                      <View className="flex-row gap-1 mt-1.5 ml-[34px]">
+                        {row.form.split("").map((r, i) => (
+                          <View
+                            key={i}
+                            className="w-4 h-4 rounded items-center justify-center"
+                            style={{ backgroundColor: FORM_COLORS[r] || "#374151" }}
+                          >
+                            <Text className="text-black text-[8px] font-black">{r}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    ) : null}
                   </View>
-                ))
-              )}
+                );
+              })}
+
+              {zones.length > 0 ? (
+                <View className="mt-3 gap-1.5 px-1">
+                  {zones.map((zone) => (
+                    <View key={zone} className="flex-row items-center gap-2">
+                      <View className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: zoneColor(zone) || "#9CA3AF" }} />
+                      <Text className="text-gray-400 text-[10px] font-bold flex-1">{zone}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
             </View>
           )}
           <View className="h-10" />

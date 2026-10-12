@@ -1,21 +1,13 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, TextInput, Keyboard } from "react-native";
 import { router } from "expo-router";
-import {
-  Menu,
-  Search,
-  Bell,
-  RotateCw,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  X,
-} from "lucide-react-native";
+import { Menu, Search, RotateCw, CalendarDays, X } from "lucide-react-native";
+import DateStrip from "./DateStrip";
+import CalendarModal from "./CalendarModal";
 
 interface HeaderProps {
   selectedDate: Date;
-  onPrevDate: () => void;
-  onNextDate: () => void;
+  onSelectDate: (date: Date) => void;
   onRefresh: () => void;
   showDateSelector: boolean;
   searchQuery: string;
@@ -24,127 +16,82 @@ interface HeaderProps {
 
 function Header({
   selectedDate,
-  onPrevDate,
-  onNextDate,
+  onSelectDate,
   onRefresh,
   showDateSelector,
   searchQuery,
   onSearchQueryChange,
 }: HeaderProps) {
-  const formatDateString = (date: Date) => {
-    const day = date.getDate();
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
-    return `${day} ${month} ${year}`;
-  };
+  const [calendarVisible, setCalendarVisible] = useState(false);
 
-  const [isSearching, setIsSearching] = useState(false);
-  const inputRef = React.useRef<TextInput>(null);
-
-  React.useEffect(() => {
-    if (isSearching) {
-      const timer = setTimeout(() => {
-        try {
-          inputRef.current?.focus();
-        } catch (e) { }
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [isSearching]);
-
-  const handleOpenSearch = React.useCallback(() => {
-    setIsSearching(true);
-  }, []);
-
-  const handleCloseSearch = React.useCallback(() => {
+  const clearSearch = React.useCallback(() => {
+    onSearchQueryChange("");
     try {
       Keyboard.dismiss();
-    } catch (e) { }
-    setIsSearching(false);
-    onSearchQueryChange("");
+    } catch (e) {}
   }, [onSearchQueryChange]);
 
-  const today = new Date();
-  const isToday =
-    selectedDate.getDate() === today.getDate() &&
-    selectedDate.getMonth() === today.getMonth() &&
-    selectedDate.getFullYear() === today.getFullYear();
-
   return (
-    <View>
+    <View className="bg-[#0D0E0F] border-b border-[#ffffff05]">
       {/* Main Header Bar */}
-
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-[#ffffff05] bg-[#0D0E0F] h-[58px]">
-        {/* Menu drawer button */}
-        <TouchableOpacity
-          onPress={() => router.push("/settings")}
-          className="p-1"
-        >
+      <View className="flex-row items-center justify-between px-4 py-3 h-[58px]">
+        <TouchableOpacity onPress={() => router.push("/settings")} className="p-1" accessibilityLabel="Settings">
           <Menu size={24} color="#ECEDEE" />
         </TouchableOpacity>
 
-        {/* Brand title */}
         <Text className="text-xl font-black text-white tracking-widest uppercase">
           LIVE <Text className="text-[#02DB54]">SCORES</Text>
         </Text>
 
-        {/* Refresh button */}
-        <View className="flex-row items-center">
-          <TouchableOpacity
-            onPress={onRefresh}
-            className="p-1 bg-white/5 rounded-full"
-          >
-            <RotateCw size={18} color="#ECEDEE" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={onRefresh} className="p-1.5 bg-white/5 rounded-full" accessibilityLabel="Refresh">
+          <RotateCw size={18} color="#ECEDEE" />
+        </TouchableOpacity>
       </View>
 
-      {/* Date Navigation Bar Component */}
       {showDateSelector && (
-        <View className="px-4 py-3 bg-[#0D0E0F]">
-          <View className="bg-[#131415] rounded-3xl p-3 flex-row justify-between items-center border border-[#ffffff08]">
-            <View className="flex-row items-center gap-2.5 pl-1.5">
-              <Calendar size={18} color="#02DB54" />
-              <View>
-                <Text className="text-white font-extrabold text-sm">
-                  {isToday ? "Today" : "Date Selected"}
-                </Text>
-                <Text className="text-gray-400 text-xs font-bold mt-0.5">
-                  {formatDateString(selectedDate)}
-                </Text>
-              </View>
+        <>
+          {/* Search + calendar */}
+          <View className="flex-row items-center gap-2 px-4 pb-3">
+            <View className="flex-1 flex-row items-center bg-[#131415] rounded-2xl px-3 border border-white/5 h-11">
+              <Search size={16} color="#9BA1A6" />
+              <TextInput
+                placeholder="Search teams or leagues..."
+                placeholderTextColor="#9BA1A6"
+                value={searchQuery}
+                onChangeText={onSearchQueryChange}
+                returnKeyType="search"
+                autoCorrect={false}
+                className="flex-1 text-white ml-2"
+                // A fixed line height + Android's default padding clip the text inside the bar
+                style={{ height: 44, fontSize: 13, paddingVertical: 0, includeFontPadding: false, textAlignVertical: "center" }}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={clearSearch} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityLabel="Clear search">
+                  <X size={16} color="#9BA1A6" />
+                </TouchableOpacity>
+              )}
             </View>
-
-            <View className="flex-row items-center gap-2 pr-1">
-              <TouchableOpacity
-                onPress={onPrevDate}
-                className="bg-white/5 p-2.5 rounded-full border border-white/5 active:bg-white/10"
-              >
-                <ChevronLeft size={16} color="#ECEDEE" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={onNextDate}
-                className="bg-white/5 p-2.5 rounded-full border border-white/5 active:bg-white/10"
-              >
-                <ChevronRight size={16} color="#ECEDEE" />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() => setCalendarVisible(true)}
+              className="w-11 h-11 rounded-2xl bg-[#131415] border border-white/5 items-center justify-center"
+              accessibilityLabel="Pick a date"
+            >
+              <CalendarDays size={18} color="#02DB54" />
+            </TouchableOpacity>
           </View>
-        </View>
+
+          {/* Scrollable day picker */}
+          <View className="pb-3">
+            <DateStrip selectedDate={selectedDate} onSelectDate={onSelectDate} />
+          </View>
+
+          <CalendarModal
+            visible={calendarVisible}
+            selectedDate={selectedDate}
+            onSelectDate={onSelectDate}
+            onClose={() => setCalendarVisible(false)}
+          />
+        </>
       )}
     </View>
   );
