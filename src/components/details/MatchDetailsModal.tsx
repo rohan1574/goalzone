@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   Modal,
   View,
@@ -390,34 +390,34 @@ export default function MatchDetailsModal({
 
   // 1. Fetch Timeline Events, Stats, Lineups, Standings, H2H, Venue/Round, Ratings
   // Load Events
-  const loadEvents = useCallback(async () => {
+  const loadEvents = useCallback(async (force = false) => {
     if (!match?.id) return;
     const matchId = match.id;
-    setLoadingEvents(true);
+    if (!force) setLoadingEvents(true);
     try {
-      const data = await fetchFixtureEvents(matchId);
+      const data = await fetchFixtureEvents(matchId, force, isLive);
       if (isCurrent(matchId)) setEvents(data || []);
     } catch (err) {
       console.error("Failed to load events:", err);
     } finally {
       if (isCurrent(matchId)) setLoadingEvents(false);
     }
-  }, [match?.id]);
+  }, [match?.id, isLive]);
 
   // Load Stats
-  const loadStats = useCallback(async () => {
+  const loadStats = useCallback(async (force = false) => {
     if (!match?.id) return;
     const matchId = match.id;
-    setLoadingStats(true);
+    if (!force) setLoadingStats(true);
     try {
-      const statsData = await fetchFixtureStatistics(matchId);
+      const statsData = await fetchFixtureStatistics(matchId, force, isLive);
       if (isCurrent(matchId)) setStats(statsData || []);
     } catch (err) {
       console.error("Failed to load statistics:", err);
     } finally {
       if (isCurrent(matchId)) setLoadingStats(false);
     }
-  }, [match?.id]);
+  }, [match?.id, isLive]);
 
   // Load Lineups (supports force reload)
   const loadLineups = useCallback(async (force = false) => {
@@ -518,7 +518,7 @@ export default function MatchDetailsModal({
             match.away.name.toLowerCase().includes(name.toLowerCase());
           const active = !!(isHome || isAway);
 
-          return { pos, name, logo, pl, w, d, l, gd, pts, form, zone, active };
+          return { pos, name, logo, pl, w, d, l, gd, pts, form, zone, active, group: item.group || "" };
         });
         setStandings(mapped);
       } else {
@@ -548,8 +548,8 @@ export default function MatchDetailsModal({
   }, [match?.id, match?.home?.id, match?.away?.id]);
 
   const refreshAll = useCallback(() => {
-    loadEvents();
-    loadStats();
+    loadEvents(true);
+    loadStats(true);
     loadLineups(true);
     loadRatings();
     loadMatchInfo();
@@ -572,13 +572,31 @@ export default function MatchDetailsModal({
 
   useEffect(() => {
     if (!visible || !match?.id) return;
-    loadEvents();
-    loadStats();
+    loadEvents(false);
+    loadStats(false);
     loadLineups(false);
     loadMatchInfo();
     loadStandings();
     loadH2H();
   }, [visible, match?.id, loadEvents, loadStats, loadLineups, loadMatchInfo, loadStandings, loadH2H]);
+
+  // Live Timeline Events: Auto-refresh every 1 minute while viewing a live match
+  useEffect(() => {
+    if (!visible || !match?.id || !isLive) return;
+    const eventsInterval = setInterval(() => {
+      loadEvents(false);
+    }, 60000); // 1 minute auto-refresh for live match events/timeline
+    return () => clearInterval(eventsInterval);
+  }, [visible, match?.id, isLive, loadEvents]);
+
+  // Live Match Statistics: Auto-refresh every 5 minutes while viewing a live match
+  useEffect(() => {
+    if (!visible || !match?.id || !isLive) return;
+    const statsInterval = setInterval(() => {
+      loadStats(false);
+    }, 300000); // 5 minutes auto-refresh for live match statistics
+    return () => clearInterval(statsInterval);
+  }, [visible, match?.id, isLive, loadStats]);
 
   // Ratings load separately so they re-fetch (as final ratings) once a live match finishes
   useEffect(() => {
@@ -654,6 +672,23 @@ export default function MatchDetailsModal({
 
   const hasWdl = standings.some((r) => r.w !== null || r.d !== null || r.l !== null);
   const standingsZones = Array.from(new Set(standings.map((r) => r.zone).filter(Boolean))) as string[];
+
+  const groupedStandings = useMemo(() => {
+    const groups: { [key: string]: any[] } = {};
+    const hasDistinctGroups = new Set(standings.map((r) => r.group).filter(Boolean)).size > 1;
+
+    if (!hasDistinctGroups) {
+      return [{ title: "", rows: standings }];
+    }
+
+    standings.forEach((row) => {
+      const g = row.group || "Other";
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(row);
+    });
+
+    return Object.entries(groups).map(([title, rows]) => ({ title, rows }));
+  }, [standings]);
 
   return (
     <Modal
@@ -1114,78 +1149,91 @@ export default function MatchDetailsModal({
                   </Text>
                 </View>
               ) : (
-                <View className="bg-[#131517] rounded-3xl p-3 border border-white/5">
-                  {/* Table Header */}
-                  <View className="flex-row border-b border-white/10 pb-2 mb-1 items-center">
-                    <Text className="text-[#9BA1A6] font-bold text-[11px] text-center w-7">#</Text>
-                    <Text className="text-[#9BA1A6] font-bold text-[11px] flex-1 ml-1">Team</Text>
-                    {(hasWdl ? ["P", "W", "D", "L", "GD"] : ["P", "GD"]).map((h) => (
-                      <Text key={h} className="text-[#9BA1A6] font-bold text-[11px] text-center w-7">
-                        {h}
-                      </Text>
-                    ))}
-                    <Text className="text-[#9BA1A6] font-bold text-[11px] text-center w-9">PTS</Text>
-                  </View>
-
-                  {/* Table Rows */}
-                  {standings.map((row, idx) => {
-                    const color = zoneColor(row.zone);
-                    return (
-                      <View
-                        key={`${row.pos}-${idx}`}
-                        className={`py-2 border-b border-white/5 ${
-                          row.active ? "bg-[#02DB54]/10 rounded-xl px-1" : ""
-                        }`}
-                      >
-                        <View className="flex-row items-center">
-                          <View className="w-7 items-center">
-                            <Text
-                              className="font-black text-xs"
-                              style={{ color: color || "#FFFFFF" }}
-                            >
-                              {row.pos}
-                            </Text>
-                          </View>
-                          <View className="flex-row items-center gap-2 flex-1 ml-1">
-                            {row.logo ? (
-                              <Image source={{ uri: row.logo }} className="w-5 h-5" resizeMode="contain" />
-                            ) : null}
-                            <Text
-                              className={`text-xs font-extrabold flex-1 ${
-                                row.active ? "text-[#02DB54]" : "text-white"
-                              }`}
-                              numberOfLines={1}
-                            >
-                              {row.name}
-                            </Text>
-                          </View>
-                          {(hasWdl ? [row.pl, row.w, row.d, row.l, row.gd] : [row.pl, row.gd]).map((v, i) => (
-                            <Text key={i} className="text-gray-300 text-xs font-bold text-center w-7">
-                              {v ?? "-"}
-                            </Text>
-                          ))}
-                          <Text className="text-white text-xs font-black text-center w-9">{row.pts}</Text>
+                <View className="gap-4">
+                  {groupedStandings.map((group, gIdx) => (
+                    <View key={group.title || `group-${gIdx}`} className="bg-[#131517] rounded-3xl p-3 border border-white/5">
+                      {group.title ? (
+                        <View className="flex-row items-center gap-2 pb-2 mb-1.5 border-b border-white/10">
+                          <View className="w-2 h-2 rounded-full bg-[#02DB54]" />
+                          <Text className="text-[#02DB54] font-black text-xs uppercase tracking-wider">
+                            {group.title}
+                          </Text>
                         </View>
-                        {row.form ? (
-                          <View className="flex-row gap-1 mt-1.5 ml-[34px]">
-                            {row.form.split("").map((r: string, i: number) => (
-                              <View
-                                key={i}
-                                className="w-4 h-4 rounded items-center justify-center"
-                                style={{ backgroundColor: FORM_COLORS[r] || "#374151" }}
-                              >
-                                <Text className="text-black text-[8px] font-black">{r}</Text>
-                              </View>
-                            ))}
-                          </View>
-                        ) : null}
+                      ) : null}
+
+                      {/* Table Header */}
+                      <View className="flex-row border-b border-white/10 pb-2 mb-1 items-center">
+                        <Text className="text-[#9BA1A6] font-bold text-[11px] text-center w-7">#</Text>
+                        <Text className="text-[#9BA1A6] font-bold text-[11px] flex-1 ml-1">Team</Text>
+                        {(hasWdl ? ["P", "W", "D", "L", "GD"] : ["P", "GD"]).map((h) => (
+                          <Text key={h} className="text-[#9BA1A6] font-bold text-[11px] text-center w-7">
+                            {h}
+                          </Text>
+                        ))}
+                        <Text className="text-[#9BA1A6] font-bold text-[11px] text-center w-9">PTS</Text>
                       </View>
-                    );
-                  })}
+
+                      {/* Table Rows */}
+                      {group.rows.map((row: any, idx: number) => {
+                        const color = zoneColor(row.zone);
+                        return (
+                          <View
+                            key={`${row.pos}-${row.name}-${idx}`}
+                            className={`py-2 border-b border-white/5 ${
+                              row.active ? "bg-[#02DB54]/10 rounded-xl px-1" : ""
+                            }`}
+                          >
+                            <View className="flex-row items-center">
+                              <View className="w-7 items-center">
+                                <Text
+                                  className="font-black text-xs"
+                                  style={{ color: color || "#FFFFFF" }}
+                                >
+                                  {row.pos}
+                                </Text>
+                              </View>
+                              <View className="flex-row items-center gap-2 flex-1 ml-1">
+                                {row.logo ? (
+                                  <Image source={{ uri: row.logo }} className="w-5 h-5" resizeMode="contain" />
+                                ) : null}
+                                <Text
+                                  className={`text-xs font-extrabold flex-1 ${
+                                    row.active ? "text-[#02DB54]" : "text-white"
+                                  }`}
+                                  numberOfLines={1}
+                                >
+                                  {row.name}
+                                </Text>
+                              </View>
+                              {(hasWdl ? [row.pl, row.w, row.d, row.l, row.gd] : [row.pl, row.gd]).map((v: any, i: number) => (
+                                <Text key={i} className="text-gray-300 text-xs font-bold text-center w-7">
+                                  {v ?? "-"}
+                                </Text>
+                              ))}
+                              <Text className="text-white text-xs font-black text-center w-9">{row.pts}</Text>
+                            </View>
+                            {row.form ? (
+                              <View className="flex-row gap-1 mt-1.5 ml-[34px]">
+                                {row.form.split("").map((r: string, i: number) => (
+                                  <View
+                                    key={i}
+                                    className="w-4 h-4 rounded items-center justify-center"
+                                    style={{ backgroundColor: FORM_COLORS[r] || "#374151" }}
+                                  >
+                                    <Text className="text-black text-[8px] font-black">{r}</Text>
+                                  </View>
+                                ))}
+                              </View>
+                            ) : null}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  ))}
 
                   {/* Zones Legend */}
                   {standingsZones.length > 0 ? (
-                    <View className="mt-3 gap-1.5 px-1">
+                    <View className="bg-[#131517] rounded-3xl p-3 border border-white/5 gap-1.5 px-3">
                       {standingsZones.map((zone: string) => (
                         <View key={zone} className="flex-row items-center gap-2">
                           <View

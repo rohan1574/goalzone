@@ -117,20 +117,23 @@ function mapStandings(apiResponse) {
   const list = apiResponse.response || [];
   if (list.length === 0) return [];
 
-  const apiStandings = list[0]?.league?.standings?.[0] || [];
-  return apiStandings.map((item) => ({
-    teamId: item.team.id,
-    teamName: item.team.name,
-    logoUrl: item.team.logo,
+  const rawStandings = list[0]?.league?.standings || [];
+  const flattened = Array.isArray(rawStandings[0]) ? rawStandings.flat() : rawStandings;
+
+  return flattened.map((item) => ({
+    teamId: item.team?.id,
+    teamName: item.team?.name,
+    logoUrl: item.team?.logo,
     pos: item.rank,
-    played: item.all.played,
-    win: item.all.win,
-    draw: item.all.draw,
-    lose: item.all.lose,
-    goalsDiff: item.goalsDiff,
-    points: item.points,
+    played: item.all?.played ?? 0,
+    win: item.all?.win ?? 0,
+    draw: item.all?.draw ?? 0,
+    lose: item.all?.lose ?? 0,
+    goalsDiff: item.goalsDiff ?? 0,
+    points: item.points ?? 0,
     form: item.form || "",
     description: item.description || "",
+    group: item.group || "",
   }));
 }
 

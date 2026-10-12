@@ -1117,7 +1117,7 @@ app.get("/football-get-standing-all", async (req, res) => {
 
   for (const season of seasonsToTry) {
     // v2: rows also carry win/draw/lose, form and qualification zone
-    const cacheKey = `standings_v2_${leagueid}_${season}`;
+    const cacheKey = `standings_v3_${leagueid}_${season}`;
     try {
       const data = await fetchAndCache(
         cacheKey,
@@ -1527,6 +1527,7 @@ function getMockStats(eventid) {
 
 app.get("/football-get-match-statistics", async (req, res) => {
   const eventid = req.query.eventid;
+  const force = req.query.force === "true" || req.query.refresh === "true";
   if (!eventid) {
     return res.status(400).json({ error: "Missing eventid parameter" });
   }
@@ -1536,12 +1537,25 @@ app.get("/football-get-match-statistics", async (req, res) => {
   }
 
   const cacheKey = `stats_event_${eventid}`;
+  if (force) {
+    cache.clear(cacheKey);
+  }
+
+  // Detect if match is currently live (from query or liveScoreManager)
+  const liveData = getCachedLiveScores();
+  const isMatchLive =
+    req.query.live === "true" ||
+    (liveData?.matches || []).some((m) => String(m.id) === String(eventid));
+
+  // Live match stats refresh every 5 minutes (300s); finished matches cache for 1 hour
+  const ttl = isMatchLive ? 300 : 3600;
+
   try {
     const data = await fetchAndCache(
       cacheKey,
       "/fixtures/statistics",
       { fixture: eventid },
-      3600, // 1 hour cache (previously 10 min)
+      ttl,
       (apiResponse) => {
         return parseFixtureStats(apiResponse);
       },
@@ -1560,6 +1574,7 @@ app.get("/football-get-match-statistics", async (req, res) => {
 // ==========================================
 app.get("/football-get-match-events", async (req, res) => {
   const eventid = req.query.eventid;
+  const force = req.query.force === "true" || req.query.refresh === "true";
   if (!eventid) {
     return res.status(400).json({ error: "Missing eventid parameter" });
   }
@@ -1569,12 +1584,25 @@ app.get("/football-get-match-events", async (req, res) => {
   }
 
   const cacheKey = `events_fixture_${eventid}`;
+  if (force) {
+    cache.clear(cacheKey);
+  }
+
+  // Detect if match is currently live
+  const liveData = getCachedLiveScores();
+  const isMatchLive =
+    req.query.live === "true" ||
+    (liveData?.matches || []).some((m) => String(m.id) === String(eventid));
+
+  // Live match events (goals, cards, subs) refresh every 1 minute (60s); past matches cache for 30 minutes
+  const ttl = isMatchLive ? 60 : 1800;
+
   try {
     const data = await fetchAndCache(
       cacheKey,
       "/fixtures/events",
       { fixture: eventid },
-      1800, // 30 minutes cache (previously 5 min)
+      ttl,
       (apiResponse) => parseFixtureEvents(apiResponse)
     );
     res.json(data);

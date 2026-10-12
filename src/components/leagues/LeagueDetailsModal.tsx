@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Modal,
   View,
@@ -53,6 +53,7 @@ interface TableRow {
   pts: number;
   form: string;
   zone: string;
+  group?: string;
 }
 
 const FINISHED = new Set(["FT", "AET", "PEN"]);
@@ -109,6 +110,7 @@ const mapTable = (raw: any[]): TableRow[] =>
       pts: item.pts ?? item.points ?? 0,
       form: String(item.form || "").slice(-5),
       zone: item.description || "",
+      group: item.group || "",
     };
   });
 
@@ -176,6 +178,23 @@ export default function LeagueDetailsModal({
 
   const zones = Array.from(new Set(table.map((r) => r.zone).filter(Boolean)));
   const hasWdl = table.some((r) => r.w !== null);
+
+  const groupedTable = useMemo(() => {
+    const groups: { [key: string]: TableRow[] } = {};
+    const hasDistinctGroups = new Set(table.map((r) => r.group).filter(Boolean)).size > 1;
+
+    if (!hasDistinctGroups) {
+      return [{ title: "", rows: table }];
+    }
+
+    table.forEach((row) => {
+      const g = row.group || "Other";
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(row);
+    });
+
+    return Object.entries(groups).map(([title, rows]) => ({ title, rows }));
+  }, [table]);
 
   return (
     <Modal animationType="slide" transparent={false} visible={visible} onRequestClose={onClose}>
@@ -301,57 +320,70 @@ export default function LeagueDetailsModal({
               </Text>
             </View>
           ) : (
-            <View className="bg-[#131415] rounded-3xl p-3 border border-white/5">
-              <View className="flex-row border-b border-white/10 pb-2 mb-1 items-center">
-                <Text className="text-[#9BA1A6] font-bold text-[11px] text-center w-7">#</Text>
-                <Text className="text-[#9BA1A6] font-bold text-[11px] flex-1 ml-1">Team</Text>
-                {(hasWdl ? ["P", "W", "D", "L", "GD"] : ["P", "GD"]).map((h) => (
-                  <Text key={h} className="text-[#9BA1A6] font-bold text-[11px] text-center w-7">{h}</Text>
-                ))}
-                <Text className="text-[#9BA1A6] font-bold text-[11px] text-center w-9">PTS</Text>
-              </View>
-
-              {table.map((row, idx) => {
-                const color = zoneColor(row.zone);
-                return (
-                  <View key={`${row.pos}-${idx}`} className="py-2 border-b border-white/5">
-                    <View className="flex-row items-center">
-                      <View className="w-7 items-center">
-                        <Text
-                          className="font-black text-xs"
-                          style={{ color: color || "#FFFFFF" }}
-                        >
-                          {row.pos}
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center gap-2 flex-1 ml-1">
-                        {row.logo ? <Image source={{ uri: row.logo }} className="w-5 h-5" resizeMode="contain" /> : null}
-                        <Text className="text-white text-xs font-extrabold flex-1" numberOfLines={1}>{row.name}</Text>
-                      </View>
-                      {(hasWdl ? [row.pl, row.w, row.d, row.l, row.gd] : [row.pl, row.gd]).map((v, i) => (
-                        <Text key={i} className="text-gray-300 text-xs font-bold text-center w-7">{v ?? "-"}</Text>
-                      ))}
-                      <Text className="text-white text-xs font-black text-center w-9">{row.pts}</Text>
+            <View className="gap-4">
+              {groupedTable.map((group, gIdx) => (
+                <View key={group.title || `group-${gIdx}`} className="bg-[#131415] rounded-3xl p-3 border border-white/5">
+                  {group.title ? (
+                    <View className="flex-row items-center gap-2 pb-2 mb-1.5 border-b border-white/10">
+                      <View className="w-2 h-2 rounded-full bg-[#02DB54]" />
+                      <Text className="text-[#02DB54] font-black text-xs uppercase tracking-wider">
+                        {group.title}
+                      </Text>
                     </View>
-                    {row.form ? (
-                      <View className="flex-row gap-1 mt-1.5 ml-[34px]">
-                        {row.form.split("").map((r, i) => (
-                          <View
-                            key={i}
-                            className="w-4 h-4 rounded items-center justify-center"
-                            style={{ backgroundColor: FORM_COLORS[r] || "#374151" }}
-                          >
-                            <Text className="text-black text-[8px] font-black">{r}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    ) : null}
+                  ) : null}
+
+                  <View className="flex-row border-b border-white/10 pb-2 mb-1 items-center">
+                    <Text className="text-[#9BA1A6] font-bold text-[11px] text-center w-7">#</Text>
+                    <Text className="text-[#9BA1A6] font-bold text-[11px] flex-1 ml-1">Team</Text>
+                    {(hasWdl ? ["P", "W", "D", "L", "GD"] : ["P", "GD"]).map((h) => (
+                      <Text key={h} className="text-[#9BA1A6] font-bold text-[11px] text-center w-7">{h}</Text>
+                    ))}
+                    <Text className="text-[#9BA1A6] font-bold text-[11px] text-center w-9">PTS</Text>
                   </View>
-                );
-              })}
+
+                  {group.rows.map((row, idx) => {
+                    const color = zoneColor(row.zone);
+                    return (
+                      <View key={`${row.pos}-${row.name}-${idx}`} className="py-2 border-b border-white/5">
+                        <View className="flex-row items-center">
+                          <View className="w-7 items-center">
+                            <Text
+                              className="font-black text-xs"
+                              style={{ color: color || "#FFFFFF" }}
+                            >
+                              {row.pos}
+                            </Text>
+                          </View>
+                          <View className="flex-row items-center gap-2 flex-1 ml-1">
+                            {row.logo ? <Image source={{ uri: row.logo }} className="w-5 h-5" resizeMode="contain" /> : null}
+                            <Text className="text-white text-xs font-extrabold flex-1" numberOfLines={1}>{row.name}</Text>
+                          </View>
+                          {(hasWdl ? [row.pl, row.w, row.d, row.l, row.gd] : [row.pl, row.gd]).map((v, i) => (
+                            <Text key={i} className="text-gray-300 text-xs font-bold text-center w-7">{v ?? "-"}</Text>
+                          ))}
+                          <Text className="text-white text-xs font-black text-center w-9">{row.pts}</Text>
+                        </View>
+                        {row.form ? (
+                          <View className="flex-row gap-1 mt-1.5 ml-[34px]">
+                            {row.form.split("").map((r, i) => (
+                              <View
+                                key={i}
+                                className="w-4 h-4 rounded items-center justify-center"
+                                style={{ backgroundColor: FORM_COLORS[r] || "#374151" }}
+                              >
+                                <Text className="text-black text-[8px] font-black">{r}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        ) : null}
+                      </View>
+                    );
+                  })}
+                </View>
+              ))}
 
               {zones.length > 0 ? (
-                <View className="mt-3 gap-1.5 px-1">
+                <View className="bg-[#131415] rounded-3xl p-3 border border-white/5 gap-1.5 px-3">
                   {zones.map((zone) => (
                     <View key={zone} className="flex-row items-center gap-2">
                       <View className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: zoneColor(zone) || "#9CA3AF" }} />

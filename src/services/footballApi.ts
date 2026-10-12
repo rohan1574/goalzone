@@ -820,8 +820,8 @@ export const fetchLeagueStandings = async (
 ): Promise<any[]> => {
   if (!leagueid) return [];
 
-  const CACHE_KEY = `@goalzone_api_cache_standings_${leagueid}`;
-  const CACHE_TIME_KEY = `@goalzone_api_cache_standings_time_${leagueid}`;
+  const CACHE_KEY = `@goalzone_api_cache_standings_v2_${leagueid}`;
+  const CACHE_TIME_KEY = `@goalzone_api_cache_standings_time_v2_${leagueid}`;
   const PATH_CACHE_KEY = "@goalzone_api_standings_path";
 
   try {
@@ -1066,23 +1066,30 @@ export const fetchAwayTeamLineup = async (eventid: string | number, force = fals
   }
 };
 
-export const fetchFixtureStatistics = async (eventid: string | number) => {
+export const fetchFixtureStatistics = async (
+  eventid: string | number,
+  force = false,
+  isLive = false
+) => {
   if (!eventid) return [];
   const CACHE_KEY = `@goalzone_api_cache_stats_${eventid}`;
   const CACHE_TIME_KEY = `@goalzone_api_cache_stats_time_${eventid}`;
 
   try {
-    const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
-    const cachedData = await AsyncStorage.getItem(CACHE_KEY);
+    if (!force) {
+      const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
+      const cachedData = await AsyncStorage.getItem(CACHE_KEY);
 
-    if (cachedTime && cachedData) {
-      const parsedTime = parseInt(cachedTime, 10);
-      const now = Date.now();
-      const parsed = JSON.parse(cachedData);
-      // Only serve cache if it has real stats (non-empty array)
-      if (Array.isArray(parsed) && parsed.length > 0 && now - parsedTime < 60000) {
-        console.log(`[Cache] Using cached statistics for event ${eventid}.`);
-        return parsed;
+      if (cachedTime && cachedData) {
+        const parsedTime = parseInt(cachedTime, 10);
+        const now = Date.now();
+        const maxAge = isLive ? 300000 : 300000; // 5 minutes cache
+        const parsed = JSON.parse(cachedData);
+        // Only serve cache if it has real stats (non-empty array) and within maxAge
+        if (Array.isArray(parsed) && parsed.length > 0 && now - parsedTime < maxAge) {
+          console.log(`[Cache] Using cached statistics for event ${eventid}.`);
+          return parsed;
+        }
       }
     }
   } catch (err) {
@@ -1094,7 +1101,11 @@ export const fetchFixtureStatistics = async (eventid: string | number) => {
   );
   try {
     const response = await api.get("/football-get-match-statistics", {
-      params: { eventid },
+      params: {
+        eventid,
+        ...(force ? { force: "true" } : {}),
+        ...(isLive ? { live: "true" } : {}),
+      },
     });
     const freshData = response.data || [];
 
@@ -1161,11 +1172,19 @@ export const fetchFixturePredictions = async (eventid: string | number) => {
   }
 };
 
-export const fetchFixtureEvents = async (eventid: string | number) => {
+export const fetchFixtureEvents = async (
+  eventid: string | number,
+  force = false,
+  isLive = false
+) => {
   if (!eventid) return [];
   try {
     const response = await api.get("/football-get-match-events", {
-      params: { eventid },
+      params: {
+        eventid,
+        ...(force ? { force: "true" } : {}),
+        ...(isLive ? { live: "true" } : {}),
+      },
     });
     return response.data || [];
   } catch (error) {
