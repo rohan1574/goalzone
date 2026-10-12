@@ -273,6 +273,7 @@ const popularLeagues = [
   { leagueId: "2",   leagueName: "UEFA Champions League",country: "UEFA",     leagueLogo: "https://media.api-sports.io/football/leagues/2.png" },
   { leagueId: "3",   leagueName: "UEFA Europa League",   country: "UEFA",     leagueLogo: "https://media.api-sports.io/football/leagues/3.png" },
   { leagueId: "848", leagueName: "UEFA Conference League",country: "UEFA",    leagueLogo: "https://media.api-sports.io/football/leagues/848.png" },
+  { leagueId: "5",   leagueName: "UEFA Nations League",  country: "UEFA",     leagueLogo: "https://media.api-sports.io/football/leagues/5.png" },
   // ── Americas ──
   { leagueId: "71",  leagueName: "Brasileirão Série A",  country: "Brazil",   leagueLogo: "https://media.api-sports.io/football/leagues/71.png" },
   { leagueId: "128", leagueName: "Liga Profesional",     country: "Argentina",leagueLogo: "https://media.api-sports.io/football/leagues/128.png" },

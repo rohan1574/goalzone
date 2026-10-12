@@ -235,6 +235,7 @@ const POPULAR_LEAGUE_IDS = new Set([
   '2',    // UEFA Champions League
   '3',    // UEFA Europa League
   '848',  // UEFA Conference League
+  '5',    // UEFA Nations League
   '88',   // Eredivisie
   '94',   // Primeira Liga
   '71',   // Brasileirão Série A

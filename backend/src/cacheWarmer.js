@@ -18,7 +18,7 @@ const api = axios.create({
 });
 
 // Top curated league IDs to pre-warm (Big 5, Champions League, Europa League, Brasileirão, Saudi Pro League, MLS)
-const POPULAR_LEAGUE_IDS = ['39', '140', '135', '78', '61', '2', '3', '71', '307', '253'];
+const POPULAR_LEAGUE_IDS = ['39', '140', '135', '78', '61', '2', '3', '848', '5', '71', '307', '253'];
 
 // ==========================================
 // HELPERS

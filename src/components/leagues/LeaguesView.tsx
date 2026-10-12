@@ -17,8 +17,8 @@ const STORAGE_KEY = "@goalzone_favorite_leagues";
 const getCategoryForLeague = (name: string, country?: string) => {
   if (country && country !== "Unknown" && country !== "International") return country;
   const lower = name.toLowerCase();
-  if (lower.includes("champions league") || lower.includes("europa league") || lower.includes("conference league")) return "UEFA";
-  if (lower.includes("world cup") || lower.includes("nations league") || lower.includes("olympic")) return "International";
+  if (lower.includes("champions league") || lower.includes("europa league") || lower.includes("conference league") || lower.includes("nations league")) return "UEFA";
+  if (lower.includes("world cup") || lower.includes("olympic")) return "International";
   return country || "International";
 };
 

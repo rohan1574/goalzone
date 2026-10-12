@@ -41,7 +41,7 @@ const HOUR = 60 * MIN;
 const DAY = 24 * HOUR;
 
 // Leagues with standings / league fixtures in the app (mirrors popularLeagues in server.js)
-const SYNC_LEAGUE_IDS = ['39', '140', '135', '78', '61', '88', '94', '2', '3', '848', '71', '128', '253', '13', '307'];
+const SYNC_LEAGUE_IDS = ['39', '140', '135', '78', '61', '88', '94', '2', '3', '848', '5', '71', '128', '253', '13', '307'];
 
 const STATUS_FILE = path.join(CACHE_DIR, '_sync_status.json');
 const TRIGGER_FILE = path.join(CACHE_DIR, '_sync_trigger.json');

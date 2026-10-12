@@ -26,6 +26,19 @@ import BannerAdComponent from "../ads/BannerAdComponent";
 import LiveMatchClock from "../common/LiveMatchClock";
 import MatchPrediction from "./MatchPrediction";
 
+const zoneColor = (zone: string) => {
+  const z = (zone || "").toLowerCase();
+  if (!z) return null;
+  if (z.includes("relegation")) return "#EF4444";
+  if (z.includes("champions league") || z.includes("libertadores")) return "#02DB54";
+  if (z.includes("europa league") || z.includes("sudamericana")) return "#60A5FA";
+  if (z.includes("conference") || z.includes("ecl")) return "#2DD4BF";
+  if (z.includes("promotion") || z.includes("play")) return "#EAB308";
+  return "#9CA3AF";
+};
+
+const FORM_COLORS: Record<string, string> = { W: "#02DB54", D: "#9CA3AF", L: "#EF4444" };
+
 interface Team {
   id?: string | number;
   name: string;
@@ -477,7 +490,10 @@ export default function MatchDetailsModal({
             teamObj.logoUrl ||
             `https://images.fotmob.com/image_resources/logo/teamlogo/${item.teamId || item.id}.png`;
           const pl =
-            item.pl || item.played || item.playedCount || item.all?.played || 0;
+            item.pl ?? item.played ?? item.playedCount ?? item.all?.played ?? 0;
+          const w = item.win ?? item.won ?? item.all?.win ?? null;
+          const d = item.draw ?? item.drawn ?? item.all?.draw ?? null;
+          const l = item.lose ?? item.lost ?? item.all?.lose ?? null;
           const gd = String(
             item.gd ??
               item.goalDiff ??
@@ -488,7 +504,9 @@ export default function MatchDetailsModal({
               item.all?.goalsDiff ??
               "0"
           );
-          const pts = item.pts || item.points || 0;
+          const pts = item.pts ?? item.points ?? 0;
+          const form = String(item.form || "").slice(-5);
+          const zone = item.description || "";
 
           const isHome =
             (teamObj.id && String(teamObj.id) === String(match.home.id)) ||
@@ -500,7 +518,7 @@ export default function MatchDetailsModal({
             match.away.name.toLowerCase().includes(name.toLowerCase());
           const active = !!(isHome || isAway);
 
-          return { pos, name, logo, pl, gd, pts, active };
+          return { pos, name, logo, pl, w, d, l, gd, pts, form, zone, active };
         });
         setStandings(mapped);
       } else {
@@ -633,6 +651,9 @@ export default function MatchDetailsModal({
 
   // Use actual API stats only — no demo fallback
   const effectiveStats = stats;
+
+  const hasWdl = standings.some((r) => r.w !== null || r.d !== null || r.l !== null);
+  const standingsZones = Array.from(new Set(standings.map((r) => r.zone).filter(Boolean))) as string[];
 
   return (
     <Modal
@@ -1086,48 +1107,96 @@ export default function MatchDetailsModal({
               {loadingStandings ? (
                 <ActivityIndicator color="#02DB54" className="my-6" />
               ) : standings.length === 0 ? (
-                <Text className="text-gray-400 text-center py-6">
-                  No table standings available.
-                </Text>
+                <View className="py-12 px-4 items-center bg-[#131415] rounded-3xl border border-white/5 my-2">
+                  <Text className="text-[#02DB54] font-black text-sm mb-1">No Table Available</Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">
+                    Standings aren't available for this competition.
+                  </Text>
+                </View>
               ) : (
-                <View className="bg-[#131517] rounded-2xl overflow-hidden border border-white/5">
+                <View className="bg-[#131517] rounded-3xl p-3 border border-white/5">
                   {/* Table Header */}
-                  <View className="flex-row items-center py-3 px-4 bg-white/5 border-b border-white/5">
-                    <Text className="text-gray-400 font-extrabold text-xs w-8 text-center">#</Text>
-                    <Text className="text-gray-400 font-extrabold text-xs flex-1 ml-2">Team</Text>
-                    <Text className="text-gray-400 font-extrabold text-xs w-10 text-center">P</Text>
-                    <Text className="text-gray-400 font-extrabold text-xs w-10 text-center">GD</Text>
-                    <Text className="text-gray-400 font-extrabold text-xs w-12 text-center">PTS</Text>
+                  <View className="flex-row border-b border-white/10 pb-2 mb-1 items-center">
+                    <Text className="text-[#9BA1A6] font-bold text-[11px] text-center w-7">#</Text>
+                    <Text className="text-[#9BA1A6] font-bold text-[11px] flex-1 ml-1">Team</Text>
+                    {(hasWdl ? ["P", "W", "D", "L", "GD"] : ["P", "GD"]).map((h) => (
+                      <Text key={h} className="text-[#9BA1A6] font-bold text-[11px] text-center w-7">
+                        {h}
+                      </Text>
+                    ))}
+                    <Text className="text-[#9BA1A6] font-bold text-[11px] text-center w-9">PTS</Text>
                   </View>
 
                   {/* Table Rows */}
-                  {standings.map((item, idx) => (
-                    <View
-                      key={idx}
-                      className={`flex-row items-center py-3 px-4 border-b border-white/5 ${
-                        item.active ? "bg-[#02DB54]/15" : ""
-                      }`}
-                    >
-                      <Text className="text-white font-black text-xs w-8 text-center">
-                        {item.pos}
-                      </Text>
-                      <View className="flex-row items-center flex-1 ml-2 gap-2">
-                        <Image source={{ uri: item.logo }} className="w-5 h-5" resizeMode="contain" />
-                        <Text className="text-white font-bold text-xs" numberOfLines={1}>
-                          {item.name}
-                        </Text>
+                  {standings.map((row, idx) => {
+                    const color = zoneColor(row.zone);
+                    return (
+                      <View
+                        key={`${row.pos}-${idx}`}
+                        className={`py-2 border-b border-white/5 ${
+                          row.active ? "bg-[#02DB54]/10 rounded-xl px-1" : ""
+                        }`}
+                      >
+                        <View className="flex-row items-center">
+                          <View className="w-7 items-center">
+                            <Text
+                              className="font-black text-xs"
+                              style={{ color: color || "#FFFFFF" }}
+                            >
+                              {row.pos}
+                            </Text>
+                          </View>
+                          <View className="flex-row items-center gap-2 flex-1 ml-1">
+                            {row.logo ? (
+                              <Image source={{ uri: row.logo }} className="w-5 h-5" resizeMode="contain" />
+                            ) : null}
+                            <Text
+                              className={`text-xs font-extrabold flex-1 ${
+                                row.active ? "text-[#02DB54]" : "text-white"
+                              }`}
+                              numberOfLines={1}
+                            >
+                              {row.name}
+                            </Text>
+                          </View>
+                          {(hasWdl ? [row.pl, row.w, row.d, row.l, row.gd] : [row.pl, row.gd]).map((v, i) => (
+                            <Text key={i} className="text-gray-300 text-xs font-bold text-center w-7">
+                              {v ?? "-"}
+                            </Text>
+                          ))}
+                          <Text className="text-white text-xs font-black text-center w-9">{row.pts}</Text>
+                        </View>
+                        {row.form ? (
+                          <View className="flex-row gap-1 mt-1.5 ml-[34px]">
+                            {row.form.split("").map((r: string, i: number) => (
+                              <View
+                                key={i}
+                                className="w-4 h-4 rounded items-center justify-center"
+                                style={{ backgroundColor: FORM_COLORS[r] || "#374151" }}
+                              >
+                                <Text className="text-black text-[8px] font-black">{r}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        ) : null}
                       </View>
-                      <Text className="text-gray-300 font-bold text-xs w-10 text-center">
-                        {item.pl}
-                      </Text>
-                      <Text className="text-gray-300 font-bold text-xs w-10 text-center">
-                        {item.gd}
-                      </Text>
-                      <Text className="text-white font-black text-xs w-12 text-center">
-                        {item.pts}
-                      </Text>
+                    );
+                  })}
+
+                  {/* Zones Legend */}
+                  {standingsZones.length > 0 ? (
+                    <View className="mt-3 gap-1.5 px-1">
+                      {standingsZones.map((zone: string) => (
+                        <View key={zone} className="flex-row items-center gap-2">
+                          <View
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: zoneColor(zone) || "#9CA3AF" }}
+                          />
+                          <Text className="text-gray-400 text-[10px] font-bold flex-1">{zone}</Text>
+                        </View>
+                      ))}
                     </View>
-                  ))}
+                  ) : null}
                 </View>
               )}
             </View>

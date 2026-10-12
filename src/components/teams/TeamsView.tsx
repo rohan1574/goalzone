@@ -53,6 +53,46 @@ interface TeamsViewProps {
   onPressDetails?: (match: any) => void;
 }
 
+const TeamRowItem = React.memo(function TeamRowItem({
+  item,
+  isFav,
+  onOpen,
+  onToggleFav,
+}: {
+  item: Item;
+  isFav: boolean;
+  onOpen: (item: Item) => void;
+  onToggleFav: (id: string) => void;
+}) {
+  const isTeam = item.type === "team";
+  return (
+    <TouchableOpacity
+      className="relative bg-[#131415] mx-4 mb-2 rounded-2xl px-4 py-3 border border-white/5 flex-row items-center overflow-hidden"
+      onPress={() => onOpen(item)}
+      activeOpacity={0.75}
+    >
+      <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#02DB54]" />
+      <RemoteLogo uri={item.logo} label={item.name} plate={!isTeam} />
+      <View className="flex-1 ml-3">
+        <Text className="text-white text-sm font-extrabold" numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text className="text-gray-500 text-[10px] font-bold mt-0.5">
+          {isTeam ? "National team" : "International tournament"}
+        </Text>
+      </View>
+      <TouchableOpacity
+        onPress={() => onToggleFav(item.id)}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        className="p-1.5"
+        accessibilityLabel={isFav ? `Remove ${item.name} from favorites` : `Add ${item.name} to favorites`}
+      >
+        <Star size={18} color={isFav ? "#FFC800" : "#9BA1A6"} fill={isFav ? "#FFC800" : "none"} />
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+});
+
 function TeamsView({ apiLeagues, onPressDetails }: TeamsViewProps) {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [countries, setCountries] = useState<any[] | null>(null);
@@ -146,36 +186,14 @@ function TeamsView({ apiLeagues, onPressDetails }: TeamsViewProps) {
   }, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: Item }) => {
-      const isFav = favorites.includes(item.id);
-      const isTeam = item.type === "team";
-      return (
-        <TouchableOpacity
-          className="relative bg-[#131415] mx-4 mb-2 rounded-2xl px-4 py-3 border border-white/5 flex-row items-center overflow-hidden"
-          onPress={() => openItem(item)}
-          activeOpacity={0.75}
-        >
-          <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#02DB54]" />
-          <RemoteLogo uri={item.logo} label={item.name} plate={!isTeam} />
-          <View className="flex-1 ml-3">
-            <Text className="text-white text-sm font-extrabold" numberOfLines={1}>
-              {item.name}
-            </Text>
-            <Text className="text-gray-500 text-[10px] font-bold mt-0.5">
-              {isTeam ? "National team" : "International tournament"}
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => toggleFavorite(item.id)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            className="p-1.5"
-            accessibilityLabel={isFav ? `Remove ${item.name} from favorites` : `Add ${item.name} to favorites`}
-          >
-            <Star size={18} color={isFav ? "#FFC800" : "#9BA1A6"} fill={isFav ? "#FFC800" : "none"} />
-          </TouchableOpacity>
-        </TouchableOpacity>
-      );
-    },
+    ({ item }: { item: Item }) => (
+      <TeamRowItem
+        item={item}
+        isFav={favorites.includes(item.id)}
+        onOpen={openItem}
+        onToggleFav={toggleFavorite}
+      />
+    ),
     [favorites, toggleFavorite, openItem],
   );
 
@@ -257,9 +275,11 @@ function TeamsView({ apiLeagues, onPressDetails }: TeamsViewProps) {
           contentContainerStyle={{ paddingBottom: 150, paddingTop: 8 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          initialNumToRender={20}
-          maxToRenderPerBatch={15}
-          windowSize={8}
+          initialNumToRender={12}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          windowSize={5}
+          removeClippedSubviews={true}
           stickySectionHeadersEnabled={false}
         />
       )}

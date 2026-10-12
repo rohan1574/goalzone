@@ -12,7 +12,7 @@ interface RemoteLogoProps {
 }
 
 // Team / league / flag logo. Country flags from API-Football are SVGs, which <Image> can't draw.
-export default function RemoteLogo({ uri, label, size = 32, round, plate }: RemoteLogoProps) {
+function RemoteLogo({ uri, label, size = 32, round, plate }: RemoteLogoProps) {
   const [failed, setFailed] = useState(false);
   const box = { width: size, height: size, borderRadius: round ? size / 2 : 6 };
 
@@ -46,3 +46,6 @@ export default function RemoteLogo({ uri, label, size = 32, round, plate }: Remo
   }
   return <Image source={{ uri }} style={box} resizeMode="contain" onError={() => setFailed(true)} />;
 }
+
+export default React.memo(RemoteLogo);
+

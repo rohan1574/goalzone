@@ -14,7 +14,7 @@ export const useLiveClock = (initialMinute?: string | number, status?: string) =
   const stUpper = String(status || "").trim().toUpperCase();
   const minUpper = minStr.toUpperCase();
 
-  // 1. Finished match: MUST display FT/AET/PEN, NEVER 90', and NEVER tick seconds
+  // 1. Finished match check
   const isFinished =
     FINISHED_SET.has(stUpper) ||
     FINISHED_SET.has(minUpper) ||
@@ -30,24 +30,14 @@ export const useLiveClock = (initialMinute?: string | number, status?: string) =
     minUpper === "90MIN" ||
     (stUpper === "2H" && minUpper.startsWith("90"));
 
-  if (isFinished) {
-    if (stUpper === "AET" || minUpper === "AET") return "AET";
-    if (stUpper === "PEN" || minUpper === "PEN") return "PEN";
-    return "FT";
-  }
-
-  // 2. Half Time: display HT, NEVER tick seconds
-  if (stUpper === "HT" || minUpper === "HT") {
-    return "HT";
-  }
-
-  // 3. Not Started / Scheduled: display NS or time, NEVER tick seconds
-  if (NOT_STARTED_SET.has(stUpper) || NOT_STARTED_SET.has(minUpper)) {
-    return status || minStr || "NS";
-  }
+  const isHalfTime = stUpper === "HT" || minUpper === "HT";
+  const isNotStarted = NOT_STARTED_SET.has(stUpper) || NOT_STARTED_SET.has(minUpper);
 
   // Check for non-ticking statuses
   const isSpecial =
+    isFinished ||
+    isHalfTime ||
+    isNotStarted ||
     ["HT", "FT", "AET", "PEN", "PST", "CANC", "NS", "TBD", "SUSP", "INT"].includes(minUpper) ||
     Boolean(
       stUpper &&
@@ -68,7 +58,7 @@ export const useLiveClock = (initialMinute?: string | number, status?: string) =
 
   const parsed = parseMinute(minStr);
 
-  // Sync initial seconds realistically
+  // Hooks MUST be called unconditionally at the top level
   const [seconds, setSeconds] = useState(() => Math.floor((Date.now() / 1000) % 60));
   const [extraSeconds, setExtraSeconds] = useState(0);
 
@@ -88,6 +78,20 @@ export const useLiveClock = (initialMinute?: string | number, status?: string) =
 
     return () => clearInterval(interval);
   }, [minStr, isSpecial]);
+
+  if (isFinished) {
+    if (stUpper === "AET" || minUpper === "AET") return "AET";
+    if (stUpper === "PEN" || minUpper === "PEN") return "PEN";
+    return "FT";
+  }
+
+  if (isHalfTime) {
+    return "HT";
+  }
+
+  if (isNotStarted) {
+    return status || minStr || "NS";
+  }
 
   if (isSpecial || !parsed) {
     return status || minStr || "Live";
