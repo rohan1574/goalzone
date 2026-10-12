@@ -17,29 +17,20 @@ export const api = axios.create({
 export async function fetchWithBackendFallback(endpoint: string, params: any = {}) {
   try {
     const res = await api.get(endpoint, { params });
-    const hasContent = res.data && (
-      (Array.isArray(res.data) && res.data.length > 0) ||
-      (res.data.fixtures && Array.isArray(res.data.fixtures) && res.data.fixtures.length > 0) ||
-      (res.data.live && Array.isArray(res.data.live) && res.data.live.length > 0) ||
-      (res.data.starters && Array.isArray(res.data.starters) && res.data.starters.length > 0) ||
-      (res.data.startXI && Array.isArray(res.data.startXI) && res.data.startXI.length > 0) ||
-      (res.data.lineup?.starters && Array.isArray(res.data.lineup.starters) && res.data.lineup.starters.length > 0)
-    );
-    if (hasContent) return res;
-
-    console.log(`[API Fallback] VPS returned empty for ${endpoint}. Trying local backend...`);
-    const localRes = await axios.get(`${LOCAL_BACKEND_URL_ANDROID}${endpoint}`, { params, timeout: 5000 })
-      .catch(() => axios.get(`${LOCAL_BACKEND_URL_LOCALHOST}${endpoint}`, { params, timeout: 5000 }));
-    if (localRes && localRes.data) return localRes;
+    if (res && res.data !== undefined) {
+      return res;
+    }
     return res;
   } catch (err) {
-    console.warn(`[API Fallback] VPS failed for ${endpoint}. Trying local backend...`);
+    // Only try local fallback if VPS is completely unreachable
     try {
-      const localRes = await axios.get(`${LOCAL_BACKEND_URL_ANDROID}${endpoint}`, { params, timeout: 5000 })
-        .catch(() => axios.get(`${LOCAL_BACKEND_URL_LOCALHOST}${endpoint}`, { params, timeout: 5000 }));
+      const localRes = await axios
+        .get(`${LOCAL_BACKEND_URL_ANDROID}${endpoint}`, { params, timeout: 1500 })
+        .catch(() => axios.get(`${LOCAL_BACKEND_URL_LOCALHOST}${endpoint}`, { params, timeout: 1500 }))
+        .catch(() => null);
       if (localRes && localRes.data) return localRes;
-    } catch (localErr) {
-      console.warn(`[API Fallback] Local backend unreachable for ${endpoint}`);
+    } catch {
+      // local fallback unreachable
     }
     throw err;
   }
