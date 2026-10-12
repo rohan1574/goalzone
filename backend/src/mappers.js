@@ -40,9 +40,22 @@ function mapDateFixtures(apiResponse) {
     const finalStatus = isFinished
       ? (statusShort === "AET" || statusShort === "PEN" ? statusShort : "FT")
       : statusShort;
-    const elapsedMinute = item.fixture.status.elapsed
-      ? (item.fixture.status.extra ? `${item.fixture.status.elapsed}+${item.fixture.status.extra}'` : `${item.fixture.status.elapsed}'`)
-      : statusShort;
+    let elapsedMinute = statusShort;
+    if (item.fixture.status.elapsed) {
+      const el = item.fixture.status.elapsed;
+      const ex = item.fixture.status.extra;
+      if (statusShort === "1H" && el >= 45) {
+        const cur = el > 45 ? el - 45 : 0;
+        elapsedMinute = ex ? `45+${cur}' (+${ex})` : `45+${cur}'`;
+      } else if (statusShort === "2H" && el >= 90) {
+        const cur = el > 90 ? el - 90 : 0;
+        elapsedMinute = ex ? `90+${cur}' (+${ex})` : `90+${cur}'`;
+      } else if (ex) {
+        elapsedMinute = `${el}' (+${ex})`;
+      } else {
+        elapsedMinute = `${el}'`;
+      }
+    }
     const finalMinute = isFinished ? finalStatus : elapsedMinute;
 
     return {
@@ -66,6 +79,7 @@ function mapDateFixtures(apiResponse) {
       score,
       minute: finalMinute,
       status: finalStatus,
+      extra: item.fixture.status.extra ?? null,
       time,
       date: item.fixture.date,
       timestamp: item.fixture.timestamp,

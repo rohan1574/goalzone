@@ -9,7 +9,11 @@ const NOT_STARTED_SET = new Set([
   "NS", "TBD", "TIMED", "SCHEDULED", "UPCOMING", "POSTPONED"
 ]);
 
-export const useLiveClock = (initialMinute?: string | number, status?: string) => {
+export const useLiveClock = (
+  initialMinute?: string | number,
+  status?: string,
+  extraProp?: string | number
+) => {
   const minStr = String(initialMinute || "").trim();
   const stUpper = String(status || "").trim().toUpperCase();
   const minUpper = minStr.toUpperCase();
@@ -39,32 +43,96 @@ export const useLiveClock = (initialMinute?: string | number, status?: string) =
         ["HT", "FT", "AET", "PEN", "PST", "CANC", "NS", "TBD", "SUSP", "INT"].includes(stUpper)
     );
 
-  const parseMinute = (val: string) => {
-    const clean = val.replace("'", "").trim();
+  const parseMinute = (val: string, extraVal?: string | number) => {
+    // Extract bracketed total extra, e.g. (+5) or [5] or (5) or (+3)
+    const bracketMatch = val.match(/[\(\[]\+?(\d+)[\)\]]/);
+    const bracketExtra = bracketMatch ? parseInt(bracketMatch[1], 10) : null;
+
+    let propExtra: number | null = null;
+    if (extraVal !== undefined && extraVal !== null) {
+      const p = parseInt(String(extraVal).replace(/[^0-9]/g, ""), 10);
+      if (!isNaN(p) && p > 0) propExtra = p;
+    }
+
+    const totalExtra = bracketExtra ?? propExtra;
+
+    // Clean out brackets and apostrophes
+    const clean = val
+      .replace(/[\(\[][^\)\]]*[\)\]]/g, "")
+      .replace("'", "")
+      .trim();
+
     if (clean.includes("+")) {
       const parts = clean.split("+");
       const base = parseInt(parts[0], 10);
-      const extra = parseInt(parts[1], 10);
-      return !isNaN(base) ? { base, extra: !isNaN(extra) ? extra : 0 } : null;
+      const elapsedExtra = parseInt(parts[1], 10);
+      if (!isNaN(base)) {
+        return {
+          base,
+          elapsedExtra: !isNaN(elapsedExtra) ? elapsedExtra : 0,
+          totalExtra,
+        };
+      }
     }
+
     const num = parseInt(clean, 10);
-    return isNaN(num) ? null : { base: num, extra: 0 };
+    if (!isNaN(num)) {
+      // If 2H stoppage time: elapsed minute >= 90
+      if (stUpper === "2H" && num >= 90) {
+        return {
+          base: 90,
+          elapsedExtra: num > 90 ? num - 90 : 0,
+          totalExtra,
+        };
+      }
+      // If 1H stoppage time: elapsed minute >= 45
+      if (stUpper === "1H" && num >= 45) {
+        return {
+          base: 45,
+          elapsedExtra: num > 45 ? num - 45 : 0,
+          totalExtra,
+        };
+      }
+      // If extra time is explicitly announced and minute is 90+
+      if (num >= 90 && totalExtra) {
+        return {
+          base: 90,
+          elapsedExtra: num > 90 ? num - 90 : 0,
+          totalExtra,
+        };
+      }
+      // If extra time is explicitly announced and minute is 45-59
+      if (num >= 45 && num < 60 && totalExtra) {
+        return {
+          base: 45,
+          elapsedExtra: num > 45 ? num - 45 : 0,
+          totalExtra,
+        };
+      }
+      return {
+        base: num,
+        elapsedExtra: 0,
+        totalExtra,
+      };
+    }
+
+    return null;
   };
 
-  const parsed = parseMinute(minStr);
+  const parsed = parseMinute(minStr, extraProp);
 
   // Hooks MUST be called unconditionally at the top level
   const [seconds, setSeconds] = useState(() => Math.floor((Date.now() / 1000) % 60));
-  const [extraSeconds, setExtraSeconds] = useState(0);
+  const [extraMinutesTicked, setExtraMinutesTicked] = useState(0);
 
   useEffect(() => {
     if (isSpecial || !parsed) return;
 
-    setExtraSeconds(0);
+    setExtraMinutesTicked(0);
     const interval = setInterval(() => {
       setSeconds((prev) => {
         if (prev >= 59) {
-          setExtraSeconds((e) => e + 1);
+          setExtraMinutesTicked((e) => e + 1);
           return 0;
         }
         return prev + 1;
@@ -72,7 +140,7 @@ export const useLiveClock = (initialMinute?: string | number, status?: string) =
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [minStr, isSpecial]);
+  }, [minStr, isSpecial, extraProp]);
 
   if (isFinished) {
     if (stUpper === "AET" || minUpper === "AET") return "AET";
@@ -92,19 +160,27 @@ export const useLiveClock = (initialMinute?: string | number, status?: string) =
     return status || minStr || "Live";
   }
 
-  const currentMinute = parsed.base + extraSeconds;
   const secDisplay = seconds < 10 ? `0${seconds}` : `${seconds}`;
 
-  if (parsed.extra > 0) {
-    return `${parsed.base}+${parsed.extra}:${secDisplay}`;
+  // When stoppage / extra time is active: format base+elapsedExtra:sec(+totalExtra)
+  if (parsed.totalExtra !== null && parsed.totalExtra !== undefined) {
+    const curExtra = parsed.elapsedExtra + extraMinutesTicked;
+    return `${parsed.base}+${curExtra}:${secDisplay}(+${parsed.totalExtra})`;
   }
 
+  if (parsed.elapsedExtra > 0) {
+    const curExtra = parsed.elapsedExtra + extraMinutesTicked;
+    return `${parsed.base}+${curExtra}:${secDisplay}`;
+  }
+
+  const currentMinute = parsed.base + extraMinutesTicked;
   return `${currentMinute}:${secDisplay}`;
 };
 
-interface LiveMatchClockProps {
+export interface LiveMatchClockProps {
   minute?: string | number;
   status?: string;
+  extra?: string | number;
   textClass?: string;
   showDot?: boolean;
 }
@@ -112,10 +188,11 @@ interface LiveMatchClockProps {
 export default function LiveMatchClock({
   minute,
   status,
+  extra,
   textClass = "text-[#02DB54] text-[10px] font-bold",
   showDot = true,
 }: LiveMatchClockProps) {
-  const formatted = useLiveClock(minute, status);
+  const formatted = useLiveClock(minute, status, extra);
   const isTicking = formatted.includes(":");
 
   return (

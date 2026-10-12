@@ -647,7 +647,8 @@ export default function ExploreScreen() {
         },
         score: m.score || getMatchScore(m).display,
         minute: m.minute || getMatchStatus(m),
-        status: "Live",
+        status: m.status || "Live",
+        extra: m.extra ?? m.fixture?.status?.extra ?? undefined,
       };
     });
   }, [apiData?.live]);
@@ -733,6 +734,7 @@ export default function ExploreScreen() {
         status: matchStatus,
         score: matchScore,
         minute: matchMinute,
+        extra: m.extra ?? m.fixture?.status?.extra ?? undefined,
         time: formatLocalMatchTime(m),
         date: defaultDateStr,
         rawDate: m.rawDate || m.date || m.fixture?.date,

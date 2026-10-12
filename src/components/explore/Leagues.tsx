@@ -12,6 +12,7 @@ interface LeagueMatch {
   date?: string;
   home: { id?: string | number; name: string; logo: string };
   away: { id?: string | number; name: string; logo: string };
+  extra?: string | number;
 }
 
 interface LeagueGroup {
@@ -82,11 +83,21 @@ const MatchCard = React.memo(function MatchCard({
           logo: match.away?.logo || "",
         },
         score: match.score || (isFinished || match.status === "Live" ? match.time : "VS"),
-        minute: effectiveStatus,
-        status: effectiveStatus,
+        minute: match.minute || effectiveStatus,
+        status: match.status || effectiveStatus,
+        extra: match.extra,
       });
     }
   }, [match, leagueName, leagueId, leagueLogo, onPressDetails, isFinished, effectiveStatus]);
+
+  const isLiveTicking =
+    !isFinished &&
+    (stUpper === "LIVE" ||
+      stUpper === "1H" ||
+      stUpper === "2H" ||
+      stUpper === "ET" ||
+      minUpper.includes("+") ||
+      minUpper.includes("'"));
 
   return (
     <TouchableOpacity
@@ -99,9 +110,9 @@ const MatchCard = React.memo(function MatchCard({
 
       {/* Left column: Match times / info */}
       <View className="w-[20%] pl-2 justify-center">
-        {match.status === "Live" && !isFinished ? (
+        {isLiveTicking ? (
           <View className="mb-1 items-start">
-            <LiveMatchClock minute={match.minute} status={match.status} />
+            <LiveMatchClock minute={match.minute} status={match.status} extra={match.extra} />
           </View>
         ) : (
           <Text className="text-gray-400 text-xs font-bold tracking-wider mb-1">

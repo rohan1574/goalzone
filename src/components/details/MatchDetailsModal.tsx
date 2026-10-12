@@ -64,6 +64,7 @@ interface Match {
   venue?: string;
   venueCity?: string;
   round?: string;
+  extra?: string | number;
 }
 
 interface PlayerRating {
@@ -762,6 +763,7 @@ export default function MatchDetailsModal({
                     <LiveMatchClock
                       minute={match.minute}
                       status={match.status}
+                      extra={match.extra}
                       textClass="text-[#02DB54] text-[11px] font-black uppercase"
                     />
                   )}

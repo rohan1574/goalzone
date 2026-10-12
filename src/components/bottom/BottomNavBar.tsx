@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     // Fixed height with a radius of exactly half: Android renders an oversized radius
     // (e.g. 999) inconsistently and the capsule sometimes comes out barely rounded
     height: TAB_HEIGHT,
-    borderRadius: TAB_HEIGHT / 2,
+    borderRadius: TAB_HEIGHT / 3,
     // Equal share of the bar so the capsule fits the longest label on narrow phones too
     flex: 1,
     marginHorizontal: 3,
