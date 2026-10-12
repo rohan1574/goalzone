@@ -885,6 +885,15 @@ export const fetchHomeTeamLineup = async (eventid: string | number) => {
   const CACHE_KEY = `@goalzone_api_cache_home_lineup_${eventid}`;
   const CACHE_TIME_KEY = `@goalzone_api_cache_home_lineup_time_${eventid}`;
 
+  const hasLineupData = (d: any) =>
+    d &&
+    (
+      (d.starters?.length > 0) ||
+      (d.startXI?.length > 0) ||
+      (d.lineup?.starters?.length > 0) ||
+      (d.lineup?.startXI?.length > 0)
+    );
+
   try {
     const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
     const cachedData = await AsyncStorage.getItem(CACHE_KEY);
@@ -893,9 +902,7 @@ export const fetchHomeTeamLineup = async (eventid: string | number) => {
       const parsedTime = parseInt(cachedTime, 10);
       const now = Date.now();
       const parsed = JSON.parse(cachedData);
-      // Only serve cache if it has real lineup data (not null/empty)
-      const hasData = parsed && (parsed.starters?.length > 0 || parsed.startXI?.length > 0 || parsed.lineup?.starters?.length > 0);
-      if (hasData && now - parsedTime < 300000) {
+      if (hasLineupData(parsed) && now - parsedTime < 300000) {
         console.log(`[Cache] Using cached home lineup for event ${eventid}.`);
         return parsed;
       }
@@ -911,11 +918,10 @@ export const fetchHomeTeamLineup = async (eventid: string | number) => {
     const response = await api.get("/football-get-hometeam-lineup", {
       params: { eventid },
     });
-    const freshData = unwrapApiResponse(response.data);
-    const hasData = freshData && (freshData.starters?.length > 0 || freshData.startXI?.length > 0 || freshData.lineup?.starters?.length > 0);
+    const freshData = response.data || null;
 
     // Only cache if real data exists
-    if (hasData) {
+    if (hasLineupData(freshData)) {
       try {
         await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
         await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
@@ -936,6 +942,15 @@ export const fetchAwayTeamLineup = async (eventid: string | number) => {
   const CACHE_KEY = `@goalzone_api_cache_away_lineup_${eventid}`;
   const CACHE_TIME_KEY = `@goalzone_api_cache_away_lineup_time_${eventid}`;
 
+  const hasLineupData = (d: any) =>
+    d &&
+    (
+      (d.starters?.length > 0) ||
+      (d.startXI?.length > 0) ||
+      (d.lineup?.starters?.length > 0) ||
+      (d.lineup?.startXI?.length > 0)
+    );
+
   try {
     const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
     const cachedData = await AsyncStorage.getItem(CACHE_KEY);
@@ -944,9 +959,7 @@ export const fetchAwayTeamLineup = async (eventid: string | number) => {
       const parsedTime = parseInt(cachedTime, 10);
       const now = Date.now();
       const parsed = JSON.parse(cachedData);
-      // Only serve cache if it has real lineup data (not null/empty)
-      const hasData = parsed && (parsed.starters?.length > 0 || parsed.startXI?.length > 0 || parsed.lineup?.starters?.length > 0);
-      if (hasData && now - parsedTime < 300000) {
+      if (hasLineupData(parsed) && now - parsedTime < 300000) {
         console.log(`[Cache] Using cached away lineup for event ${eventid}.`);
         return parsed;
       }
@@ -962,11 +975,10 @@ export const fetchAwayTeamLineup = async (eventid: string | number) => {
     const response = await api.get("/football-get-awayteam-lineup", {
       params: { eventid },
     });
-    const freshData = unwrapApiResponse(response.data);
-    const hasData = freshData && (freshData.starters?.length > 0 || freshData.startXI?.length > 0 || freshData.lineup?.starters?.length > 0);
+    const freshData = response.data || null;
 
     // Only cache if real data exists
-    if (hasData) {
+    if (hasLineupData(freshData)) {
       try {
         await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
         await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());

@@ -408,14 +408,34 @@ export default function MatchDetailsModal({
 
   const timelineEvents = getTimelineEvents();
 
-  // Helper to extract lineup data flexibly (no demo fallback)
+  // Helper to extract lineup data flexibly — handles both flat and nested response structures
   const getLineupObj = (data: any, fallbackName: string) => {
     if (!data) return { starters: [], subs: [], formation: "", teamName: fallbackName };
-    const l = data.lineup || data;
-    const starters = l.starters || l.startXI || l.startingXI || l.startersList || [];
-    const subs = l.subs || l.substitutes || [];
-    const formation = l.formation || "";
-    const teamName = l.name || l.teamName || fallbackName;
+
+    // Backend returns: { teamName, formation, starters, startXI, subs, substitutes, lineup: {...} }
+    // Try flat root-level fields first (backend format), then nested 'lineup' object
+    const starters =
+      (data.starters?.length > 0 && data.starters) ||
+      (data.startXI?.length > 0 && data.startXI) ||
+      (data.lineup?.starters?.length > 0 && data.lineup.starters) ||
+      (data.lineup?.startXI?.length > 0 && data.lineup.startXI) ||
+      data.startingXI ||
+      data.startersList ||
+      [];
+
+    const subs =
+      (data.subs?.length > 0 && data.subs) ||
+      (data.substitutes?.length > 0 && data.substitutes) ||
+      (data.lineup?.subs?.length > 0 && data.lineup.subs) ||
+      (data.lineup?.substitutes?.length > 0 && data.lineup.substitutes) ||
+      [];
+
+    const formation =
+      data.formation || data.lineup?.formation || "";
+
+    const teamName =
+      data.teamName || data.name || data.lineup?.teamName || data.lineup?.name || fallbackName;
+
     return { starters, subs, formation, teamName };
   };
 
@@ -752,15 +772,17 @@ export default function MatchDetailsModal({
             <View className="mb-6">
               {loadingLineup ? (
                 <ActivityIndicator color="#02DB54" className="my-6" />
-              ) : isUpcoming ? (
-                <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
-                  <Text className="text-[#02DB54] font-black text-sm mb-1">Match Has Not Started</Text>
-                  <Text className="text-gray-400 font-bold text-xs text-center">Lineups will appear once the match begins.</Text>
-                </View>
               ) : (homeStarters.length === 0 && awayStarters.length === 0) ? (
                 <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
-                  <Text className="text-[#02DB54] font-black text-sm mb-1">Lineups Not Available</Text>
-                  <Text className="text-gray-400 font-bold text-xs text-center">Lineup data could not be found for this match.</Text>
+                  <Text className="text-[#02DB54] font-black text-sm mb-1">
+                    {isUpcoming ? "Lineup Not Announced Yet" : "Lineups Not Available"}
+                  </Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">
+                    {isUpcoming
+                      ? "Team lineups are usually announced 1 hour before kickoff."
+                      : "Lineup data could not be found for this match."
+                    }
+                  </Text>
                 </View>
               ) : (
                 <View>

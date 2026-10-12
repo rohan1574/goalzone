@@ -705,11 +705,17 @@ app.get("/football-find-team-by-country", async (req, res) => {
 // ==========================================
 const translateLineup = (apiResponse, side) => {
   const list = apiResponse.response || [];
-  if (list.length === 0) return null;
+  if (list.length === 0) {
+    console.log(`[Lineup] No lineup data from API for side: ${side}. Response length: 0`);
+    return { teamName: "", formation: "", starters: [], startXI: [], subs: [], substitutes: [] };
+  }
 
   const idx = side === "home" ? 0 : 1;
   const apiLineup = list[idx];
-  if (!apiLineup) return null;
+  if (!apiLineup) {
+    console.log(`[Lineup] No lineup entry at index ${idx} for side: ${side}`);
+    return { teamName: "", formation: "", starters: [], startXI: [], subs: [], substitutes: [] };
+  }
 
   const starters = apiLineup.startXI || [];
   const subs = apiLineup.substitutes || [];
