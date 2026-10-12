@@ -186,30 +186,23 @@ export const useLiveClock = (
 
   const secDisplay = seconds < 10 ? `0${seconds}` : `${seconds}`;
 
-  // When stoppage / extra time is active: format base+elapsedExtra:sec(+totalExtra)
-  if (parsed.totalExtra !== null && parsed.totalExtra !== undefined) {
+  // Dynamic stoppage time completion (for whatever extra minutes this match was given: 5, 8, 4, 3, etc.)
+  const dynamicTargetExtra = parsed.totalExtra ?? (parsed.elapsedExtra > 0 ? parsed.elapsedExtra : null);
+
+  if (dynamicTargetExtra !== null && dynamicTargetExtra > 0) {
     const curExtra = parsed.elapsedExtra + extraMinutesTicked;
-    // When extra time has ended:
-    if (curExtra > parsed.totalExtra) {
+    // As soon as the dynamic extra time completes (curExtra >= dynamicTargetExtra):
+    if (curExtra >= dynamicTargetExtra) {
       if (parsed.base === 45 || stUpper === "1H") return "HT";
       if (parsed.base === 90 || stUpper === "2H") return "FT";
       if (parsed.base === 105) return "HT";
       if (parsed.base === 120) return "FT";
       return "FT";
     }
-    return `${parsed.base}+${curExtra}:${secDisplay}(+${parsed.totalExtra})`;
-  }
-
-  if (parsed.elapsedExtra > 0) {
-    const curExtra = parsed.elapsedExtra + extraMinutesTicked;
-    if (parsed.base === 45 && curExtra >= 5) return "HT";
-    if (parsed.base === 90 && curExtra >= 5) return "FT";
-    return `${parsed.base}+${curExtra}:${secDisplay}`;
+    return `${parsed.base}+${curExtra}:${secDisplay}(+${dynamicTargetExtra})`;
   }
 
   const currentMinute = parsed.base + extraMinutesTicked;
-  if (parsed.base >= 90 && currentMinute >= 96) return "FT";
-  if (parsed.base >= 45 && currentMinute >= 50 && stUpper === "1H") return "HT";
   return `${currentMinute}:${secDisplay}`;
 };
 

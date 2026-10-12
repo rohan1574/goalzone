@@ -46,12 +46,27 @@ const MatchCard = React.memo(function MatchCard({
   const stUpper = String(match.status || "").trim().toUpperCase();
   const minUpper = String(match.minute || "").trim().toUpperCase();
 
+  const bracketMatch = minUpper.match(/[\(\[]\+?(\d+)[\)\]]/);
+  const bracketExtra = bracketMatch ? parseInt(bracketMatch[1], 10) : null;
+  const propExtra = match.extra != null ? parseInt(String(match.extra), 10) : null;
+  const plusMatch = minUpper.match(/\+(\d+)/);
+  const plusExtra = plusMatch ? parseInt(plusMatch[1], 10) : null;
+  const targetExtra = bracketExtra || propExtra || plusExtra;
+  const elapsedExtra = plusExtra || 0;
+
+  const isExtraComplete = Boolean(
+    targetExtra &&
+    elapsedExtra >= targetExtra &&
+    (stUpper === "2H" || stUpper === "1H" || minUpper.startsWith("90") || minUpper.startsWith("45"))
+  );
+
   const isTimeExpired = match.timestamp
     ? (Date.now() - match.timestamp * 1000) / 60000 >= 115
     : false;
 
   const isFinished =
     isTimeExpired ||
+    (isExtraComplete && (stUpper === "2H" || minUpper.startsWith("90"))) ||
     stUpper === "FT" ||
     stUpper === "AET" ||
     stUpper === "PEN" ||
@@ -65,8 +80,15 @@ const MatchCard = React.memo(function MatchCard({
     minUpper.includes("ENDED") ||
     minUpper.includes("FULL TIME");
 
+  const isHalfTime =
+    stUpper === "HT" ||
+    minUpper === "HT" ||
+    (isExtraComplete && (stUpper === "1H" || minUpper.startsWith("45")));
+
   const effectiveStatus = isFinished
     ? (stUpper === "AET" || minUpper === "AET" ? "AET" : stUpper === "PEN" || minUpper === "PEN" ? "PEN" : "FT")
+    : isHalfTime
+    ? "HT"
     : (match.status || "NS");
 
   const handleCardPress = React.useCallback(() => {

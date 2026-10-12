@@ -722,8 +722,23 @@ export default function ExploreScreen() {
       const mStatusUpper = String(m.status || "").trim().toUpperCase();
       const mMinuteUpper = String(m.minute || "").trim().toUpperCase();
 
+      const bracketMatch = mMinuteUpper.match(/[\(\[]\+?(\d+)[\)\]]/);
+      const bracketExtra = bracketMatch ? parseInt(bracketMatch[1], 10) : null;
+      const propExtra = m.extra != null ? parseInt(String(m.extra), 10) : null;
+      const plusMatch = mMinuteUpper.match(/\+(\d+)/);
+      const plusExtra = plusMatch ? parseInt(plusMatch[1], 10) : null;
+      const targetExtra = bracketExtra || propExtra || plusExtra;
+      const elapsedExtra = plusExtra || 0;
+
+      const isExtraComplete = Boolean(
+        targetExtra &&
+        elapsedExtra >= targetExtra &&
+        (mStatusUpper === "2H" || mStatusUpper === "1H" || mMinuteUpper.startsWith("90") || mMinuteUpper.startsWith("45"))
+      );
+
       const isFinishedMatch =
         isTimeExpired ||
+        (isExtraComplete && (mStatusUpper === "2H" || mMinuteUpper.startsWith("90"))) ||
         mStatusUpper === "FT" ||
         mStatusUpper === "AET" ||
         mStatusUpper === "PEN" ||
@@ -737,14 +752,23 @@ export default function ExploreScreen() {
         mMinuteUpper.includes("ENDED") ||
         mMinuteUpper.includes("FULL TIME");
 
+      const isHalfTime =
+        mStatusUpper === "HT" ||
+        mMinuteUpper === "HT" ||
+        (isExtraComplete && (mStatusUpper === "1H" || mMinuteUpper.startsWith("45")));
+
       const matchStatus = isFinishedMatch
         ? (mStatusUpper === "AET" || mMinuteUpper === "AET" ? "AET" : mStatusUpper === "PEN" || mMinuteUpper === "PEN" ? "PEN" : "FT")
+        : isHalfTime
+        ? "HT"
         : (m.status || (m.minute === "Live" || m.statusType === "live" ? "Live" : "NS"));
 
       const matchScore = m.score || (m.homeScore !== undefined && m.awayScore !== undefined ? `${m.homeScore} - ${m.awayScore}` : "VS");
 
       const matchMinute = isFinishedMatch
         ? matchStatus
+        : isHalfTime
+        ? "HT"
         : (m.minute || (matchStatus === "FT" ? "FT" : matchStatus === "NS" ? "NS" : "Live"));
 
       const matchItem = {

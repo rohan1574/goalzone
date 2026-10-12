@@ -333,17 +333,19 @@ app.get("/football-current-live", (req, res) => {
       minute: item.fixture.status.elapsed
         ? (() => {
             const el = item.fixture.status.elapsed;
-            const ex = item.fixture.status.extra;
+            const ex = item.fixture.status.extra != null ? parseInt(item.fixture.status.extra, 10) : null;
             const st = item.fixture.status.short;
             if (st === '1H' && el >= 45) {
               const cur = el > 45 ? el - 45 : 0;
-              if ((ex && cur > ex) || (!ex && cur >= 6)) return 'HT';
-              return ex ? `45+${cur}' (+${ex})` : (cur > 0 ? `45+${cur}'` : `45'`);
+              const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
+              if (targetExtra !== null && cur >= targetExtra) return 'HT';
+              return targetExtra !== null ? `45+${cur}' (+${targetExtra})` : `45'`;
             }
             if (st === '2H' && el >= 90) {
               const cur = el > 90 ? el - 90 : 0;
-              if ((ex && cur > ex) || (!ex && cur >= 8)) return 'FT';
-              return ex ? `90+${cur}' (+${ex})` : (cur > 0 ? `90+${cur}'` : `90'`);
+              const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
+              if (targetExtra !== null && cur >= targetExtra) return 'FT';
+              return targetExtra !== null ? `90+${cur}' (+${targetExtra})` : `90'`;
             }
             if (ex) return `${el}' (+${ex})`;
             return `${el}'`;
@@ -351,15 +353,17 @@ app.get("/football-current-live", (req, res) => {
         : item.fixture.status.short,
       status: (() => {
         const el = item.fixture?.status?.elapsed;
-        const ex = item.fixture?.status?.extra;
+        const ex = item.fixture?.status?.extra != null ? parseInt(item.fixture.status.extra, 10) : null;
         const st = item.fixture?.status?.short;
         if (st === '1H' && el >= 45) {
           const cur = el > 45 ? el - 45 : 0;
-          if ((ex && cur > ex) || (!ex && cur >= 6)) return 'HT';
+          const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
+          if (targetExtra !== null && cur >= targetExtra) return 'HT';
         }
         if (st === '2H' && el >= 90) {
           const cur = el > 90 ? el - 90 : 0;
-          if ((ex && cur > ex) || (!ex && cur >= 8)) return 'FT';
+          const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
+          if (targetExtra !== null && cur >= targetExtra) return 'FT';
         }
         return st;
       })(),
@@ -603,6 +607,25 @@ function sanitizeFixturesStatus(data) {
     const stUpper = String(item.status || "").trim().toUpperCase();
     const minUpper = String(item.minute || "").trim().toUpperCase();
     if (stUpper === "FT" || stUpper === "AET" || stUpper === "PEN") return item;
+
+    // Check dynamic extra time in minute string or extra field
+    const bracketMatch = minUpper.match(/[\(\[]\+?(\d+)[\)\]]/);
+    const bracketExtra = bracketMatch ? parseInt(bracketMatch[1], 10) : null;
+    const propExtra = item.extra != null ? parseInt(item.extra, 10) : null;
+    const plusMatch = minUpper.match(/\+(\d+)/);
+    const plusExtra = plusMatch ? parseInt(plusMatch[1], 10) : null;
+    const targetExtra = bracketExtra || propExtra || plusExtra;
+    const elapsedExtra = plusExtra || 0;
+
+    // Dynamic completion: if elapsed extra time >= target extra time
+    if (targetExtra && elapsedExtra >= targetExtra) {
+      if (stUpper === "2H" || minUpper.startsWith("90")) {
+        return { ...item, status: "FT", minute: "FT" };
+      }
+      if (stUpper === "1H" || minUpper.startsWith("45")) {
+        return { ...item, status: "HT", minute: "HT" };
+      }
+    }
 
     const ts = item.timestamp || (item.date ? Math.floor(new Date(item.date).getTime() / 1000) : null);
     const minsSinceKO = ts ? (Date.now() - ts * 1000) / 60000 : null;

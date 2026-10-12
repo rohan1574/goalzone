@@ -48,22 +48,28 @@ function mapDateFixtures(apiResponse) {
 
     if (item.fixture.status.elapsed && !isFinished) {
       const el = item.fixture.status.elapsed;
-      const ex = item.fixture.status.extra;
+      const ex = item.fixture.status.extra != null ? parseInt(item.fixture.status.extra, 10) : null;
       if (statusShort === "1H" && el >= 45) {
         const cur = el > 45 ? el - 45 : 0;
-        if ((ex && cur > ex) || (!ex && cur >= 5) || (minsSinceKO !== null && minsSinceKO >= 55)) {
+        const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
+        if (targetExtra !== null && cur >= targetExtra) {
           finalStatus = "HT";
           elapsedMinute = "HT";
+        } else if (targetExtra !== null) {
+          elapsedMinute = `45+${cur}' (+${targetExtra})`;
         } else {
-          elapsedMinute = ex ? `45+${cur}' (+${ex})` : (cur > 0 ? `45+${cur}'` : `45'`);
+          elapsedMinute = `45'`;
         }
       } else if (statusShort === "2H" && el >= 90) {
         const cur = el > 90 ? el - 90 : 0;
-        if ((ex && cur > ex) || (!ex && cur >= 5) || (minsSinceKO !== null && minsSinceKO >= 108)) {
+        const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
+        if (targetExtra !== null && cur >= targetExtra) {
           finalStatus = "FT";
           elapsedMinute = "FT";
+        } else if (targetExtra !== null) {
+          elapsedMinute = `90+${cur}' (+${targetExtra})`;
         } else {
-          elapsedMinute = ex ? `90+${cur}' (+${ex})` : (cur > 0 ? `90+${cur}'` : `90'`);
+          elapsedMinute = `90'`;
         }
       } else if (ex) {
         elapsedMinute = `${el}' (+${ex})`;

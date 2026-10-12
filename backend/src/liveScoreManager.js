@@ -369,20 +369,22 @@ function normalizeApiResponse(rawResponse) {
       minute: item.fixture?.status?.elapsed
         ? (() => {
             const el = item.fixture.status.elapsed;
-            const ex = item.fixture.status.extra;
+            const ex = item.fixture.status.extra != null ? parseInt(item.fixture.status.extra, 10) : null;
             const st = item.fixture.status.short;
             const ts = item.fixture?.timestamp;
             const minsSinceKO = ts ? (Date.now() - ts * 1000) / 60000 : null;
             if (minsSinceKO !== null && minsSinceKO >= 115) return 'FT';
             if (st === '1H' && el >= 45) {
               const cur = el > 45 ? el - 45 : 0;
-              if ((ex && cur > ex) || (!ex && cur >= 5) || (minsSinceKO !== null && minsSinceKO >= 55)) return 'HT';
-              return ex ? `45+${cur}' (+${ex})` : (cur > 0 ? `45+${cur}'` : `45'`);
+              const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
+              if (targetExtra !== null && cur >= targetExtra) return 'HT';
+              return targetExtra !== null ? `45+${cur}' (+${targetExtra})` : `45'`;
             }
             if (st === '2H' && el >= 90) {
               const cur = el > 90 ? el - 90 : 0;
-              if ((ex && cur > ex) || (!ex && cur >= 5) || (minsSinceKO !== null && minsSinceKO >= 108)) return 'FT';
-              return ex ? `90+${cur}' (+${ex})` : (cur > 0 ? `90+${cur}'` : `90'`);
+              const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
+              if (targetExtra !== null && cur >= targetExtra) return 'FT';
+              return targetExtra !== null ? `90+${cur}' (+${targetExtra})` : `90'`;
             }
             if (ex) return `${el}' (+${ex})`;
             return `${el}'`;
@@ -390,18 +392,20 @@ function normalizeApiResponse(rawResponse) {
         : (item.status || 'LIVE'),
       status: (() => {
         const el = item.fixture?.status?.elapsed;
-        const ex = item.fixture?.status?.extra;
+        const ex = item.fixture?.status?.extra != null ? parseInt(item.fixture.status.extra, 10) : null;
         const st = item.fixture?.status?.short || item.status || 'LIVE';
         const ts = item.fixture?.timestamp;
         const minsSinceKO = ts ? (Date.now() - ts * 1000) / 60000 : null;
         if (minsSinceKO !== null && minsSinceKO >= 115) return 'FT';
         if (st === '1H' && el >= 45) {
           const cur = el > 45 ? el - 45 : 0;
-          if ((ex && cur > ex) || (!ex && cur >= 5) || (minsSinceKO !== null && minsSinceKO >= 55)) return 'HT';
+          const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
+          if (targetExtra !== null && cur >= targetExtra) return 'HT';
         }
         if (st === '2H' && el >= 90) {
           const cur = el > 90 ? el - 90 : 0;
-          if ((ex && cur > ex) || (!ex && cur >= 5) || (minsSinceKO !== null && minsSinceKO >= 108)) return 'FT';
+          const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
+          if (targetExtra !== null && cur >= targetExtra) return 'FT';
         }
         return st;
       })(),
