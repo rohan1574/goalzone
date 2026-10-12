@@ -165,15 +165,27 @@ export const useLiveClock = (
   // When stoppage / extra time is active: format base+elapsedExtra:sec(+totalExtra)
   if (parsed.totalExtra !== null && parsed.totalExtra !== undefined) {
     const curExtra = parsed.elapsedExtra + extraMinutesTicked;
+    // When extra time has ended:
+    if (curExtra > parsed.totalExtra) {
+      if (parsed.base === 45 || stUpper === "1H") return "HT";
+      if (parsed.base === 90 || stUpper === "2H") return "FT";
+      if (parsed.base === 105) return "HT";
+      if (parsed.base === 120) return "FT";
+      return "FT";
+    }
     return `${parsed.base}+${curExtra}:${secDisplay}(+${parsed.totalExtra})`;
   }
 
   if (parsed.elapsedExtra > 0) {
     const curExtra = parsed.elapsedExtra + extraMinutesTicked;
+    if (parsed.base === 45 && curExtra >= 6) return "HT";
+    if (parsed.base === 90 && curExtra >= 8) return "FT";
     return `${parsed.base}+${curExtra}:${secDisplay}`;
   }
 
   const currentMinute = parsed.base + extraMinutesTicked;
+  if (parsed.base >= 90 && currentMinute >= 98) return "FT";
+  if (parsed.base >= 45 && currentMinute >= 51 && stUpper === "1H") return "HT";
   return `${currentMinute}:${secDisplay}`;
 };
 

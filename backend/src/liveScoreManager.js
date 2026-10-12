@@ -373,17 +373,32 @@ function normalizeApiResponse(rawResponse) {
             const st = item.fixture.status.short;
             if (st === '1H' && el >= 45) {
               const cur = el > 45 ? el - 45 : 0;
+              if ((ex && cur > ex) || (!ex && cur >= 6)) return 'HT';
               return ex ? `45+${cur}' (+${ex})` : (cur > 0 ? `45+${cur}'` : `45'`);
             }
             if (st === '2H' && el >= 90) {
               const cur = el > 90 ? el - 90 : 0;
+              if ((ex && cur > ex) || (!ex && cur >= 8)) return 'FT';
               return ex ? `90+${cur}' (+${ex})` : (cur > 0 ? `90+${cur}'` : `90'`);
             }
             if (ex) return `${el}' (+${ex})`;
             return `${el}'`;
           })()
         : (item.status || 'LIVE'),
-      status: item.fixture?.status?.short || item.status || 'LIVE',
+      status: (() => {
+        const el = item.fixture?.status?.elapsed;
+        const ex = item.fixture?.status?.extra;
+        const st = item.fixture?.status?.short || item.status || 'LIVE';
+        if (st === '1H' && el >= 45) {
+          const cur = el > 45 ? el - 45 : 0;
+          if ((ex && cur > ex) || (!ex && cur >= 6)) return 'HT';
+        }
+        if (st === '2H' && el >= 90) {
+          const cur = el > 90 ? el - 90 : 0;
+          if ((ex && cur > ex) || (!ex && cur >= 8)) return 'FT';
+        }
+        return st;
+      })(),
       elapsed: item.fixture?.status?.elapsed ?? null,
       extra: item.fixture?.status?.extra ?? null,
     };

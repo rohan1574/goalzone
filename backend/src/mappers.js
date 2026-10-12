@@ -37,19 +37,29 @@ function mapDateFixtures(apiResponse) {
       : "19:00";
 
     const isFinished = FINISHED_STATUSES.has(statusShort);
-    const finalStatus = isFinished
+    let finalStatus = isFinished
       ? (statusShort === "AET" || statusShort === "PEN" ? statusShort : "FT")
       : statusShort;
     let elapsedMinute = statusShort;
-    if (item.fixture.status.elapsed) {
+    if (item.fixture.status.elapsed && !isFinished) {
       const el = item.fixture.status.elapsed;
       const ex = item.fixture.status.extra;
       if (statusShort === "1H" && el >= 45) {
         const cur = el > 45 ? el - 45 : 0;
-        elapsedMinute = ex ? `45+${cur}' (+${ex})` : `45+${cur}'`;
+        if ((ex && cur > ex) || (!ex && cur >= 6)) {
+          finalStatus = "HT";
+          elapsedMinute = "HT";
+        } else {
+          elapsedMinute = ex ? `45+${cur}' (+${ex})` : `45+${cur}'`;
+        }
       } else if (statusShort === "2H" && el >= 90) {
         const cur = el > 90 ? el - 90 : 0;
-        elapsedMinute = ex ? `90+${cur}' (+${ex})` : `90+${cur}'`;
+        if ((ex && cur > ex) || (!ex && cur >= 8)) {
+          finalStatus = "FT";
+          elapsedMinute = "FT";
+        } else {
+          elapsedMinute = ex ? `90+${cur}' (+${ex})` : `90+${cur}'`;
+        }
       } else if (ex) {
         elapsedMinute = `${el}' (+${ex})`;
       } else {
