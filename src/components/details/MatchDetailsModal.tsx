@@ -233,11 +233,7 @@ export default function MatchDetailsModal({
   const [h2hData, setH2hData] = useState<any>(null);
   const [loadingH2h, setLoadingH2h] = useState<boolean>(false);
 
-  // 1. Fetch Timeline Events for Infor tab
-  // 1. Fetch Timeline Events, Stats, Lineups, Standings, H2H when modal opens
-  useEffect(() => {
-    if (!visible || !match?.id) return;
-
+  // 1. Fetch Timeline Events, Stats, Lineups, Standings, H2H
   // Load Events
   const loadEvents = useCallback(async () => {
     if (!match?.id) return;
