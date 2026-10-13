@@ -36,7 +36,7 @@ const getCategoryForLeague = (name: string, country?: string) => {
   if (lower.includes("bundesliga") || lower.includes("dfb")) return "Germany";
   if (lower.includes("ligue 1") || lower.includes("coupe de france")) return "France";
   if (lower.includes("mls") || lower.includes("major league")) return "USA";
-  if (lower.includes("saudi") || lower.includes("pro league")) return "Saudi Arabia";
+  if (lower.includes("saudi") || lower.includes("pro league") || lower.includes("king's cup") || lower.includes("king cup") || lower.includes("super cup")) return "Saudi Arabia";
   return TOURNAMENTS;
 };
 

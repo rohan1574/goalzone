@@ -205,6 +205,10 @@ export const POPULAR_LEAGUE_IDS = new Set([
   '128',  // Liga Profesional Argentina
   '253',  // MLS
   '307',  // Saudi Pro League
+  '504',  // King Cup of Champions
+  '826',  // Saudi Super Cup
+  '17',   // AFC Champions League Elite
+  '18',   // AFC Champions League Two
   '13',   // Copa Libertadores
   '1',    // World Cup
   '4',    // Euro Championship
@@ -212,7 +216,7 @@ export const POPULAR_LEAGUE_IDS = new Set([
   '10',   // International Friendlies
   '11',   // UEFA Nations League
   '15',   // FIFA Club World Cup
-  '393',  // AFC Champions League
+  '393',  // Legacy / Ecuador
   '239'   // Süper Lig
 ]);
 
@@ -226,8 +230,12 @@ export default function Leagues({
 
   const filteredLeaguesList = React.useMemo(() => {
     if (!leaguesList) return [];
+    // If user is actively searching, do not filter by popular league IDs
+    if (searchQuery && searchQuery.trim()) {
+      return leaguesList;
+    }
     return leaguesList.filter((league) => POPULAR_LEAGUE_IDS.has(String(league.leagueId)));
-  }, [leaguesList]);
+  }, [leaguesList, searchQuery]);
 
   // Reset display limit when leaguesList changes (e.g. date changed)
   React.useEffect(() => {

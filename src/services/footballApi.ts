@@ -476,6 +476,55 @@ export const fetchLiveMatches = async (): Promise<any[]> => {
   }
 };
 
+export const SUPPLEMENTAL_FEATURED_LEAGUES = [
+  { leagueId: "307", leagueName: "Saudi Pro League", country: "Saudi Arabia", leagueLogo: "https://media.api-sports.io/football/leagues/307.png" },
+  { leagueId: "504", leagueName: "King Cup of Champions", country: "Saudi Arabia", leagueLogo: "https://media.api-sports.io/football/leagues/504.png" },
+  { leagueId: "826", leagueName: "Saudi Super Cup", country: "Saudi Arabia", leagueLogo: "https://media.api-sports.io/football/leagues/826.png" },
+  { leagueId: "17",  leagueName: "AFC Champions League Elite", country: "Asia", leagueLogo: "https://media.api-sports.io/football/leagues/17.png" },
+  { leagueId: "18",  leagueName: "AFC Champions League Two", country: "Asia", leagueLogo: "https://media.api-sports.io/football/leagues/18.png" },
+];
+
+export async function supplementFixturesWithAfcAndSaudi(fixtures: any[], dateString: string): Promise<any[]> {
+  const result = [...fixtures];
+  const hasAfc = result.some((m: any) => String(m.leagueId) === "17" || (m.league && m.league.includes("AFC")));
+
+  if (!hasAfc) {
+    try {
+      const afcRes = await fetchWithBackendFallback("/football-get-fixtures-by-league", { leagueid: "17" });
+      const afcList = findArray(afcRes.data);
+      const yyyymmddHyphen = `${dateString.substring(0, 4)}-${dateString.substring(4, 6)}-${dateString.substring(6, 8)}`;
+      const matchingAfc = afcList
+        .filter((m: any) => {
+          const raw = String(m.rawDate || m.date || "");
+          return raw.startsWith(yyyymmddHyphen) || raw.includes(yyyymmddHyphen);
+        })
+        .map((m: any) => ({
+          id: String(m.id),
+          league: "AFC Champions League Elite",
+          leagueId: "17",
+          leagueLogo: "https://media.api-sports.io/football/leagues/17.png",
+          leagueCountry: "Asia",
+          home: m.home,
+          away: m.away,
+          score: m.score || "VS",
+          minute: m.status || "NS",
+          status: m.status || "NS",
+          time: m.time || "19:00",
+          date: m.date,
+          rawDate: m.rawDate,
+          timestamp: m.timestamp,
+        }));
+
+      if (matchingAfc.length > 0) {
+        result.unshift(...matchingAfc);
+      }
+    } catch {
+      // non-fatal fallback
+    }
+  }
+  return result;
+}
+
 export const loadFootballDashboard = async (forceRefresh = false) => {
   const MEM_KEY = "@goalzone_mem_dashboard";
   const CACHE_KEY = "@goalzone_api_cache_dashboard_v2";
@@ -520,11 +569,23 @@ export const loadFootballDashboard = async (forceRefresh = false) => {
       date: formatFootballDate(0),
     });
     if (aggRes.data && aggRes.data.teams && aggRes.data.teams.length > 0) {
+      const rawLeagues = aggRes.data.leagues || [];
+      const seenLeagues = new Set(rawLeagues.map((l: any) => String(l.leagueId || l.id)));
+      SUPPLEMENTAL_FEATURED_LEAGUES.forEach((sl) => {
+        if (!seenLeagues.has(sl.leagueId)) {
+          seenLeagues.add(sl.leagueId);
+          rawLeagues.push(sl);
+        }
+      });
+
+      const todayStr = formatFootballDate(0);
+      const enrichedFixtures = await supplementFixturesWithAfcAndSaudi(aggRes.data.fixtures || [], todayStr);
+
       const response = {
         data: {
           live: aggRes.data.live || [],
-          leagues: aggRes.data.leagues || [],
-          fixtures: aggRes.data.fixtures || [],
+          leagues: rawLeagues,
+          fixtures: enrichedFixtures,
           teams: aggRes.data.teams || [],
         },
         hasPartialFailure: false,
@@ -601,7 +662,7 @@ export const fetchFixturesByDate = async (dateString: string) => {
       date: dateString,
       timezone: userTimezone,
     });
-    const freshData = findArray(response.data);
+    const freshData = await supplementFixturesWithAfcAndSaudi(findArray(response.data), dateString);
 
     // Save to high-speed memory RAM cache instantly (0ms)
     setMemoryCache(MEM_KEY, freshData, ttl);

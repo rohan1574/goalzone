@@ -4,7 +4,12 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { LogBox } from "react-native";
 import mobileAds from "react-native-google-mobile-ads";
+
+LogBox.ignoreLogs([
+  "Invalid `href` prop for `Use` element",
+]);
 
 export default function RootLayout() {
   useEffect(() => {

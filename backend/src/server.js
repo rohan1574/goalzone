@@ -395,8 +395,13 @@ const popularLeagues = [
   { leagueId: "128", leagueName: "Liga Profesional",     country: "Argentina",leagueLogo: "https://media.api-sports.io/football/leagues/128.png" },
   { leagueId: "253", leagueName: "MLS",                  country: "USA",      leagueLogo: "https://media.api-sports.io/football/leagues/253.png" },
   { leagueId: "13",  leagueName: "Copa Libertadores",    country: "South America", leagueLogo: "https://media.api-sports.io/football/leagues/13.png" },
-  // ── Middle East & Asia ──
+  // ── Middle East & Saudi Arabia ──
   { leagueId: "307", leagueName: "Saudi Pro League",     country: "Saudi Arabia", leagueLogo: "https://media.api-sports.io/football/leagues/307.png" },
+  { leagueId: "504", leagueName: "King Cup of Champions",country: "Saudi Arabia", leagueLogo: "https://media.api-sports.io/football/leagues/504.png" },
+  { leagueId: "826", leagueName: "Saudi Super Cup",      country: "Saudi Arabia", leagueLogo: "https://media.api-sports.io/football/leagues/826.png" },
+  // ── Asia & Continental ──
+  { leagueId: "17",  leagueName: "AFC Champions League Elite", country: "Asia",   leagueLogo: "https://media.api-sports.io/football/leagues/17.png" },
+  { leagueId: "18",  leagueName: "AFC Champions League Two",   country: "Asia",   leagueLogo: "https://media.api-sports.io/football/leagues/18.png" },
 ];
 
 app.get("/football-popular-leagues", (req, res) => {

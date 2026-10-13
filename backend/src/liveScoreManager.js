@@ -312,6 +312,10 @@ const POPULAR_LEAGUE_IDS = new Set([
   '128',  // Liga Profesional Argentina
   '253',  // MLS
   '307',  // Saudi Pro League
+  '504',  // King Cup of Champions
+  '826',  // Saudi Super Cup
+  '17',   // AFC Champions League Elite
+  '18',   // AFC Champions League Two
   '13',   // Copa Libertadores
   '1',    // World Cup
   '4',    // Euro Championship

@@ -7,7 +7,7 @@
 // Leagues shown anywhere in the app (date lists, live scores, dashboard)
 const POPULAR_LEAGUE_IDS_SET = new Set([
   '39', '140', '135', '78', '61', '2', '3', '848', '5', '94',
-  '71', '128', '253', '307', '13', '1', '4', '9', '10', '11', '15', '393', '239',
+  '71', '128', '253', '307', '504', '826', '17', '18', '13', '1', '4', '9', '10', '11', '15', '393', '239',
   '40', '45', '48', '143', '16'
 ]);
 
@@ -141,6 +141,10 @@ function mapLeagueFixtures(apiResponse) {
         name: item.teams.away.name,
         logo: item.teams.away.logo,
       },
+      league: item.league?.name || "",
+      leagueId: item.league?.id ? String(item.league.id) : "",
+      leagueLogo: item.league?.logo || "",
+      leagueCountry: item.league?.country || "",
     };
   });
 }

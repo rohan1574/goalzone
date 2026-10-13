@@ -812,6 +812,12 @@ export default function ExploreScreen() {
 
     // Priority ordering for major leagues so top leagues appear first
     const PRIORITY_LEAGUES = [
+      "AFC Champions League",
+      "Saudi Pro League",
+      "King Cup of Champions",
+      "King's Cup",
+      "King Cup",
+      "Saudi Super Cup",
       "Premier League",
       "La Liga",
       "Serie A",
@@ -819,7 +825,6 @@ export default function ExploreScreen() {
       "Ligue 1",
       "Brasileirão Série A",
       "Serie A - Betano",
-      "Saudi Pro League",
       "Major League Soccer",
       "MLS",
       "UEFA Champions League",

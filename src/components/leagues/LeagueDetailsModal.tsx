@@ -114,24 +114,70 @@ const mapTable = (raw: any[]): TableRow[] =>
     };
   });
 
+export const SAUDI_AND_AFC_COMPETITIONS: (League & { shortName: string })[] = [
+  {
+    id: "307",
+    name: "Saudi Pro League",
+    logo: "https://media.api-sports.io/football/leagues/307.png",
+    category: "Saudi Arabia",
+    shortName: "Pro League",
+  },
+  {
+    id: "504",
+    name: "King Cup of Champions",
+    logo: "https://media.api-sports.io/football/leagues/504.png",
+    category: "Saudi Arabia",
+    shortName: "King's Cup",
+  },
+  {
+    id: "826",
+    name: "Saudi Super Cup",
+    logo: "https://media.api-sports.io/football/leagues/826.png",
+    category: "Saudi Arabia",
+    shortName: "Super Cup",
+  },
+  {
+    id: "17",
+    name: "AFC Champions League Elite",
+    logo: "https://media.api-sports.io/football/leagues/17.png",
+    category: "AFC / Asia",
+    shortName: "AFC Champions",
+  },
+  {
+    id: "18",
+    name: "AFC Champions League Two",
+    logo: "https://media.api-sports.io/football/leagues/18.png",
+    category: "AFC / Asia",
+    shortName: "AFC Two",
+  },
+];
+
 export default function LeagueDetailsModal({
   visible,
   league,
   onClose,
   onPressDetails,
 }: LeagueDetailsModalProps) {
+  const [currentLeague, setCurrentLeague] = useState<League | null>(league);
   const [activeTab, setActiveTab] = useState<"fixtures" | "table">("fixtures");
   const [fixtures, setFixtures] = useState<FixtureRow[]>([]);
   const [loadingFixtures, setLoadingFixtures] = useState(true);
   const [table, setTable] = useState<TableRow[]>([]);
   const [loadingTable, setLoadingTable] = useState(true);
 
+  // Sync prop changes
+  useEffect(() => {
+    setCurrentLeague(league);
+  }, [league]);
+
+  const activeLeague = currentLeague || league;
+
   // Drop responses for a league the user has already closed / switched away from
   const loadedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!visible || !league) return;
-    const leagueId = league.id;
+    if (!visible || !activeLeague) return;
+    const leagueId = activeLeague.id;
     loadedFor.current = leagueId;
     setActiveTab("fixtures");
     setFixtures([]);
@@ -156,17 +202,17 @@ export default function LeagueDetailsModal({
       .finally(() => {
         if (loadedFor.current === leagueId) setLoadingTable(false);
       });
-  }, [visible, league?.id]);
+  }, [visible, activeLeague?.id]);
 
-  if (!league) return null;
+  if (!activeLeague) return null;
 
   const openMatch = (match: FixtureRow) => {
     if (!onPressDetails) return;
     onPressDetails({
       id: match.id,
-      league: league.name,
-      leagueId: league.id,
-      leagueLogo: league.logo,
+      league: activeLeague.name,
+      leagueId: activeLeague.id,
+      leagueLogo: activeLeague.logo,
       home: match.home,
       away: match.away,
       score: NOT_STARTED.has(match.status) ? "VS" : match.score,
@@ -175,6 +221,21 @@ export default function LeagueDetailsModal({
       timestamp: match.kickoff ? Math.floor(match.kickoff / 1000) : undefined,
     });
   };
+
+  const isSaudiOrAsianComp = Boolean(
+    activeLeague && (
+      activeLeague.id === "307" ||
+      activeLeague.id === "504" ||
+      activeLeague.id === "826" ||
+      activeLeague.id === "17" ||
+      activeLeague.id === "18" ||
+      (activeLeague.name && (
+        activeLeague.name.toLowerCase().includes("saudi") ||
+        activeLeague.name.toLowerCase().includes("king") ||
+        activeLeague.name.toLowerCase().includes("afc")
+      ))
+    )
+  );
 
   const zones = Array.from(new Set(table.map((r) => r.zone).filter(Boolean)));
   const hasWdl = table.some((r) => r.w !== null);
@@ -204,18 +265,61 @@ export default function LeagueDetailsModal({
             <ArrowLeft size={24} color="#ECEDEE" />
           </TouchableOpacity>
           <View className="flex-1 flex-row items-center justify-center gap-2.5 px-2">
-            <RemoteLogo uri={league.logo} label={league.name} size={30} plate />
+            <RemoteLogo uri={activeLeague.logo} label={activeLeague.name} size={30} plate />
             <View className="flex-shrink">
-              <Text className="text-white text-lg font-black" numberOfLines={1}>{league.name}</Text>
-              {league.category ? (
+              <Text className="text-white text-lg font-black" numberOfLines={1}>{activeLeague.name}</Text>
+              {activeLeague.category ? (
                 <Text className="text-gray-400 text-[10px] font-bold uppercase tracking-wider" numberOfLines={1}>
-                  {league.category}
+                  {activeLeague.category}
                 </Text>
               ) : null}
             </View>
           </View>
           <View className="w-8" />
         </View>
+
+        {/* Quick Competition Switcher for Saudi & AFC Tournaments */}
+        {isSaudiOrAsianComp && (
+          <View className="py-2.5 border-b border-white/5 bg-[#101112]">
+            <Text className="text-[10px] text-gray-400 font-extrabold px-4 mb-2 uppercase tracking-wider">
+              🇸🇦 Saudi & AFC Competitions
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+              {SAUDI_AND_AFC_COMPETITIONS.map((comp) => {
+                const isSelected = activeLeague.id === comp.id;
+                return (
+                  <TouchableOpacity
+                    key={comp.id}
+                    onPress={() => setCurrentLeague(comp)}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: isSelected ? "#02DB54" : "rgba(255,255,255,0.08)",
+                      backgroundColor: isSelected ? "rgba(2,219,84,0.12)" : "#18191B",
+                    }}
+                  >
+                    <RemoteLogo uri={comp.logo} label={comp.shortName} size={16} />
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        marginLeft: 6,
+                        fontWeight: "800",
+                        color: isSelected ? "#02DB54" : "#D1D5DB",
+                      }}
+                    >
+                      {comp.shortName}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Tabs */}
         <View className="flex-row bg-[#131415] rounded-3xl mx-4 my-4 p-1 border border-white/5">
