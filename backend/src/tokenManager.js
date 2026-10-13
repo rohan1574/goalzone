@@ -7,30 +7,48 @@ const CACHE_DIR = process.env.CACHE_DIR
 
 const FILE_PATH = path.join(CACHE_DIR, 'subscribers.json');
 
-// In-memory cache of subscriptions: { [topicName: string]: string[] }
+// In-memory cache of subscriptions: { [topicName: string]: Set<string> }
 let subscriptions = {};
+let saveTimeout = null;
 
 function load() {
   try {
     if (fs.existsSync(FILE_PATH)) {
       const raw = fs.readFileSync(FILE_PATH, 'utf-8');
-      subscriptions = JSON.parse(raw) || {};
+      const parsed = JSON.parse(raw) || {};
+      subscriptions = {};
+      Object.keys(parsed).forEach((topic) => {
+        subscriptions[topic] = new Set(Array.isArray(parsed[topic]) ? parsed[topic] : []);
+      });
+      return;
     }
   } catch (err) {
     console.warn('[TokenManager] Failed to read subscribers file:', err.message);
-    subscriptions = {};
   }
+  subscriptions = {};
 }
 
-function save() {
+function flushSave() {
   try {
     if (!fs.existsSync(CACHE_DIR)) {
       fs.mkdirSync(CACHE_DIR, { recursive: true });
     }
-    fs.writeFileSync(FILE_PATH, JSON.stringify(subscriptions, null, 2), 'utf-8');
+    const serializable = {};
+    Object.keys(subscriptions).forEach((topic) => {
+      serializable[topic] = Array.from(subscriptions[topic]);
+    });
+    fs.writeFileSync(FILE_PATH, JSON.stringify(serializable), 'utf-8');
   } catch (err) {
     console.warn('[TokenManager] Failed to write subscribers file:', err.message);
   }
+}
+
+function scheduleSave() {
+  if (saveTimeout) return;
+  saveTimeout = setTimeout(() => {
+    saveTimeout = null;
+    flushSave();
+  }, 2000);
 }
 
 // Initial load
@@ -38,68 +56,59 @@ load();
 
 function addToken(token, topic = 'popular_matches') {
   if (!token) return;
-  load();
-  if (!subscriptions[topic]) subscriptions[topic] = [];
-  if (!subscriptions[topic].includes(token)) {
-    subscriptions[topic].push(token);
-    save();
-    console.log(`[TokenManager] Added device token to "${topic}". Total subscribers: ${subscriptions[topic].length}`);
+  if (!subscriptions[topic]) subscriptions[topic] = new Set();
+  if (!subscriptions[topic].has(token)) {
+    subscriptions[topic].add(token);
+    scheduleSave();
+    console.log(`[TokenManager] Added device token to "${topic}". Total subscribers: ${subscriptions[topic].size}`);
   }
 }
 
 function removeToken(token, topic = 'popular_matches') {
   if (!token) return;
-  load();
-  if (subscriptions[topic]) {
-    const prev = subscriptions[topic].length;
-    subscriptions[topic] = subscriptions[topic].filter((t) => t !== token);
-    if (subscriptions[topic].length !== prev) {
-      save();
-      console.log(`[TokenManager] Removed token from "${topic}". Remaining: ${subscriptions[topic].length}`);
-    }
+  if (subscriptions[topic] && subscriptions[topic].has(token)) {
+    subscriptions[topic].delete(token);
+    scheduleSave();
+    console.log(`[TokenManager] Removed token from "${topic}". Remaining: ${subscriptions[topic].size}`);
   }
 }
 
 function getTokens(topic = 'popular_matches') {
-  load();
-  return subscriptions[topic] || [];
+  return subscriptions[topic] ? Array.from(subscriptions[topic]) : [];
 }
 
 function getTokensForMatch(matchId, isPopular) {
-  load();
   const set = new Set();
-  if (isPopular && Array.isArray(subscriptions['popular_matches'])) {
+  if (isPopular && subscriptions['popular_matches']) {
     subscriptions['popular_matches'].forEach((t) => set.add(t));
   }
   const matchTopic = `match_${matchId}`;
-  if (Array.isArray(subscriptions[matchTopic])) {
+  if (subscriptions[matchTopic]) {
     subscriptions[matchTopic].forEach((t) => set.add(t));
   }
   return Array.from(set);
 }
 
 function getAllTokens() {
-  load();
   const set = new Set();
-  Object.values(subscriptions).forEach((list) => {
-    if (Array.isArray(list)) list.forEach((t) => set.add(t));
+  Object.values(subscriptions).forEach((tokenSet) => {
+    if (tokenSet instanceof Set) tokenSet.forEach((t) => set.add(t));
+    else if (Array.isArray(tokenSet)) tokenSet.forEach((t) => set.add(t));
   });
   return Array.from(set);
 }
 
 function removeInvalidTokens(invalidTokens) {
   if (!Array.isArray(invalidTokens) || invalidTokens.length === 0) return;
-  load();
-  const invalidSet = new Set(invalidTokens);
   let changed = false;
-  Object.keys(subscriptions).forEach((topic) => {
-    if (Array.isArray(subscriptions[topic])) {
-      const prev = subscriptions[topic].length;
-      subscriptions[topic] = subscriptions[topic].filter((t) => !invalidSet.has(t));
-      if (subscriptions[topic].length !== prev) changed = true;
-    }
+  invalidTokens.forEach((badToken) => {
+    Object.keys(subscriptions).forEach((topic) => {
+      if (subscriptions[topic]?.delete(badToken)) {
+        changed = true;
+      }
+    });
   });
-  if (changed) save();
+  if (changed) scheduleSave();
 }
 
 module.exports = {

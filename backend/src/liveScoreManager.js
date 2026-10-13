@@ -195,35 +195,50 @@ async function sendMatchAlert({ matchId, isPopular, title, body, data, channelId
       let totalFailure = 0;
       const invalidTokens = [];
 
+      const chunkList = [];
       for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
-        const chunk = tokens.slice(i, i + CHUNK_SIZE);
-        const multicastMessage = {
-          tokens: chunk,
-          notification: { title, body },
-          data: { ...data, matchId: String(matchId) },
-          android: {
-            priority: 'high',
-            collapseKey: tag,
-            notification: { sound: 'default', channelId, tag },
-          },
-          apns: {
-            headers: { 'apns-collapse-id': tag },
-            payload: { aps: { sound: 'default', contentAvailable: true } },
-          },
-        };
+        chunkList.push(tokens.slice(i, i + CHUNK_SIZE));
+      }
 
-        const multiRes = await getMessaging().sendEachForMulticast(multicastMessage);
-        totalSuccess += multiRes.successCount;
-        totalFailure += multiRes.failureCount;
+      // Send 5 chunks in parallel so 50,000 users receive goals within 2-3 seconds
+      const BATCH_CONCURRENCY = 5;
+      for (let b = 0; b < chunkList.length; b += BATCH_CONCURRENCY) {
+        const batch = chunkList.slice(b, b + BATCH_CONCURRENCY);
+        await Promise.all(
+          batch.map(async (chunk) => {
+            try {
+              const multicastMessage = {
+                tokens: chunk,
+                notification: { title, body },
+                data: { ...data, matchId: String(matchId) },
+                android: {
+                  priority: 'high',
+                  collapseKey: tag,
+                  notification: { sound: 'default', channelId, tag },
+                },
+                apns: {
+                  headers: { 'apns-collapse-id': tag },
+                  payload: { aps: { sound: 'default', contentAvailable: true } },
+                },
+              };
 
-        multiRes.responses.forEach((resp, idx) => {
-          if (resp.error && (
-            resp.error.code === 'messaging/registration-token-not-registered' ||
-            resp.error.code === 'messaging/invalid-registration-token'
-          )) {
-            invalidTokens.push(chunk[idx]);
-          }
-        });
+              const multiRes = await getMessaging().sendEachForMulticast(multicastMessage);
+              totalSuccess += multiRes.successCount;
+              totalFailure += multiRes.failureCount;
+
+              multiRes.responses.forEach((resp, idx) => {
+                if (resp.error && (
+                  resp.error.code === 'messaging/registration-token-not-registered' ||
+                  resp.error.code === 'messaging/invalid-registration-token'
+                )) {
+                  invalidTokens.push(chunk[idx]);
+                }
+              });
+            } catch (err) {
+              console.error(`[FCM Multicast Batch Error]:`, err.message);
+            }
+          })
+        );
       }
 
       console.log(`[FCM Multicast] ${data.type} sent to ${totalSuccess}/${tokens.length} devices (failed: ${totalFailure})`);

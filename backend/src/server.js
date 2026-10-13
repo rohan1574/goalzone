@@ -257,29 +257,44 @@ app.all("/api/test-notification", async (req, res) => {
         let totalFailure = 0;
         const invalidTokens = [];
 
+        const chunkList = [];
         for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
-          const chunk = tokens.slice(i, i + CHUNK_SIZE);
-          const multicastMsg = {
-            tokens: chunk,
-            notification: { title, body },
-            data: { type: alertType },
-            android: {
-              priority: "high",
-              notification: { sound: "default", channelId: "match_alerts" },
-            },
-          };
-          const multiRes = await messaging.sendEachForMulticast(multicastMsg);
-          totalSuccess += multiRes.successCount;
-          totalFailure += multiRes.failureCount;
+          chunkList.push(tokens.slice(i, i + CHUNK_SIZE));
+        }
 
-          multiRes.responses.forEach((resp, idx) => {
-            if (resp.error && (
-              resp.error.code === "messaging/registration-token-not-registered" ||
-              resp.error.code === "messaging/invalid-registration-token"
-            )) {
-              invalidTokens.push(chunk[idx]);
-            }
-          });
+        // Send 5 chunks in parallel so even 50,000 users are notified in ~2-3 seconds
+        const BATCH_CONCURRENCY = 5;
+        for (let b = 0; b < chunkList.length; b += BATCH_CONCURRENCY) {
+          const batch = chunkList.slice(b, b + BATCH_CONCURRENCY);
+          await Promise.all(
+            batch.map(async (chunk) => {
+              try {
+                const multicastMsg = {
+                  tokens: chunk,
+                  notification: { title, body },
+                  data: { type: alertType },
+                  android: {
+                    priority: "high",
+                    notification: { sound: "default", channelId: "match_alerts" },
+                  },
+                };
+                const multiRes = await messaging.sendEachForMulticast(multicastMsg);
+                totalSuccess += multiRes.successCount;
+                totalFailure += multiRes.failureCount;
+
+                multiRes.responses.forEach((resp, idx) => {
+                  if (resp.error && (
+                    resp.error.code === "messaging/registration-token-not-registered" ||
+                    resp.error.code === "messaging/invalid-registration-token"
+                  )) {
+                    invalidTokens.push(chunk[idx]);
+                  }
+                });
+              } catch (err) {
+                console.error("[FCM Test Multicast Batch Error]:", err.message);
+              }
+            })
+          );
         }
 
         results.multicastSent = true;
