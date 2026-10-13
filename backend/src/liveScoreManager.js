@@ -597,12 +597,14 @@ async function checkAndSendLineupAlerts() {
     const kickoffMs = f.timestamp * 1000;
     const diffMinutes = (kickoffMs - now) / (60 * 1000);
 
-    // Check window: 5 to 55 minutes before scheduled kickoff
-    if (diffMinutes < 5 || diffMinutes > 55) continue;
+    // Check window: 10 to 45 minutes before scheduled kickoff (saves 15 min of useless early calls)
+    if (diffMinutes < 10 || diffMinutes > 45) continue;
 
-    // Throttle checks per fixture: check at most once every 3.5 minutes
+    // Throttle checks per fixture: check once every 7.5 - 10 minutes (saves ~75% sync calls)
+    const { remaining } = getDailyQuotaStatus();
+    const throttleMs = remaining < 2000 ? 10 * 60 * 1000 : 7.5 * 60 * 1000;
     const lastCheck = lastLineupCheck.get(fixtureId) || 0;
-    if (now - lastCheck < 3.5 * 60 * 1000) continue;
+    if (now - lastCheck < throttleMs) continue;
     lastLineupCheck.set(fixtureId, now);
 
     try {
