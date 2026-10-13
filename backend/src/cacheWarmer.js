@@ -17,8 +17,12 @@ const api = axios.create({
   },
 });
 
-// Top curated league IDs to pre-warm (Big 5, Champions League, Europa League, Brasileirão, Saudi Pro League, King's Cup, AFC Champions League, MLS)
-const POPULAR_LEAGUE_IDS = ['39', '140', '135', '78', '61', '2', '3', '848', '5', '71', '307', '504', '826', '17', '18', '253'];
+// Top curated league IDs to pre-warm (Big 5, domestic cups, Champions League, Europa League, Brasileirão, Saudi Pro League, King's Cup, AFC Champions League, MLS)
+const POPULAR_LEAGUE_IDS = [
+  '39', '45', '48', '140', '143', '135', '137', '78', '81', '61', '66',
+  '71', '73', '253', '257', '772', '307', '504', '826', '17', '18',
+  '2', '3', '848', '5'
+];
 
 // ==========================================
 // HELPERS

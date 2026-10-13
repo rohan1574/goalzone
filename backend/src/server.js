@@ -377,31 +377,64 @@ app.get("/football-current-live", (req, res) => {
 // 2. POPULAR LEAGUES (curated top leagues)
 // ==========================================
 const popularLeagues = [
-  // ── The Big Five ──
+  // ── England ──
   { leagueId: "39",  leagueName: "Premier League",      country: "England",  leagueLogo: "https://media.api-sports.io/football/leagues/39.png" },
+  { leagueId: "45",  leagueName: "FA Cup",              country: "England",  leagueLogo: "https://media.api-sports.io/football/leagues/45.png" },
+  { leagueId: "48",  leagueName: "League Cup",          country: "England",  leagueLogo: "https://media.api-sports.io/football/leagues/48.png" },
+  { leagueId: "528", leagueName: "Community Shield",    country: "England",  leagueLogo: "https://media.api-sports.io/football/leagues/528.png" },
+  { leagueId: "40",  leagueName: "Championship",        country: "England",  leagueLogo: "https://media.api-sports.io/football/leagues/40.png" },
+
+  // ── Spain ──
   { leagueId: "140", leagueName: "La Liga",              country: "Spain",    leagueLogo: "https://media.api-sports.io/football/leagues/140.png" },
+  { leagueId: "143", leagueName: "Copa del Rey",         country: "Spain",    leagueLogo: "https://media.api-sports.io/football/leagues/143.png" },
+  { leagueId: "556", leagueName: "Supercopa de España",  country: "Spain",    leagueLogo: "https://media.api-sports.io/football/leagues/556.png" },
+  { leagueId: "141", leagueName: "Segunda División",     country: "Spain",    leagueLogo: "https://media.api-sports.io/football/leagues/141.png" },
+
+  // ── Italy ──
   { leagueId: "135", leagueName: "Serie A",              country: "Italy",    leagueLogo: "https://media.api-sports.io/football/leagues/135.png" },
+  { leagueId: "137", leagueName: "Coppa Italia",         country: "Italy",    leagueLogo: "https://media.api-sports.io/football/leagues/137.png" },
+  { leagueId: "547", leagueName: "Supercoppa Italiana",  country: "Italy",    leagueLogo: "https://media.api-sports.io/football/leagues/547.png" },
+  { leagueId: "136", leagueName: "Serie B",              country: "Italy",    leagueLogo: "https://media.api-sports.io/football/leagues/136.png" },
+
+  // ── Germany ──
   { leagueId: "78",  leagueName: "Bundesliga",           country: "Germany",  leagueLogo: "https://media.api-sports.io/football/leagues/78.png" },
+  { leagueId: "81",  leagueName: "DFB Pokal",            country: "Germany",  leagueLogo: "https://media.api-sports.io/football/leagues/81.png" },
+  { leagueId: "529", leagueName: "DFL-Supercup",         country: "Germany",  leagueLogo: "https://media.api-sports.io/football/leagues/529.png" },
+  { leagueId: "79",  leagueName: "2. Bundesliga",        country: "Germany",  leagueLogo: "https://media.api-sports.io/football/leagues/79.png" },
+
+  // ── France ──
   { leagueId: "61",  leagueName: "Ligue 1",              country: "France",   leagueLogo: "https://media.api-sports.io/football/leagues/61.png" },
-  // ── Europe ──
-  { leagueId: "88",  leagueName: "Eredivisie",           country: "Netherlands", leagueLogo: "https://media.api-sports.io/football/leagues/88.png" },
-  { leagueId: "94",  leagueName: "Primeira Liga",        country: "Portugal", leagueLogo: "https://media.api-sports.io/football/leagues/94.png" },
-  { leagueId: "2",   leagueName: "UEFA Champions League",country: "UEFA",     leagueLogo: "https://media.api-sports.io/football/leagues/2.png" },
-  { leagueId: "3",   leagueName: "UEFA Europa League",   country: "UEFA",     leagueLogo: "https://media.api-sports.io/football/leagues/3.png" },
-  { leagueId: "848", leagueName: "UEFA Conference League",country: "UEFA",    leagueLogo: "https://media.api-sports.io/football/leagues/848.png" },
-  { leagueId: "5",   leagueName: "UEFA Nations League",  country: "UEFA",     leagueLogo: "https://media.api-sports.io/football/leagues/5.png" },
-  // ── Americas ──
+  { leagueId: "66",  leagueName: "Coupe de France",      country: "France",   leagueLogo: "https://media.api-sports.io/football/leagues/66.png" },
+  { leagueId: "526", leagueName: "Trophée des Champions",country: "France",   leagueLogo: "https://media.api-sports.io/football/leagues/526.png" },
+  { leagueId: "62",  leagueName: "Ligue 2",              country: "France",   leagueLogo: "https://media.api-sports.io/football/leagues/62.png" },
+
+  // ── Brazil ──
   { leagueId: "71",  leagueName: "Brasileirão Série A",  country: "Brazil",   leagueLogo: "https://media.api-sports.io/football/leagues/71.png" },
-  { leagueId: "128", leagueName: "Liga Profesional",     country: "Argentina",leagueLogo: "https://media.api-sports.io/football/leagues/128.png" },
+  { leagueId: "73",  leagueName: "Copa do Brasil",       country: "Brazil",   leagueLogo: "https://media.api-sports.io/football/leagues/73.png" },
+  { leagueId: "632", leagueName: "Supercopa do Brasil",  country: "Brazil",   leagueLogo: "https://media.api-sports.io/football/leagues/632.png" },
+  { leagueId: "72",  leagueName: "Brasileirão Série B",  country: "Brazil",   leagueLogo: "https://media.api-sports.io/football/leagues/72.png" },
+
+  // ── USA ──
   { leagueId: "253", leagueName: "MLS",                  country: "USA",      leagueLogo: "https://media.api-sports.io/football/leagues/253.png" },
-  { leagueId: "13",  leagueName: "Copa Libertadores",    country: "South America", leagueLogo: "https://media.api-sports.io/football/leagues/13.png" },
+  { leagueId: "257", leagueName: "US Open Cup",          country: "USA",      leagueLogo: "https://media.api-sports.io/football/leagues/257.png" },
+  { leagueId: "772", leagueName: "Leagues Cup",          country: "USA",      leagueLogo: "https://media.api-sports.io/football/leagues/772.png" },
+
   // ── Middle East & Saudi Arabia ──
   { leagueId: "307", leagueName: "Saudi Pro League",     country: "Saudi Arabia", leagueLogo: "https://media.api-sports.io/football/leagues/307.png" },
   { leagueId: "504", leagueName: "King Cup of Champions",country: "Saudi Arabia", leagueLogo: "https://media.api-sports.io/football/leagues/504.png" },
   { leagueId: "826", leagueName: "Saudi Super Cup",      country: "Saudi Arabia", leagueLogo: "https://media.api-sports.io/football/leagues/826.png" },
-  // ── Asia & Continental ──
+
+  // ── Europe & International ──
+  { leagueId: "2",   leagueName: "UEFA Champions League",country: "UEFA",     leagueLogo: "https://media.api-sports.io/football/leagues/2.png" },
+  { leagueId: "3",   leagueName: "UEFA Europa League",   country: "UEFA",     leagueLogo: "https://media.api-sports.io/football/leagues/3.png" },
+  { leagueId: "848", leagueName: "UEFA Conference League",country: "UEFA",    leagueLogo: "https://media.api-sports.io/football/leagues/848.png" },
+  { leagueId: "5",   leagueName: "UEFA Nations League",  country: "UEFA",     leagueLogo: "https://media.api-sports.io/football/leagues/5.png" },
   { leagueId: "17",  leagueName: "AFC Champions League Elite", country: "Asia",   leagueLogo: "https://media.api-sports.io/football/leagues/17.png" },
   { leagueId: "18",  leagueName: "AFC Champions League Two",   country: "Asia",   leagueLogo: "https://media.api-sports.io/football/leagues/18.png" },
+  { leagueId: "13",  leagueName: "Copa Libertadores",    country: "South America", leagueLogo: "https://media.api-sports.io/football/leagues/13.png" },
+  { leagueId: "88",  leagueName: "Eredivisie",           country: "Netherlands", leagueLogo: "https://media.api-sports.io/football/leagues/88.png" },
+  { leagueId: "94",  leagueName: "Primeira Liga",        country: "Portugal", leagueLogo: "https://media.api-sports.io/football/leagues/94.png" },
+  { leagueId: "128", leagueName: "Liga Profesional",     country: "Argentina",leagueLogo: "https://media.api-sports.io/football/leagues/128.png" },
 ];
 
 app.get("/football-popular-leagues", (req, res) => {

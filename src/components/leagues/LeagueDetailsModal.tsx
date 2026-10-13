@@ -114,43 +114,127 @@ const mapTable = (raw: any[]): TableRow[] =>
     };
   });
 
-export const SAUDI_AND_AFC_COMPETITIONS: (League & { shortName: string })[] = [
-  {
-    id: "307",
-    name: "Saudi Pro League",
-    logo: "https://media.api-sports.io/football/leagues/307.png",
-    category: "Saudi Arabia",
-    shortName: "Pro League",
+export interface CompetitionItem extends League {
+  shortName: string;
+}
+
+export const COUNTRY_COMPETITIONS: Record<string, { label: string; flag: string; comps: CompetitionItem[] }> = {
+  England: {
+    label: "English Competitions",
+    flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+    comps: [
+      { id: "39",  name: "Premier League",      logo: "https://media.api-sports.io/football/leagues/39.png",  category: "England", shortName: "Premier League" },
+      { id: "45",  name: "FA Cup",              logo: "https://media.api-sports.io/football/leagues/45.png",  category: "England", shortName: "FA Cup" },
+      { id: "48",  name: "League Cup",          logo: "https://media.api-sports.io/football/leagues/48.png",  category: "England", shortName: "EFL Cup" },
+      { id: "528", name: "Community Shield",    logo: "https://media.api-sports.io/football/leagues/528.png", category: "England", shortName: "Comm. Shield" },
+      { id: "40",  name: "Championship",        logo: "https://media.api-sports.io/football/leagues/40.png",  category: "England", shortName: "Championship" },
+    ],
   },
-  {
-    id: "504",
-    name: "King Cup of Champions",
-    logo: "https://media.api-sports.io/football/leagues/504.png",
-    category: "Saudi Arabia",
-    shortName: "King's Cup",
+  Spain: {
+    label: "Spanish Competitions",
+    flag: "🇪🇸",
+    comps: [
+      { id: "140", name: "La Liga",              logo: "https://media.api-sports.io/football/leagues/140.png", category: "Spain", shortName: "La Liga" },
+      { id: "143", name: "Copa del Rey",         logo: "https://media.api-sports.io/football/leagues/143.png", category: "Spain", shortName: "Copa del Rey" },
+      { id: "556", name: "Supercopa de España",  logo: "https://media.api-sports.io/football/leagues/556.png", category: "Spain", shortName: "Supercopa" },
+      { id: "141", name: "Segunda División",     logo: "https://media.api-sports.io/football/leagues/141.png", category: "Spain", shortName: "La Liga 2" },
+    ],
   },
-  {
-    id: "826",
-    name: "Saudi Super Cup",
-    logo: "https://media.api-sports.io/football/leagues/826.png",
-    category: "Saudi Arabia",
-    shortName: "Super Cup",
+  Italy: {
+    label: "Italian Competitions",
+    flag: "🇮🇹",
+    comps: [
+      { id: "135", name: "Serie A",              logo: "https://media.api-sports.io/football/leagues/135.png", category: "Italy", shortName: "Serie A" },
+      { id: "137", name: "Coppa Italia",         logo: "https://media.api-sports.io/football/leagues/137.png", category: "Italy", shortName: "Coppa Italia" },
+      { id: "547", name: "Supercoppa Italiana",  logo: "https://media.api-sports.io/football/leagues/547.png", category: "Italy", shortName: "Supercoppa" },
+      { id: "136", name: "Serie B",              logo: "https://media.api-sports.io/football/leagues/136.png", category: "Italy", shortName: "Serie B" },
+    ],
   },
-  {
-    id: "17",
-    name: "AFC Champions League Elite",
-    logo: "https://media.api-sports.io/football/leagues/17.png",
-    category: "AFC / Asia",
-    shortName: "AFC Champions",
+  Germany: {
+    label: "German Competitions",
+    flag: "🇩🇪",
+    comps: [
+      { id: "78",  name: "Bundesliga",           logo: "https://media.api-sports.io/football/leagues/78.png",  category: "Germany", shortName: "Bundesliga" },
+      { id: "81",  name: "DFB Pokal",            logo: "https://media.api-sports.io/football/leagues/81.png",  category: "Germany", shortName: "DFB Pokal" },
+      { id: "529", name: "DFL-Supercup",         logo: "https://media.api-sports.io/football/leagues/529.png", category: "Germany", shortName: "Supercup" },
+      { id: "79",  name: "2. Bundesliga",        logo: "https://media.api-sports.io/football/leagues/79.png",  category: "Germany", shortName: "2. Bundesliga" },
+    ],
   },
-  {
-    id: "18",
-    name: "AFC Champions League Two",
-    logo: "https://media.api-sports.io/football/leagues/18.png",
-    category: "AFC / Asia",
-    shortName: "AFC Two",
+  France: {
+    label: "French Competitions",
+    flag: "🇫🇷",
+    comps: [
+      { id: "61",  name: "Ligue 1",              logo: "https://media.api-sports.io/football/leagues/61.png",  category: "France", shortName: "Ligue 1" },
+      { id: "66",  name: "Coupe de France",      logo: "https://media.api-sports.io/football/leagues/66.png",  category: "France", shortName: "Coupe de France" },
+      { id: "526", name: "Trophée des Champions",logo: "https://media.api-sports.io/football/leagues/526.png", category: "France", shortName: "Trophée" },
+      { id: "62",  name: "Ligue 2",              logo: "https://media.api-sports.io/football/leagues/62.png",  category: "France", shortName: "Ligue 2" },
+    ],
   },
-];
+  Brazil: {
+    label: "Brazilian Competitions",
+    flag: "🇧🇷",
+    comps: [
+      { id: "71",  name: "Brasileirão Série A",  logo: "https://media.api-sports.io/football/leagues/71.png",  category: "Brazil", shortName: "Série A" },
+      { id: "73",  name: "Copa do Brasil",       logo: "https://media.api-sports.io/football/leagues/73.png",  category: "Brazil", shortName: "Copa do Brasil" },
+      { id: "632", name: "Supercopa do Brasil",  logo: "https://media.api-sports.io/football/leagues/632.png", category: "Brazil", shortName: "Supercopa" },
+      { id: "72",  name: "Brasileirão Série B",  logo: "https://media.api-sports.io/football/leagues/72.png",  category: "Brazil", shortName: "Série B" },
+    ],
+  },
+  USA: {
+    label: "USA & MLS Competitions",
+    flag: "🇺🇸",
+    comps: [
+      { id: "253", name: "MLS",                  logo: "https://media.api-sports.io/football/leagues/253.png", category: "USA", shortName: "MLS" },
+      { id: "257", name: "US Open Cup",          logo: "https://media.api-sports.io/football/leagues/257.png", category: "USA", shortName: "US Open Cup" },
+      { id: "772", name: "Leagues Cup",          logo: "https://media.api-sports.io/football/leagues/772.png", category: "USA", shortName: "Leagues Cup" },
+    ],
+  },
+  "Saudi Arabia": {
+    label: "Saudi & AFC Competitions",
+    flag: "🇸🇦",
+    comps: [
+      { id: "307", name: "Saudi Pro League",     logo: "https://media.api-sports.io/football/leagues/307.png", category: "Saudi Arabia", shortName: "Pro League" },
+      { id: "504", name: "King Cup of Champions",logo: "https://media.api-sports.io/football/leagues/504.png", category: "Saudi Arabia", shortName: "King's Cup" },
+      { id: "826", name: "Saudi Super Cup",      logo: "https://media.api-sports.io/football/leagues/826.png", category: "Saudi Arabia", shortName: "Super Cup" },
+      { id: "17",  name: "AFC Champions League Elite", logo: "https://media.api-sports.io/football/leagues/17.png", category: "AFC / Asia", shortName: "AFC Champions" },
+      { id: "18",  name: "AFC Champions League Two",   logo: "https://media.api-sports.io/football/leagues/18.png", category: "AFC / Asia", shortName: "AFC Two" },
+    ],
+  },
+  UEFA: {
+    label: "UEFA European Competitions",
+    flag: "🇪🇺",
+    comps: [
+      { id: "2",   name: "UEFA Champions League",logo: "https://media.api-sports.io/football/leagues/2.png",   category: "UEFA", shortName: "Champions League" },
+      { id: "3",   name: "UEFA Europa League",   logo: "https://media.api-sports.io/football/leagues/3.png",   category: "UEFA", shortName: "Europa League" },
+      { id: "848", name: "UEFA Conference League",logo: "https://media.api-sports.io/football/leagues/848.png",category: "UEFA", shortName: "Conference" },
+      { id: "5",   name: "UEFA Nations League",  logo: "https://media.api-sports.io/football/leagues/5.png",   category: "UEFA", shortName: "Nations League" },
+    ],
+  },
+};
+
+function findCountryGroup(league: League | null) {
+  if (!league) return null;
+  const lId = String(league.id || "");
+  const cat = league.category || "";
+  const name = (league.name || "").toLowerCase();
+
+  for (const group of Object.values(COUNTRY_COMPETITIONS)) {
+    if (group.comps.some((c) => c.id === lId)) {
+      return group;
+    }
+  }
+
+  if (COUNTRY_COMPETITIONS[cat]) return COUNTRY_COMPETITIONS[cat];
+  if (name.includes("premier") || name.includes("fa cup") || name.includes("carabao") || name.includes("championship")) return COUNTRY_COMPETITIONS["England"];
+  if (name.includes("la liga") || name.includes("copa del rey") || name.includes("supercopa")) return COUNTRY_COMPETITIONS["Spain"];
+  if (name.includes("serie a") || name.includes("coppa italia") || name.includes("serie b")) return COUNTRY_COMPETITIONS["Italy"];
+  if (name.includes("bundesliga") || name.includes("dfb")) return COUNTRY_COMPETITIONS["Germany"];
+  if (name.includes("ligue 1") || name.includes("coupe de france") || name.includes("ligue 2")) return COUNTRY_COMPETITIONS["France"];
+  if (name.includes("brasileir") || name.includes("copa do brasil")) return COUNTRY_COMPETITIONS["Brazil"];
+  if (name.includes("mls") || name.includes("us open") || name.includes("leagues cup")) return COUNTRY_COMPETITIONS["USA"];
+  if (name.includes("saudi") || name.includes("king's cup") || name.includes("king cup") || name.includes("afc")) return COUNTRY_COMPETITIONS["Saudi Arabia"];
+  return null;
+}
 
 export default function LeagueDetailsModal({
   visible,
@@ -222,20 +306,7 @@ export default function LeagueDetailsModal({
     });
   };
 
-  const isSaudiOrAsianComp = Boolean(
-    activeLeague && (
-      activeLeague.id === "307" ||
-      activeLeague.id === "504" ||
-      activeLeague.id === "826" ||
-      activeLeague.id === "17" ||
-      activeLeague.id === "18" ||
-      (activeLeague.name && (
-        activeLeague.name.toLowerCase().includes("saudi") ||
-        activeLeague.name.toLowerCase().includes("king") ||
-        activeLeague.name.toLowerCase().includes("afc")
-      ))
-    )
-  );
+  const activeCountryGroup = findCountryGroup(activeLeague);
 
   const zones = Array.from(new Set(table.map((r) => r.zone).filter(Boolean)));
   const hasWdl = table.some((r) => r.w !== null);
@@ -278,14 +349,14 @@ export default function LeagueDetailsModal({
           <View className="w-8" />
         </View>
 
-        {/* Quick Competition Switcher for Saudi & AFC Tournaments */}
-        {isSaudiOrAsianComp && (
+        {/* Quick Competition Switcher for Domestic Cups & Leagues */}
+        {activeCountryGroup && activeCountryGroup.comps.length > 1 && (
           <View className="py-2.5 border-b border-white/5 bg-[#101112]">
             <Text className="text-[10px] text-gray-400 font-extrabold px-4 mb-2 uppercase tracking-wider">
-              🇸🇦 Saudi & AFC Competitions
+              {activeCountryGroup.flag} {activeCountryGroup.label}
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
-              {SAUDI_AND_AFC_COMPETITIONS.map((comp) => {
+              {activeCountryGroup.comps.map((comp) => {
                 const isSelected = activeLeague.id === comp.id;
                 return (
                   <TouchableOpacity

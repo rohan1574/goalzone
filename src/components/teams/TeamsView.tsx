@@ -29,13 +29,14 @@ const getCategoryForLeague = (name: string, country?: string) => {
   if (country && INTERNATIONAL_REGIONS.has(country.toLowerCase())) return TOURNAMENTS;
   if (country && country !== "Unknown") return country;
   const lower = name.toLowerCase();
-  if (lower.includes("premier") || lower.includes("fa cup") || lower.includes("efl") || lower.includes("championship"))
+  if (lower.includes("premier") || lower.includes("fa cup") || lower.includes("efl") || lower.includes("league cup") || lower.includes("community shield") || lower.includes("championship"))
     return "England";
-  if (lower.includes("la liga") || lower.includes("copa del rey") || lower.includes("santander")) return "Spain";
-  if (lower.includes("serie a") || lower.includes("coppa italia")) return "Italy";
-  if (lower.includes("bundesliga") || lower.includes("dfb")) return "Germany";
-  if (lower.includes("ligue 1") || lower.includes("coupe de france")) return "France";
-  if (lower.includes("mls") || lower.includes("major league")) return "USA";
+  if (lower.includes("la liga") || lower.includes("copa del rey") || lower.includes("supercopa") || lower.includes("segunda")) return "Spain";
+  if (lower.includes("serie a") || lower.includes("coppa italia") || lower.includes("supercoppa") || lower.includes("serie b")) return "Italy";
+  if (lower.includes("bundesliga") || lower.includes("dfb") || lower.includes("dfl")) return "Germany";
+  if (lower.includes("ligue 1") || lower.includes("coupe de france") || lower.includes("trophée") || lower.includes("trophee") || lower.includes("ligue 2")) return "France";
+  if (lower.includes("brasileir") || lower.includes("copa do brasil") || lower.includes("supercopa do brasil")) return "Brazil";
+  if (lower.includes("mls") || lower.includes("major league") || lower.includes("us open") || lower.includes("leagues cup")) return "USA";
   if (lower.includes("saudi") || lower.includes("pro league") || lower.includes("king's cup") || lower.includes("king cup") || lower.includes("super cup")) return "Saudi Arabia";
   return TOURNAMENTS;
 };

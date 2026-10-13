@@ -247,11 +247,8 @@ export default function ExploreScreen() {
   const interstitialLoadedRef = React.useRef(false);
   const pendingMatchRef = React.useRef<any>(null);
   const pendingTabRef = React.useRef<TabType | null>(null);
-  const pendingShowMainRef = React.useRef<boolean>(false);
 
-  // SplashScreen shown every time the app starts (no AsyncStorage check needed)
-
-  // Load interstitial ad and set up event listeners
+  // Load interstitial ad safely in background after app has mounted
   useEffect(() => {
     const unsubscribeLoaded = interstitialAd.addAdEventListener(
       AdEventType.LOADED,
@@ -267,18 +264,6 @@ export default function ExploreScreen() {
         console.log("Interstitial ad closed");
         interstitialLoadedRef.current = false;
 
-        // Check if this ad was shown from SplashScreen transition
-        const comingFromSplash = pendingShowMainRef.current;
-        if (comingFromSplash) {
-          // Clear ALL pending refs - do NOT switch tab or open match after splash ad
-          pendingShowMainRef.current = false;
-          pendingMatchRef.current = null;
-          pendingTabRef.current = null;
-          setIsOnboardingCompleted(true);
-          interstitialAd.load();
-          return;
-        }
-
         // Capture refs before clearing
         const pendingMatch = pendingMatchRef.current;
         const pendingTab = pendingTabRef.current;
@@ -286,7 +271,6 @@ export default function ExploreScreen() {
         pendingTabRef.current = null;
 
         // Use a 0ms timeout so tab switch happens after native ad dismiss animation
-        // This prevents the UI freeze without adding any visible delay
         setTimeout(() => {
           if (pendingMatch) {
             setSelectedMatch(pendingMatch);
@@ -307,14 +291,6 @@ export default function ExploreScreen() {
       (error) => {
         console.warn("Interstitial ad failed to load:", error);
         interstitialLoadedRef.current = false;
-        // If ad fails, still go to main app
-        if (pendingShowMainRef.current) {
-          pendingShowMainRef.current = false;
-          pendingMatchRef.current = null;
-          pendingTabRef.current = null;
-          setIsOnboardingCompleted(true);
-          return;
-        }
         // If ad fails, open the match details or switch tab directly
         const pendingMatch = pendingMatchRef.current;
         const pendingTab = pendingTabRef.current;
@@ -330,10 +306,17 @@ export default function ExploreScreen() {
       },
     );
 
-    // Start loading the first ad
-    interstitialAd.load();
+    // Delay initial ad request by 4s to avoid competing with startup JS hydration and UI thread
+    const timer = setTimeout(() => {
+      try {
+        interstitialAd.load();
+      } catch (err) {
+        console.warn("Error loading initial interstitial ad:", err);
+      }
+    }, 4000);
 
     return () => {
+      clearTimeout(timer);
       unsubscribeLoaded();
       unsubscribeClosed();
       unsubscribeError();
@@ -819,16 +802,39 @@ export default function ExploreScreen() {
       "King Cup",
       "Saudi Super Cup",
       "Premier League",
+      "FA Cup",
+      "League Cup",
+      "Carabao Cup",
+      "Community Shield",
+      "Championship",
       "La Liga",
+      "Copa del Rey",
+      "Supercopa de España",
+      "Segunda División",
       "Serie A",
+      "Coppa Italia",
+      "Supercoppa Italiana",
+      "Serie B",
       "Bundesliga",
+      "DFB Pokal",
+      "DFL-Supercup",
+      "2. Bundesliga",
       "Ligue 1",
+      "Coupe de France",
+      "Trophée des Champions",
+      "Ligue 2",
       "Brasileirão Série A",
-      "Serie A - Betano",
+      "Copa do Brasil",
+      "Supercopa do Brasil",
+      "Brasileirão Série B",
       "Major League Soccer",
       "MLS",
+      "US Open Cup",
+      "Leagues Cup",
       "UEFA Champions League",
       "UEFA Europa League",
+      "UEFA Conference League",
+      "Copa Libertadores",
       "Liga Profesional",
       "Eredivisie",
       "Primeira Liga",
@@ -941,26 +947,9 @@ export default function ExploreScreen() {
     return (
       <SplashScreen
         onComplete={() => {
-          // Clear all pending refs to prevent any stale tab switch or match open
           pendingMatchRef.current = null;
           pendingTabRef.current = null;
-
-          if (interstitialLoadedRef.current) {
-            // Mark that we're transitioning from splash
-            // The CLOSED event will call setIsOnboardingCompleted(true)
-            pendingShowMainRef.current = true;
-            try {
-              interstitialAd.show();
-            } catch (err) {
-              console.warn("Failed to show interstitial ad:", err);
-              // Ad failed to show, go directly to main app
-              pendingShowMainRef.current = false;
-              setIsOnboardingCompleted(true);
-            }
-          } else {
-            // No ad loaded, go directly to main app
-            setIsOnboardingCompleted(true);
-          }
+          setIsOnboardingCompleted(true);
         }}
       />
     );

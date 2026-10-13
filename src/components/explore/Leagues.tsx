@@ -190,26 +190,66 @@ const MatchCard = React.memo(function MatchCard({
 });
 
 export const POPULAR_LEAGUE_IDS = new Set([
+  // England
   '39',   // Premier League
+  '45',   // FA Cup
+  '48',   // League Cup (EFL Cup)
+  '528',  // Community Shield
+  '40',   // Championship
+
+  // Spain
   '140',  // La Liga
+  '143',  // Copa del Rey
+  '556',  // Supercopa de España
+  '141',  // Segunda División
+
+  // Italy
   '135',  // Serie A
+  '137',  // Coppa Italia
+  '547',  // Supercoppa Italiana
+  '136',  // Serie B
+
+  // Germany
   '78',   // Bundesliga
+  '81',   // DFB Pokal
+  '529',  // DFL-Supercup
+  '79',   // 2. Bundesliga
+
+  // France
   '61',   // Ligue 1
+  '66',   // Coupe de France
+  '526',  // Trophée des Champions
+  '62',   // Ligue 2
+
+  // Brazil
+  '71',   // Brasileirão Série A
+  '73',   // Copa do Brasil
+  '632',  // Supercopa do Brasil
+  '72',   // Brasileirão Série B
+
+  // USA
+  '253',  // MLS
+  '257',  // US Open Cup
+  '772',  // Leagues Cup
+
+  // Saudi Arabia
+  '307',  // Saudi Pro League
+  '504',  // King Cup of Champions
+  '826',  // Saudi Super Cup
+
+  // Asia
+  '17',   // AFC Champions League Elite
+  '18',   // AFC Champions League Two
+
+  // Continental & International
   '2',    // UEFA Champions League
   '3',    // UEFA Europa League
   '848',  // UEFA Conference League
   '5',    // UEFA Nations League
+  '13',   // Copa Libertadores
   '88',   // Eredivisie
   '94',   // Primeira Liga
-  '71',   // Brasileirão Série A
   '128',  // Liga Profesional Argentina
-  '253',  // MLS
-  '307',  // Saudi Pro League
-  '504',  // King Cup of Champions
-  '826',  // Saudi Super Cup
-  '17',   // AFC Champions League Elite
-  '18',   // AFC Champions League Two
-  '13',   // Copa Libertadores
   '1',    // World Cup
   '4',    // Euro Championship
   '9',    // Copa America
