@@ -249,33 +249,43 @@ app.all("/api/test-notification", async (req, res) => {
       results.topicError = err.message;
     }
 
-    // 2. Send multicast directly to registered device tokens
+    // 2. Send multicast directly to registered device tokens (chunked in batches of 500 for Firebase limit)
     if (tokens.length > 0) {
       try {
-        const multicastMsg = {
-          tokens,
-          notification: { title, body },
-          data: { type: alertType },
-          android: {
-            priority: "high",
-            notification: { sound: "default", channelId: "match_alerts" },
-          },
-        };
-        const multiRes = await messaging.sendEachForMulticast(multicastMsg);
-        results.multicastSent = true;
-        results.multicastSuccess = multiRes.successCount;
-        results.multicastFailure = multiRes.failureCount;
-
-        // Prune invalid tokens
+        const CHUNK_SIZE = 500;
+        let totalSuccess = 0;
+        let totalFailure = 0;
         const invalidTokens = [];
-        multiRes.responses.forEach((resp, idx) => {
-          if (resp.error && (
-            resp.error.code === "messaging/registration-token-not-registered" ||
-            resp.error.code === "messaging/invalid-registration-token"
-          )) {
-            invalidTokens.push(tokens[idx]);
-          }
-        });
+
+        for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
+          const chunk = tokens.slice(i, i + CHUNK_SIZE);
+          const multicastMsg = {
+            tokens: chunk,
+            notification: { title, body },
+            data: { type: alertType },
+            android: {
+              priority: "high",
+              notification: { sound: "default", channelId: "match_alerts" },
+            },
+          };
+          const multiRes = await messaging.sendEachForMulticast(multicastMsg);
+          totalSuccess += multiRes.successCount;
+          totalFailure += multiRes.failureCount;
+
+          multiRes.responses.forEach((resp, idx) => {
+            if (resp.error && (
+              resp.error.code === "messaging/registration-token-not-registered" ||
+              resp.error.code === "messaging/invalid-registration-token"
+            )) {
+              invalidTokens.push(chunk[idx]);
+            }
+          });
+        }
+
+        results.multicastSent = true;
+        results.multicastSuccess = totalSuccess;
+        results.multicastFailure = totalFailure;
+
         if (invalidTokens.length > 0) {
           tokenManager.removeInvalidTokens(invalidTokens);
         }

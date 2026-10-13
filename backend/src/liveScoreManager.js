@@ -187,36 +187,47 @@ async function sendMatchAlert({ matchId, isPopular, title, body, data, channelId
     console.error(`[FCM Topic Error] Failed to send ${data.type} for match ${matchId}:`, err.message);
   }
 
-  // 2. Also send multicast to registered device tokens
+  // 2. Also send multicast to registered device tokens (chunked in batches of 500 for Firebase limit)
   if (tokens.length > 0) {
     try {
-      const multicastMessage = {
-        tokens,
-        notification: { title, body },
-        data: { ...data, matchId: String(matchId) },
-        android: {
-          priority: 'high',
-          collapseKey: tag,
-          notification: { sound: 'default', channelId, tag },
-        },
-        apns: {
-          headers: { 'apns-collapse-id': tag },
-          payload: { aps: { sound: 'default', contentAvailable: true } },
-        },
-      };
-      const multiRes = await getMessaging().sendEachForMulticast(multicastMessage);
-      console.log(`[FCM Multicast] ${data.type} sent to ${multiRes.successCount}/${tokens.length} devices (failed: ${multiRes.failureCount})`);
-
-      // Prune invalid tokens
+      const CHUNK_SIZE = 500;
+      let totalSuccess = 0;
+      let totalFailure = 0;
       const invalidTokens = [];
-      multiRes.responses.forEach((resp, idx) => {
-        if (resp.error && (
-          resp.error.code === 'messaging/registration-token-not-registered' ||
-          resp.error.code === 'messaging/invalid-registration-token'
-        )) {
-          invalidTokens.push(tokens[idx]);
-        }
-      });
+
+      for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
+        const chunk = tokens.slice(i, i + CHUNK_SIZE);
+        const multicastMessage = {
+          tokens: chunk,
+          notification: { title, body },
+          data: { ...data, matchId: String(matchId) },
+          android: {
+            priority: 'high',
+            collapseKey: tag,
+            notification: { sound: 'default', channelId, tag },
+          },
+          apns: {
+            headers: { 'apns-collapse-id': tag },
+            payload: { aps: { sound: 'default', contentAvailable: true } },
+          },
+        };
+
+        const multiRes = await getMessaging().sendEachForMulticast(multicastMessage);
+        totalSuccess += multiRes.successCount;
+        totalFailure += multiRes.failureCount;
+
+        multiRes.responses.forEach((resp, idx) => {
+          if (resp.error && (
+            resp.error.code === 'messaging/registration-token-not-registered' ||
+            resp.error.code === 'messaging/invalid-registration-token'
+          )) {
+            invalidTokens.push(chunk[idx]);
+          }
+        });
+      }
+
+      console.log(`[FCM Multicast] ${data.type} sent to ${totalSuccess}/${tokens.length} devices (failed: ${totalFailure})`);
+
       if (invalidTokens.length > 0) {
         tokenManager.removeInvalidTokens(invalidTokens);
       }
