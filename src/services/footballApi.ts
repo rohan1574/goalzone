@@ -1074,7 +1074,7 @@ export const fetchFixtureStatistics = async (
       if (cachedTime && cachedData) {
         const parsedTime = parseInt(cachedTime, 10);
         const now = Date.now();
-        const maxAge = isLive ? 300000 : 300000; // 5 minutes cache
+        const maxAge = isLive ? 300000 : 86400000; // 5 min for live, 24 hours for finished
         const parsed = JSON.parse(cachedData);
         // Only serve cache if it has real stats (non-empty array) and within maxAge
         if (Array.isArray(parsed) && parsed.length > 0 && now - parsedTime < maxAge) {
@@ -1169,6 +1169,28 @@ export const fetchFixtureEvents = async (
   isLive = false
 ) => {
   if (!eventid) return [];
+  const CACHE_KEY = `@goalzone_api_cache_events_${eventid}`;
+  const CACHE_TIME_KEY = `@goalzone_api_cache_events_time_${eventid}`;
+
+  try {
+    if (!force) {
+      const cachedTime = await AsyncStorage.getItem(CACHE_TIME_KEY);
+      const cachedData = await AsyncStorage.getItem(CACHE_KEY);
+
+      if (cachedTime && cachedData) {
+        const parsedTime = parseInt(cachedTime, 10);
+        const now = Date.now();
+        const maxAge = isLive ? 45000 : 86400000; // 45s live, 24 hours finished
+        const parsed = JSON.parse(cachedData);
+        if (Array.isArray(parsed) && now - parsedTime < maxAge) {
+          return parsed;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Error reading events cache:", err);
+  }
+
   try {
     const response = await api.get("/football-get-match-events", {
       params: {
@@ -1177,7 +1199,16 @@ export const fetchFixtureEvents = async (
         ...(isLive ? { live: "true" } : {}),
       },
     });
-    return response.data || [];
+    const freshData = response.data || [];
+    if (Array.isArray(freshData)) {
+      try {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
+        await AsyncStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+      } catch (err) {
+        console.warn("Error saving events cache:", err);
+      }
+    }
+    return freshData;
   } catch (error) {
     console.error("Error fetching match events:", error);
     return [];

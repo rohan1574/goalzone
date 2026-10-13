@@ -161,6 +161,7 @@ function PredictionView({ initialFixtures, isActive }: PredictionViewProps) {
 
   // Upcoming fixtures: today's from the dashboard plus the next two days
   useEffect(() => {
+    if (isActive === false) return;
     let cancelled = false;
     (async () => {
       const extra = await Promise.all(
@@ -177,7 +178,7 @@ function PredictionView({ initialFixtures, isActive }: PredictionViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [initialFixtures]);
+  }, [initialFixtures, isActive]);
 
   // Picks can also be made from the match screen, so reload (and settle finished matches)
   // whenever this tab is opened
@@ -195,7 +196,7 @@ function PredictionView({ initialFixtures, isActive }: PredictionViewProps) {
   // Model prediction + head to head for the selected match
   const insightsFor = useRef<string | null>(null);
   useEffect(() => {
-    if (!currentMatch) return;
+    if (isActive === false || !currentMatch) return;
     const matchId = currentMatch.id;
     insightsFor.current = matchId;
     setModel(null);

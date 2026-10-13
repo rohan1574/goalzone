@@ -544,19 +544,30 @@ export default function MatchDetailsModal({
     }
   }, [match?.id, match?.home?.id, match?.away?.id]);
 
+  // Track which tabs have already loaded data for the current match to prevent duplicate calls
+  const loadedTabsRef = useRef<Set<string>>(new Set());
+
   const refreshAll = useCallback(() => {
-    loadEvents(true);
-    loadStats(true);
-    loadLineups(true);
-    loadRatings();
+    loadedTabsRef.current.clear();
     loadMatchInfo();
-    loadStandings();
-    loadH2H();
-  }, [loadEvents, loadStats, loadLineups, loadRatings, loadMatchInfo, loadStandings, loadH2H]);
+    if (activeTab === "infor") {
+      if (!isUpcoming) loadEvents(true);
+    } else if (activeTab === "stats") {
+      if (!isUpcoming) loadStats(true);
+    } else if (activeTab === "lineup") {
+      loadLineups(true);
+      if (!isUpcoming) loadRatings();
+    } else if (activeTab === "table") {
+      loadStandings();
+    } else if (activeTab === "h2h") {
+      loadH2H();
+    }
+  }, [activeTab, isUpcoming, loadMatchInfo, loadEvents, loadStats, loadLineups, loadRatings, loadStandings, loadH2H]);
 
   // Clear the previous match's data so it never flashes up under a different match
   useEffect(() => {
     setActiveTab("infor");
+    loadedTabsRef.current.clear();
     setEvents([]);
     setStats([]);
     setHomeLineup(null);
@@ -567,39 +578,78 @@ export default function MatchDetailsModal({
     setMatchInfo(null);
   }, [match?.id]);
 
+  // Tab-based on-demand loading: only fetch data for the tab currently viewed by the user
   useEffect(() => {
     if (!visible || !match?.id) return;
-    loadEvents(false);
-    loadStats(false);
-    loadLineups(false);
-    loadMatchInfo();
-    loadStandings();
-    loadH2H();
-  }, [visible, match?.id, loadEvents, loadStats, loadLineups, loadMatchInfo, loadStandings, loadH2H]);
 
-  // Live Timeline Events: Auto-refresh every 1 minute while viewing a live match
+    // Venue / Match info is always loaded on modal open (lightweight)
+    if (!loadedTabsRef.current.has("info")) {
+      loadedTabsRef.current.add("info");
+      loadMatchInfo();
+    }
+
+    if (activeTab === "infor") {
+      // Timeline events only exist for live or finished matches
+      if (!isUpcoming && !loadedTabsRef.current.has("events")) {
+        loadedTabsRef.current.add("events");
+        loadEvents(false);
+      }
+    } else if (activeTab === "stats") {
+      // Statistics only exist for live or finished matches
+      if (!isUpcoming && !loadedTabsRef.current.has("stats")) {
+        loadedTabsRef.current.add("stats");
+        loadStats(false);
+      }
+    } else if (activeTab === "lineup") {
+      if (!loadedTabsRef.current.has("lineup")) {
+        loadedTabsRef.current.add("lineup");
+        loadLineups(false);
+        if (!isUpcoming) {
+          loadRatings();
+        }
+      }
+    } else if (activeTab === "table") {
+      if (!loadedTabsRef.current.has("table")) {
+        loadedTabsRef.current.add("table");
+        loadStandings();
+      }
+    } else if (activeTab === "h2h") {
+      if (!loadedTabsRef.current.has("h2h")) {
+        loadedTabsRef.current.add("h2h");
+        loadH2H();
+      }
+    }
+  }, [
+    visible,
+    match?.id,
+    activeTab,
+    isUpcoming,
+    loadMatchInfo,
+    loadEvents,
+    loadStats,
+    loadLineups,
+    loadRatings,
+    loadStandings,
+    loadH2H,
+  ]);
+
+  // Live Timeline Events: Auto-refresh every 1 minute while viewing a live match on infor tab
   useEffect(() => {
-    if (!visible || !match?.id || !isLive) return;
+    if (!visible || !match?.id || !isLive || activeTab !== "infor") return;
     const eventsInterval = setInterval(() => {
       loadEvents(false);
     }, 60000); // 1 minute auto-refresh for live match events/timeline
     return () => clearInterval(eventsInterval);
-  }, [visible, match?.id, isLive, loadEvents]);
+  }, [visible, match?.id, isLive, activeTab, loadEvents]);
 
-  // Live Match Statistics: Auto-refresh every 5 minutes while viewing a live match
+  // Live Match Statistics: Auto-refresh every 5 minutes while viewing a live match on stats tab
   useEffect(() => {
-    if (!visible || !match?.id || !isLive) return;
+    if (!visible || !match?.id || !isLive || activeTab !== "stats") return;
     const statsInterval = setInterval(() => {
       loadStats(false);
     }, 300000); // 5 minutes auto-refresh for live match statistics
     return () => clearInterval(statsInterval);
-  }, [visible, match?.id, isLive, loadStats]);
-
-  // Ratings load separately so they re-fetch (as final ratings) once a live match finishes
-  useEffect(() => {
-    if (!visible || !match?.id || isUpcoming) return;
-    loadRatings();
-  }, [visible, match?.id, isUpcoming, loadRatings]);
+  }, [visible, match?.id, isLive, activeTab, loadStats]);
 
   // Keep live ratings moving while the user is looking at the lineup
   useEffect(() => {

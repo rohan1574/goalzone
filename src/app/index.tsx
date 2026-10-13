@@ -225,9 +225,9 @@ export default function ExploreScreen() {
   const [apiData, setApiData] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState<TabType>("explore");
-  // Pre-mount all tabs so switching between tabs is 100% instant from the first tap
+  // Mount tabs on-demand (lazy mounting) so background tabs don't fire API requests at launch
   const [mountedTabs, setMountedTabs] = useState<Set<TabType>>(
-    new Set(["explore", "leagues", "highlight", "teams", "prediction"])
+    new Set(["explore"])
   );
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [detailsVisible, setDetailsVisible] = useState(false);

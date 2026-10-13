@@ -104,8 +104,9 @@ function requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper, { keepOn
         cache.set(cacheKey, keepOnEmpty, Math.min(ttlSeconds, 300));
         return keepOnEmpty;
       }
-      // On empty result: cache for only 60s so upcoming/live matches get real lineups the moment they appear
-      const effectiveTtl = isEmpty ? Math.min(ttlSeconds, 60) : ttlSeconds;
+      // On empty result: cache for a reasonable cooldown (10m to 1h) instead of hammering API every 60s
+      const emptyTtl = Math.max(Math.min(ttlSeconds, 3600), 600);
+      const effectiveTtl = isEmpty ? emptyTtl : ttlSeconds;
       cache.set(cacheKey, mappedData, effectiveTtl);
       return mappedData;
     } catch (err) {
@@ -138,15 +139,9 @@ function requestFromApi(cacheKey, endpoint, params, ttlSeconds, mapper, { keepOn
 async function fetchAndCache(cacheKey, endpoint, params, ttlSeconds, mapper) {
   const entry = cache.getEntry(cacheKey);
 
-  // 1. Fresh cache: return immediately if NOT empty
+  // 1. Fresh cache: return immediately (both non-empty and empty within TTL)
   if (entry && !entry.stale) {
-    if (!isDataEmpty(entry.data)) {
-      return entry.data;
-    }
-    // If empty but within 60s cooldown, return it to avoid hammering API
-    if (Date.now() - (entry.updatedAt || 0) < 60000) {
-      return entry.data;
-    }
+    return entry.data;
   }
 
   // 2. Stale cache: return existing data immediately only if it has real content,
@@ -1379,6 +1374,9 @@ app.get("/football-get-player-ratings", async (req, res) => {
   }
 
   const finished = req.query.finished === "true";
+  if (req.query.upcoming === "true") {
+    return res.json([]);
+  }
   const cacheKey = `player_ratings_${eventid}`;
   const entry = cache.getEntry(cacheKey);
   if (entry && !entry.stale) {
@@ -1719,14 +1717,19 @@ app.get("/football-get-match-statistics", async (req, res) => {
     cache.clear(cacheKey);
   }
 
+  // If match is upcoming, statistics do not exist yet
+  if (req.query.upcoming === "true") {
+    return res.json([]);
+  }
+
   // Detect if match is currently live (from query or liveScoreManager)
   const liveData = getCachedLiveScores();
   const isMatchLive =
     req.query.live === "true" ||
     (liveData?.matches || []).some((m) => String(m.id) === String(eventid));
 
-  // Live match stats refresh every 5 minutes (300s); finished matches cache for 1 hour
-  const ttl = isMatchLive ? 300 : 3600;
+  // Live match stats refresh every 5 minutes (300s); finished matches cache for 24 hours
+  const ttl = isMatchLive ? 300 : 86400;
 
   try {
     const data = await fetchAndCache(
@@ -1766,14 +1769,19 @@ app.get("/football-get-match-events", async (req, res) => {
     cache.clear(cacheKey);
   }
 
+  // If match is upcoming, timeline events do not exist yet
+  if (req.query.upcoming === "true") {
+    return res.json([]);
+  }
+
   // Detect if match is currently live
   const liveData = getCachedLiveScores();
   const isMatchLive =
     req.query.live === "true" ||
     (liveData?.matches || []).some((m) => String(m.id) === String(eventid));
 
-  // Live match events (goals, cards, subs) refresh every 1 minute (60s); past matches cache for 30 minutes
-  const ttl = isMatchLive ? 60 : 1800;
+  // Live match events (goals, cards, subs) refresh every 1 minute (60s); past matches cache for 24 hours
+  const ttl = isMatchLive ? 60 : 86400;
 
   try {
     const data = await fetchAndCache(
