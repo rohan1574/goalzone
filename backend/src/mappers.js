@@ -293,7 +293,9 @@ function parseFixtureEvents(apiResponse) {
     teamName: item.team?.name || "",
     teamLogo: item.team?.logo || "",
     player: item.player?.name || "Player",
-    assist: item.assist?.name || null
+    playerId: item.player?.id || null,
+    assist: item.assist?.name || null,
+    assistId: item.assist?.id || null
   }));
 }
 
@@ -342,6 +344,41 @@ function parsePredictions(apiResponse) {
   };
 }
 
+// Player leaderboards: /players/topscorers, /topassists, /topyellowcards, /topredcards
+const PLAYER_LEADER_CATEGORIES = {
+  topScorers: { endpoint: "/players/topscorers", value: (st) => st.goals?.total },
+  topAssists: { endpoint: "/players/topassists", value: (st) => st.goals?.assists },
+  yellowCards: { endpoint: "/players/topyellowcards", value: (st) => st.cards?.yellow },
+  redCards: { endpoint: "/players/topredcards", value: (st) => st.cards?.red },
+};
+
+/** → /football-get-player-leaders (top 10 of one category) */
+function mapPlayerLeaders(apiResponse, category) {
+  const getValue = PLAYER_LEADER_CATEGORIES[category].value;
+  const list = apiResponse.response || [];
+  return list
+    .map((item) => {
+      // A player who changed club within the league has one statistics entry per club
+      const statistics = item.statistics || [];
+      const sum = (fn) => statistics.reduce((total, st) => total + (Number(fn(st)) || 0), 0);
+      const team = statistics[0]?.team || {};
+      return {
+        id: item.player?.id,
+        name: item.player?.name || "Player",
+        photo: item.player?.photo || (item.player?.id ? `https://media.api-sports.io/football/players/${item.player.id}.png` : null),
+        teamId: team.id ?? null,
+        teamName: team.name || "",
+        teamLogo: team.logo || "",
+        value: sum(getValue),
+        appearances: sum((st) => st.games?.appearences),
+        penalties: sum((st) => st.penalty?.scored),
+      };
+    })
+    .filter((p) => p.id && p.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
+}
+
 module.exports = {
   POPULAR_LEAGUE_IDS_SET,
   NOT_STARTED_STATUSES,
@@ -351,6 +388,8 @@ module.exports = {
   mapStandings,
   mapLocation,
   mapPlayerRatings,
+  PLAYER_LEADER_CATEGORIES,
+  mapPlayerLeaders,
   parseFixtureStats,
   parseFixtureEvents,
   parsePredictions,

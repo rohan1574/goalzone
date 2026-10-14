@@ -1421,6 +1421,55 @@ export const fetchFixtureH2H = async (homeId: string | number, awayId: string | 
   }
 };
 
+export interface PlayerLeader {
+  id: number;
+  name: string;
+  photo: string | null;
+  teamId: number | null;
+  teamName: string;
+  teamLogo: string;
+  value: number;
+  appearances: number;
+  penalties: number;
+}
+
+export interface PlayerLeaders {
+  season: number | null;
+  topScorers: PlayerLeader[];
+  topAssists: PlayerLeader[];
+  yellowCards: PlayerLeader[];
+  redCards: PlayerLeader[];
+}
+
+// League top scorers / assists / cards for the Player Stats tab
+export const fetchPlayerLeaders = async (leagueid: string | number): Promise<PlayerLeaders | null> => {
+  if (!leagueid) return null;
+  const MEM_KEY = `@goalzone_mem_player_leaders_${leagueid}`;
+  const memData = getFromMemoryCache(MEM_KEY);
+  if (memData) return memData;
+
+  try {
+    const response = await api.get("/football-get-player-leaders", {
+      params: { leagueid },
+    });
+    const data = response.data;
+    if (!data || typeof data !== "object") return null;
+    const leaders: PlayerLeaders = {
+      season: data.season ?? null,
+      topScorers: Array.isArray(data.topScorers) ? data.topScorers : [],
+      topAssists: Array.isArray(data.topAssists) ? data.topAssists : [],
+      yellowCards: Array.isArray(data.yellowCards) ? data.yellowCards : [],
+      redCards: Array.isArray(data.redCards) ? data.redCards : [],
+    };
+    setMemoryCache(MEM_KEY, leaders, 10 * 60 * 1000);
+    return leaders;
+  } catch (error) {
+    // 404 until the backend with /football-get-player-leaders is deployed
+    console.warn("Player leaders unavailable:", (error as any)?.message || error);
+    return null;
+  }
+};
+
 export const fetchLeagueFixtures = async (leagueid: string | number) => {
   if (!leagueid) return [];
   const CACHE_KEY = `@goalzone_api_cache_league_fixtures_${leagueid}`;

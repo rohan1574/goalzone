@@ -26,6 +26,8 @@ const {
   mapDateFixtures,
   mapLeagueFixtures,
   mapStandings,
+  PLAYER_LEADER_CATEGORIES,
+  mapPlayerLeaders,
   mapLocation,
   mapPlayerRatings,
   parseFixtureStats,
@@ -1953,6 +1955,51 @@ app.get("/football-get-h2h", async (req, res) => {
       error: "Failed to fetch H2H data",
       message: err.message,
     });
+  }
+});
+
+// ==========================================
+// 8.3 PLAYER LEADERBOARDS (top scorers, assists, cards)
+// ==========================================
+// Kept fresh for popular leagues by the sync engine (playerLeaders job)
+const PLAYER_LEADER_TTL = 12 * 3600;
+
+app.get("/football-get-player-leaders", async (req, res) => {
+  const leagueid = req.query.leagueid;
+  if (!leagueid || !/^\d+$/.test(String(leagueid))) {
+    return res.status(400).json({ error: "Missing or invalid leagueid parameter" });
+  }
+
+  // Same season the league table uses; fall back a season while a new one has no data yet
+  const currentYear = new Date().getFullYear();
+  const bestSeason = cache.getEntry(`standings_best_season_${leagueid}`)?.data;
+  const seasonsToTry = [...new Set([bestSeason, currentYear, currentYear - 1].filter(Boolean))];
+
+  const loadCategory = (category, season) =>
+    fetchAndCache(
+      `leaders_${category}_${leagueid}_${season}`,
+      PLAYER_LEADER_CATEGORIES[category].endpoint,
+      { league: leagueid, season },
+      PLAYER_LEADER_TTL,
+      (apiResponse) => mapPlayerLeaders(apiResponse, category),
+    );
+
+  try {
+    for (const [idx, season] of seasonsToTry.entries()) {
+      const topScorers = await loadCategory("topScorers", season);
+      const isLastSeason = idx === seasonsToTry.length - 1;
+      if (topScorers.length === 0 && !isLastSeason) continue;
+
+      // One failing category shouldn't hide the others
+      const [topAssists, yellowCards, redCards] = await Promise.all(
+        ["topAssists", "yellowCards", "redCards"].map((category) =>
+          loadCategory(category, season).catch(() => []),
+        ),
+      );
+      return res.json({ season, topScorers, topAssists, yellowCards, redCards });
+    }
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch player leaders", message: err.message });
   }
 });
 

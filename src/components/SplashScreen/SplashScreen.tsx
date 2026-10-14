@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import BannerAdComponent from "../ads/BannerAdComponent";
 
 interface OnboardingStep {
@@ -40,6 +41,10 @@ const ONBOARDING_DATA: OnboardingStep[] = [
   },
 ];
 
+// Set once the user finishes or skips onboarding, so it only shows on first launch
+const ONBOARDING_SEEN_KEY = "hasSeenOnboarding";
+const SPLASH_DURATION = 2500;
+
 interface SplashScreenProps {
   onComplete: () => void;
 }
@@ -48,54 +53,148 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(0);
-  const rotateValue = useRef(new Animated.Value(0)).current;
+  const hasSeenOnboarding = useRef<Promise<boolean> | null>(null);
+
+  // Splash animations
+  const splashOpacity = useRef(new Animated.Value(1)).current;
+  const iconScale = useRef(new Animated.Value(0.6)).current;
+  const iconOpacity = useRef(new Animated.Value(0)).current;
+  const glowPulse = useRef(new Animated.Value(0)).current;
+  const textOpacity = useRef(new Animated.Value(0)).current;
+  const textOffset = useRef(new Animated.Value(16)).current;
+  const progress = useRef(new Animated.Value(0)).current;
+  const stepOpacity = useRef(new Animated.Value(0)).current;
 
   // Dynamic responsive calculations
   const isSmallDevice = height < 700 || width < 360;
   const iconSize = Math.min(Math.max(width * 0.35, 110), 160);
   const titleFontSize = isSmallDevice ? 28 : Math.min(width * 0.09, 36);
-
+  const progressWidth = Math.min(width * 0.5, 220);
 
   useEffect(() => {
-    if (currentStep === 0) {
-      const startSpinning = () => {
-        rotateValue.setValue(0);
-        Animated.loop(
-          Animated.timing(rotateValue, {
-            toValue: 1,
-            duration: 1500,
-            easing: Easing.linear,
-            useNativeDriver: true,
-          })
-        ).start();
-      };
-      startSpinning();
+    if (currentStep !== 0) return;
+    let cancelled = false;
+    hasSeenOnboarding.current ??= AsyncStorage.getItem(ONBOARDING_SEEN_KEY)
+      .then((value) => value === "true")
+      .catch(() => false);
 
-      const timer = setTimeout(() => {
-        setCurrentStep(1);
-      }, 3000);
+    Animated.sequence([
+      Animated.parallel([
+        Animated.spring(iconScale, {
+          toValue: 1,
+          friction: 6,
+          tension: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(iconOpacity, {
+          toValue: 1,
+          duration: 450,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.parallel([
+        Animated.timing(textOpacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(textOffset, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
 
-      return () => {
-        clearTimeout(timer);
-      };
-    }
-  }, [currentStep, rotateValue]);
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowPulse, {
+          toValue: 1,
+          duration: 1100,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowPulse, {
+          toValue: 0,
+          duration: 1100,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulse.start();
+
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: SPLASH_DURATION,
+      easing: Easing.inOut(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+
+    const timer = setTimeout(async () => {
+      const seen = await hasSeenOnboarding.current;
+      if (cancelled) return;
+      Animated.timing(splashOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        if (cancelled) return;
+        if (seen) {
+          onComplete();
+        } else {
+          setCurrentStep(1);
+        }
+      });
+    }, SPLASH_DURATION);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      pulse.stop();
+    };
+  }, [currentStep]);
+
+  // Fade each onboarding page in
+  useEffect(() => {
+    if (currentStep === 0) return;
+    stepOpacity.setValue(0);
+    Animated.timing(stepOpacity, {
+      toValue: 1,
+      duration: 350,
+      useNativeDriver: true,
+    }).start();
+  }, [currentStep]);
+
+  const finishOnboarding = () => {
+    AsyncStorage.setItem(ONBOARDING_SEEN_KEY, "true").catch(() => {});
+    onComplete();
+  };
 
   const handleNext = () => {
     if (currentStep === 1) {
       setCurrentStep(2);
     } else if (currentStep === 2) {
-      onComplete();
+      finishOnboarding();
     }
   };
 
   const handleSkip = () => {
-    onComplete();
+    finishOnboarding();
   };
 
-  const spinRotation = rotateValue.interpolate({
+  const glowScale = glowPulse.interpolate({
     inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
+    outputRange: [1, 1.18],
+  });
+  const glowOpacity = glowPulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.45, 1],
+  });
+  const progressTranslate = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-progressWidth, 0],
   });
 
   const stepData = ONBOARDING_DATA[currentStep];
@@ -105,89 +204,137 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     return (
       <View className="flex-1 bg-black">
         <StatusBar style="light" />
+        <Animated.View style={{ flex: 1, opacity: splashOpacity }}>
+          {/* Background Image with Blur */}
+          <Image
+            source={stepData.image}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+            blurRadius={25}
+          />
 
-        {/* Background Image with Blur */}
-        <Image
-          source={stepData.image}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-          blurRadius={25}
-        />
-
-        {/* Dark Overlay */}
-        <View
-          className="absolute inset-0"
-          style={{ backgroundColor: "rgba(0,0,0,0.65)" }}
-        />
-
-        {/* Center Content */}
-        <View className="flex-1 items-center justify-center px-4" style={{ paddingTop: insets.top }}>
-          {/* App Icon */}
+          {/* Dark Overlay */}
           <View
-            className="rounded-3xl overflow-hidden mb-6"
-            style={{
-              width: iconSize,
-              height: iconSize,
-              shadowColor: "#02DB54",
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.5,
-              shadowRadius: 20,
-              elevation: 14,
-            }}
-          >
-            <Image
-              source={require("../../../assets/images/icon.png")}
-              className="w-full h-full"
-              resizeMode="cover"
-            />
-          </View>
+            className="absolute inset-0"
+            style={{ backgroundColor: "rgba(0,0,0,0.72)" }}
+          />
 
-          {/* LIVE SCORES title */}
-          <View className="flex-row items-center flex-wrap justify-center">
-            <Text
-              className="font-black tracking-widest"
-              style={{ color: "#02DB54", fontSize: titleFontSize }}
+          {/* Center Content */}
+          <View className="flex-1 items-center justify-center px-4" style={{ paddingTop: insets.top }}>
+            <View
+              className="items-center justify-center mb-8"
+              style={{ width: iconSize * 1.6, height: iconSize * 1.6 }}
             >
-              LIVE{" "}
-            </Text>
-            <Text
-              className="font-black tracking-widest text-white"
-              style={{ fontSize: titleFontSize }}
+              {/* Pulsing glow behind the icon */}
+              <Animated.View
+                style={{
+                  position: "absolute",
+                  width: iconSize,
+                  height: iconSize,
+                  borderRadius: iconSize,
+                  backgroundColor: "rgba(2,219,84,0.2)",
+                  boxShadow: "0 0 48px 16px rgba(2,219,84,0.55)",
+                  opacity: glowOpacity,
+                  transform: [{ scale: glowScale }],
+                }}
+              />
+              <Animated.View
+                style={{
+                  position: "absolute",
+                  width: iconSize * 1.25,
+                  height: iconSize * 1.25,
+                  borderRadius: iconSize,
+                  borderWidth: 1.5,
+                  borderColor: "rgba(2,219,84,0.45)",
+                  opacity: glowOpacity,
+                  transform: [{ scale: glowScale }],
+                }}
+              />
+
+              {/* App Icon */}
+              <Animated.View
+                className="rounded-3xl overflow-hidden"
+                style={{
+                  width: iconSize,
+                  height: iconSize,
+                  opacity: iconOpacity,
+                  transform: [{ scale: iconScale }],
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.12)",
+                }}
+              >
+                <Image
+                  source={require("../../../assets/images/icon.png")}
+                  className="w-full h-full"
+                  resizeMode="cover"
+                />
+              </Animated.View>
+            </View>
+
+            {/* LIVE SCORES title */}
+            <Animated.View
+              className="items-center"
+              style={{ opacity: textOpacity, transform: [{ translateY: textOffset }] }}
             >
-              SCORES
+              <View className="flex-row items-center flex-wrap justify-center">
+                <Text
+                  className="font-black tracking-widest"
+                  style={{ color: "#02DB54", fontSize: titleFontSize }}
+                >
+                  LIVE{" "}
+                </Text>
+                <Text
+                  className="font-black tracking-widest text-white"
+                  style={{ fontSize: titleFontSize }}
+                >
+                  SCORES
+                </Text>
+              </View>
+
+              <View className="flex-row items-center mt-3">
+                <View style={{ width: 24, height: 1, backgroundColor: "rgba(2,219,84,0.6)" }} />
+                <Text className="text-xs text-gray-300 mx-3 tracking-[3px] uppercase text-center">
+                  Football • Live • Free
+                </Text>
+                <View style={{ width: 24, height: 1, backgroundColor: "rgba(2,219,84,0.6)" }} />
+              </View>
+            </Animated.View>
+          </View>
+
+          {/* Footer */}
+          <View className="items-center" style={{ paddingBottom: Math.max(insets.bottom, 4) }}>
+            {/* Progress bar */}
+            <View
+              className="overflow-hidden rounded-full mb-4"
+              style={{ width: progressWidth, height: 4, backgroundColor: "rgba(255,255,255,0.12)" }}
+            >
+              <Animated.View
+                className="rounded-full"
+                style={{
+                  width: progressWidth,
+                  height: 4,
+                  backgroundColor: "#02DB54",
+                  transform: [{ translateX: progressTranslate }],
+                }}
+              />
+            </View>
+
+            <Text className="text-[11px] text-gray-500 mb-3 tracking-wide text-center px-4">
+              This action may contain advertising
             </Text>
+
+            <View className="w-full items-center mb-2">
+              <BannerAdComponent />
+            </View>
           </View>
-
-          <Text className="text-xs text-gray-400 mt-2 tracking-wider uppercase text-center">
-            Football • Live • Free
-          </Text>
-        </View>
-
-        {/* Footer */}
-        <View className="items-center" style={{ paddingBottom: Math.max(insets.bottom, 4) }}>
-          <Animated.View style={{ transform: [{ rotate: spinRotation }] }}>
-            <Text style={{ fontSize: isSmallDevice ? 28 : 34 }}>⚽</Text>
-          </Animated.View>
-
-          <Text className="text-xs text-gray-400 mt-2 mb-3 tracking-wide text-center px-4">
-            This action may contain advertising
-          </Text>
-
-          <View className="w-full items-center">
-            <BannerAdComponent />
-          </View>
-
-          <View className="w-full bg-[#202124] py-3.5 items-center justify-center mt-1">
-            <Text className="text-white text-xs sm:text-sm font-semibold">Loading...</Text>
-          </View>
-        </View>
+        </Animated.View>
       </View>
     );
   }
 
   // ─── STEP 1 & 2: Onboarding Screens ──────────────────────────────────────
   return (
-    <View className="flex-1 bg-[#0D0E0F]">
+    <Animated.View className="flex-1 bg-[#0D0E0F]" style={{ opacity: stepOpacity }}>
       <StatusBar style="light" />
 
       {/* Full-screen Image */}
@@ -307,6 +454,6 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }

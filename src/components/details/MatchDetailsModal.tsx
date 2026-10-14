@@ -20,11 +20,14 @@ import {
   fetchFixtureH2H,
   fetchMatchLocation,
   fetchPlayerRatings,
+  fetchPlayerLeaders,
   getMatchKickoffMs,
 } from "../../services/footballApi";
+import type { PlayerLeader, PlayerLeaders } from "../../services/footballApi";
 import BannerAdComponent from "../ads/BannerAdComponent";
 import LiveMatchClock from "../common/LiveMatchClock";
 import MatchPrediction from "./MatchPrediction";
+import type { MatchDetailsTab } from "../../services/notificationRouting";
 
 const zoneColor = (zone: string) => {
   const z = (zone || "").toLowerCase();
@@ -48,6 +51,8 @@ interface Team {
 interface MatchDetailsModalProps {
   visible: boolean;
   match: Match | null;
+  // Opens the given tab, e.g. the Lineup tab when a lineup alert is tapped
+  tabRequest?: { tab: MatchDetailsTab } | null;
   onClose: () => void;
 }
 
@@ -79,6 +84,15 @@ interface MatchInfo {
   city: string;
   round: string;
 }
+
+type LeaderCategory = "topScorers" | "topAssists" | "yellowCards" | "redCards";
+
+const LEADER_CATEGORIES: { id: LeaderCategory; label: string; unit: [string, string] }[] = [
+  { id: "topScorers", label: "Goals", unit: ["goal", "goals"] },
+  { id: "topAssists", label: "Assists", unit: ["assist", "assists"] },
+  { id: "yellowCards", label: "Yellow Cards", unit: ["yellow", "yellows"] },
+  { id: "redCards", label: "Red Cards", unit: ["red", "reds"] },
+];
 
 // Live ratings are re-fetched on this interval while the Lineup tab is open
 const LIVE_RATINGS_REFRESH_MS = 90000;
@@ -155,11 +169,13 @@ const PlayerCard = ({
   isHome,
   rating,
   isTopRated,
+  eventStats,
 }: {
   player: any;
   isHome: boolean;
   rating?: PlayerRating;
   isTopRated?: boolean;
+  eventStats?: PlayerEventStats;
 }) => {
   const [imgError, setImgError] = useState(false);
   const playerId = getPlayerId(player);
@@ -212,6 +228,11 @@ const PlayerCard = ({
             <Text className="text-black font-black text-[7px]">C</Text>
           </View>
         ) : null}
+        {eventStats ? (
+          <View className="absolute -bottom-1 -left-3">
+            <PlayerEventBadges stats={eventStats} />
+          </View>
+        ) : null}
       </View>
       <Text
         className="text-white font-extrabold text-[9px] mt-1 text-center"
@@ -230,11 +251,13 @@ const SubPlayerRow = ({
   isHome,
   rating,
   isTopRated,
+  eventStats,
 }: {
   player: any;
   isHome: boolean;
   rating?: PlayerRating;
   isTopRated?: boolean;
+  eventStats?: PlayerEventStats;
 }) => {
   const [imgError, setImgError] = useState(false);
   const playerId = getPlayerId(player);
@@ -272,9 +295,11 @@ const SubPlayerRow = ({
     <View className={`flex-row items-center gap-2 my-1 ${isHome ? "justify-start" : "justify-end"}`}>
       {isHome && avatar}
       {!isHome && badge}
+      {!isHome && <PlayerEventBadges stats={eventStats} />}
       <Text className={`text-gray-300 text-xs font-semibold flex-1 ${isHome ? "text-left" : "text-right"}`} numberOfLines={1}>
         {name}
       </Text>
+      {isHome && <PlayerEventBadges stats={eventStats} />}
       {isHome && badge}
       {!isHome && avatar}
     </View>
@@ -301,6 +326,108 @@ const EventIcon = ({ item }: { item: any }) => {
       ) : (
         <View className="w-3.5 h-4 bg-yellow-400 rounded-sm" />
       )}
+    </View>
+  );
+};
+
+interface PlayerEventStats {
+  goals: number;
+  ownGoals: number;
+  assists: number;
+}
+
+const isScoredGoal = (event: any) =>
+  event.type === "goal" && !String(event.detail || "").toLowerCase().includes("missed");
+
+const isOwnGoal = (event: any) => String(event.detail || "").toLowerCase().includes("own");
+
+// Events are credited to the team the goal counts for (own goals included)
+const isHomeEvent = (event: any, homeTeamId: any) =>
+  event.isHome ?? (event.teamId ? String(event.teamId) === String(homeTeamId) : true);
+
+// "Saka 23', 71' (P)" for each of a team's scorers, in the order they first scored
+const getScorerLines = (events: any[], homeTeamId: any, forHome: boolean) => {
+  const minutesByPlayer = new Map<string, string[]>();
+  events
+    .filter((e) => isScoredGoal(e) && isHomeEvent(e, homeTeamId) === forHome)
+    .forEach((e) => {
+      const detail = String(e.detail || "").toLowerCase();
+      const suffix = isOwnGoal(e) ? " (OG)" : detail.includes("penalty") ? " (P)" : "";
+      const name = e.player || "Unknown";
+      minutesByPlayer.set(name, [...(minutesByPlayer.get(name) || []), `${e.minute}${suffix}`]);
+    });
+  return Array.from(minutesByPlayer, ([name, minutes]) => `${name} ${minutes.join(", ")}`);
+};
+
+const nameTokens = (name?: string) =>
+  (name || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .split(/[^a-z']+/)
+    .filter(Boolean);
+
+// Events name players in full ("Jurriën Timber") while lineups often use initials ("J. Timber"),
+// so without a player id fall back to surname, then first initial when a surname is shared
+const findLineupPlayer = (players: any[], id: any, name?: string) => {
+  if (id) {
+    const byId = players.find((p) => String(getPlayerId(p)) === String(id));
+    if (byId) return byId;
+  }
+  const target = nameTokens(name);
+  if (target.length === 0) return undefined;
+  const surname = target[target.length - 1];
+  const sameSurname = players.filter((p) => nameTokens(p.name || p.player?.name).at(-1) === surname);
+  if (sameSurname.length <= 1) return sameSurname[0];
+  return sameSurname.find((p) => nameTokens(p.name || p.player?.name)[0]?.[0] === target[0][0]);
+};
+
+// Goals, own goals and assists per lineup player (keyed by the lineup player object)
+const getPlayerEventStats = (events: any[], homeTeamId: any, homePlayers: any[], awayPlayers: any[]) => {
+  const stats = new Map<any, PlayerEventStats>();
+  const add = (player: any, key: keyof PlayerEventStats) => {
+    if (!player) return;
+    const current = stats.get(player) || { goals: 0, ownGoals: 0, assists: 0 };
+    stats.set(player, { ...current, [key]: current[key] + 1 });
+  };
+
+  events.filter(isScoredGoal).forEach((e) => {
+    const forHome = isHomeEvent(e, homeTeamId);
+    const teamPlayers = forHome ? homePlayers : awayPlayers;
+    const opponentPlayers = forHome ? awayPlayers : homePlayers;
+    if (isOwnGoal(e)) {
+      add(
+        findLineupPlayer(opponentPlayers, e.playerId, e.player) ||
+          findLineupPlayer(teamPlayers, e.playerId, e.player),
+        "ownGoals",
+      );
+      return;
+    }
+    add(findLineupPlayer(teamPlayers, e.playerId, e.player), "goals");
+    if (e.assist || e.assistId) add(findLineupPlayer(teamPlayers, e.assistId, e.assist), "assists");
+  });
+  return stats;
+};
+
+const EventCountBadge = ({ icon, count, own }: { icon: string; count: number; own?: boolean }) => (
+  <View
+    className="flex-row items-center rounded-full px-0.5 border border-black"
+    style={{ backgroundColor: own ? "#DC2626" : "rgba(0,0,0,0.85)" }}
+  >
+    <Text className="text-[8px]">{icon}</Text>
+    {own ? <Text className="text-white font-black text-[7px] ml-0.5">OG</Text> : null}
+    {count > 1 ? <Text className="text-white font-black text-[7px] ml-0.5">{count}</Text> : null}
+  </View>
+);
+
+// Goal / own goal / assist markers shown on a lineup player
+const PlayerEventBadges = ({ stats }: { stats?: PlayerEventStats }) => {
+  if (!stats) return null;
+  return (
+    <View className="flex-row items-center gap-0.5">
+      {stats.goals > 0 ? <EventCountBadge icon="⚽" count={stats.goals} /> : null}
+      {stats.ownGoals > 0 ? <EventCountBadge icon="⚽" count={stats.ownGoals} own /> : null}
+      {stats.assists > 0 ? <EventCountBadge icon="👟" count={stats.assists} /> : null}
     </View>
   );
 };
@@ -357,11 +484,10 @@ const getFormationRows = (starters: any[], formationStr: string) => {
 export default function MatchDetailsModal({
   visible,
   match,
+  tabRequest,
   onClose,
 }: MatchDetailsModalProps) {
-  const [activeTab, setActiveTab] = useState<
-    "infor" | "stats" | "lineup" | "table" | "h2h"
-  >("infor");
+  const [activeTab, setActiveTab] = useState<MatchDetailsTab>("infor");
   const [events, setEvents] = useState<any[]>([]);
   const [loadingEvents, setLoadingEvents] = useState<boolean>(false);
   const [homeLineup, setHomeLineup] = useState<any>(null);
@@ -375,6 +501,9 @@ export default function MatchDetailsModal({
   const [loadingH2h, setLoadingH2h] = useState<boolean>(false);
   const [ratings, setRatings] = useState<Record<string, PlayerRating>>({});
   const [matchInfo, setMatchInfo] = useState<MatchInfo | null>(null);
+  const [playerLeaders, setPlayerLeaders] = useState<PlayerLeaders | null>(null);
+  const [loadingPlayers, setLoadingPlayers] = useState<boolean>(false);
+  const [leaderCategory, setLeaderCategory] = useState<LeaderCategory>("topScorers");
 
   // Responses that arrive after the user has switched to another match are dropped
   const activeMatchIdRef = useRef<string | undefined>(match?.id);
@@ -544,6 +673,21 @@ export default function MatchDetailsModal({
     }
   }, [match?.id, match?.home?.id, match?.away?.id]);
 
+  // Load league player leaderboards (top scorers, assists, cards)
+  const loadPlayerLeaders = useCallback(async () => {
+    if (!match?.id || !match?.leagueId) return;
+    const matchId = match.id;
+    setLoadingPlayers(true);
+    try {
+      const data = await fetchPlayerLeaders(match.leagueId);
+      if (isCurrent(matchId)) setPlayerLeaders(data);
+    } catch (err) {
+      console.error("Failed to load player leaders:", err);
+    } finally {
+      if (isCurrent(matchId)) setLoadingPlayers(false);
+    }
+  }, [match?.id, match?.leagueId]);
+
   // Track which tabs have already loaded data for the current match to prevent duplicate calls
   const loadedTabsRef = useRef<Set<string>>(new Set());
 
@@ -556,13 +700,18 @@ export default function MatchDetailsModal({
       if (!isUpcoming) loadStats(true);
     } else if (activeTab === "lineup") {
       loadLineups(true);
-      if (!isUpcoming) loadRatings();
+      if (!isUpcoming) {
+        loadEvents(true);
+        loadRatings();
+      }
     } else if (activeTab === "table") {
       loadStandings();
     } else if (activeTab === "h2h") {
       loadH2H();
+    } else if (activeTab === "players") {
+      loadPlayerLeaders();
     }
-  }, [activeTab, isUpcoming, loadMatchInfo, loadEvents, loadStats, loadLineups, loadRatings, loadStandings, loadH2H]);
+  }, [activeTab, isUpcoming, loadMatchInfo, loadEvents, loadStats, loadLineups, loadRatings, loadStandings, loadH2H, loadPlayerLeaders]);
 
   // Clear the previous match's data so it never flashes up under a different match
   useEffect(() => {
@@ -576,7 +725,14 @@ export default function MatchDetailsModal({
     setH2hData(null);
     setRatings({});
     setMatchInfo(null);
+    setPlayerLeaders(null);
+    setLeaderCategory("topScorers");
   }, [match?.id]);
+
+  // Runs after the reset above, so a requested tab wins when it arrives with a new match
+  useEffect(() => {
+    if (tabRequest) setActiveTab(tabRequest.tab);
+  }, [tabRequest]);
 
   // Tab-based on-demand loading: only fetch data for the tab currently viewed by the user
   useEffect(() => {
@@ -588,13 +744,14 @@ export default function MatchDetailsModal({
       loadMatchInfo();
     }
 
-    if (activeTab === "infor") {
-      // Timeline events only exist for live or finished matches
-      if (!isUpcoming && !loadedTabsRef.current.has("events")) {
-        loadedTabsRef.current.add("events");
-        loadEvents(false);
-      }
-    } else if (activeTab === "stats") {
+    // Timeline events also feed the scorers under the team names and the lineup goal / assist
+    // badges, so they load whichever tab opens first (only live or finished matches have them)
+    if (!isUpcoming && !loadedTabsRef.current.has("events")) {
+      loadedTabsRef.current.add("events");
+      loadEvents(false);
+    }
+
+    if (activeTab === "stats") {
       // Statistics only exist for live or finished matches
       if (!isUpcoming && !loadedTabsRef.current.has("stats")) {
         loadedTabsRef.current.add("stats");
@@ -618,6 +775,11 @@ export default function MatchDetailsModal({
         loadedTabsRef.current.add("h2h");
         loadH2H();
       }
+    } else if (activeTab === "players") {
+      if (!loadedTabsRef.current.has("players")) {
+        loadedTabsRef.current.add("players");
+        loadPlayerLeaders();
+      }
     }
   }, [
     visible,
@@ -631,16 +793,18 @@ export default function MatchDetailsModal({
     loadRatings,
     loadStandings,
     loadH2H,
+    loadPlayerLeaders,
   ]);
 
-  // Live Timeline Events: Auto-refresh every 1 minute while viewing a live match on infor tab
+  // Live Timeline Events: Auto-refresh every 1 minute while viewing a live match
+  // (on every tab, since the scorers under the team names are always visible)
   useEffect(() => {
-    if (!visible || !match?.id || !isLive || activeTab !== "infor") return;
+    if (!visible || !match?.id || !isLive) return;
     const eventsInterval = setInterval(() => {
       loadEvents(false);
     }, 60000); // 1 minute auto-refresh for live match events/timeline
     return () => clearInterval(eventsInterval);
-  }, [visible, match?.id, isLive, activeTab, loadEvents]);
+  }, [visible, match?.id, isLive, loadEvents]);
 
   // Live Match Statistics: Auto-refresh every 5 minutes while viewing a live match on stats tab
   useEffect(() => {
@@ -703,6 +867,15 @@ export default function MatchDetailsModal({
   const homeStarters = homeLineupData.starters;
   const awayStarters = awayLineupData.starters;
 
+  const homeScorers = getScorerLines(timelineEvents, match.home?.id, true);
+  const awayScorers = getScorerLines(timelineEvents, match.home?.id, false);
+  const playerEventStats = getPlayerEventStats(
+    timelineEvents,
+    match.home?.id,
+    [...homeStarters, ...homeLineupData.subs],
+    [...awayStarters, ...awayLineupData.subs],
+  );
+
   const getRating = (player: any): PlayerRating | undefined => {
     const id = getPlayerId(player);
     return id ? ratings[String(id)] : undefined;
@@ -716,6 +889,18 @@ export default function MatchDetailsModal({
 
   // Use actual API stats only — no demo fallback
   const effectiveStats = stats;
+
+  const hasPlayerLeaders =
+    !!playerLeaders && LEADER_CATEGORIES.some((c) => playerLeaders[c.id].length > 0);
+  const activeLeaderCategory = LEADER_CATEGORIES.find((c) => c.id === leaderCategory)!;
+  const leaderRows: PlayerLeader[] = playerLeaders?.[leaderCategory] || [];
+  // Players from the two teams in this match are highlighted in the leaderboards
+  const getLeaderSide = (player: PlayerLeader) => {
+    if (player.teamId == null) return null;
+    if (String(player.teamId) === String(match.home?.id)) return "home";
+    if (String(player.teamId) === String(match.away?.id)) return "away";
+    return null;
+  };
 
   const hasWdl = standings.some((r) => r.w !== null || r.d !== null || r.l !== null);
   const standingsZones = Array.from(new Set(standings.map((r) => r.zone).filter(Boolean))) as string[];
@@ -779,8 +964,8 @@ export default function MatchDetailsModal({
               {match.league || "Competition"}
             </Text>
 
-            {/* Score layout */}
-            <View className="flex-row justify-between items-center my-1 px-1">
+            {/* Score layout (top-aligned so the crests line up when one side lists more scorers) */}
+            <View className="flex-row justify-between items-start my-1 px-1">
               {/* Home Team */}
               <View className="items-center flex-1">
                 <View className="w-16 h-16 bg-[#181A1C] border border-white/10 items-center justify-center rounded-2xl mb-2">
@@ -793,11 +978,15 @@ export default function MatchDetailsModal({
                 <Text className="text-white font-extrabold text-xs text-center" numberOfLines={1}>
                   {match.home?.name || "Home"}
                 </Text>
-                <Text className="text-gray-400 text-[10px] font-bold mt-0.5">Home</Text>
+                {homeScorers.map((line) => (
+                  <Text key={line} className="text-gray-400 text-[10px] font-bold mt-0.5 text-center" numberOfLines={1}>
+                    {line}
+                  </Text>
+                ))}
               </View>
 
               {/* Score & Minute */}
-              <View className="items-center mx-4">
+              <View className="items-center mx-4 mt-2">
                 <Text className="text-white text-3xl font-black tracking-tight">
                   {match.score || "VS"}
                 </Text>
@@ -834,7 +1023,11 @@ export default function MatchDetailsModal({
                 <Text className="text-white font-extrabold text-xs text-center" numberOfLines={1}>
                   {match.away?.name || "Away"}
                 </Text>
-                <Text className="text-gray-400 text-[10px] font-bold mt-0.5">Away</Text>
+                {awayScorers.map((line) => (
+                  <Text key={line} className="text-gray-400 text-[10px] font-bold mt-0.5 text-center" numberOfLines={1}>
+                    {line}
+                  </Text>
+                ))}
               </View>
             </View>
 
@@ -875,6 +1068,7 @@ export default function MatchDetailsModal({
               { id: "lineup", label: "Lineup" },
               { id: "table", label: "Table" },
               { id: "h2h", label: "H2H" },
+              { id: "players", label: "Player Stats" },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -938,11 +1132,7 @@ export default function MatchDetailsModal({
               ) : (
                 <View className="space-y-4">
                   {timelineEvents.map((item, index) => {
-                    const isHome =
-                      item.isHome ??
-                      (item.teamId
-                        ? String(item.teamId) === String(match.home?.id)
-                        : true);
+                    const isHome = isHomeEvent(item, match.home?.id);
 
                     return (
                       <View
@@ -1119,7 +1309,7 @@ export default function MatchDetailsModal({
                       {getFormationRows(homeStarters, homeLineupData.formation).map((row: any[], rIdx: number) => (
                         <View key={`h-row-${rIdx}`} className="flex-row justify-around items-center px-1 my-1">
                           {row.map((p: any, pIdx: number) => (
-                            <PlayerCard key={`h-p-${p.id || pIdx}`} player={p} isHome={true} rating={getRating(p)} isTopRated={isTopRated(p)} />
+                            <PlayerCard key={`h-p-${p.id || pIdx}`} player={p} isHome={true} rating={getRating(p)} isTopRated={isTopRated(p)} eventStats={playerEventStats.get(p)} />
                           ))}
                         </View>
                       ))}
@@ -1139,7 +1329,7 @@ export default function MatchDetailsModal({
                       {getFormationRows(awayStarters, awayLineupData.formation).slice().reverse().map((row: any[], rIdx: number) => (
                         <View key={`a-row-${rIdx}`} className="flex-row justify-around items-center px-1 my-1">
                           {row.map((p: any, pIdx: number) => (
-                            <PlayerCard key={`a-p-${p.id || pIdx}`} player={p} isHome={false} rating={getRating(p)} isTopRated={isTopRated(p)} />
+                            <PlayerCard key={`a-p-${p.id || pIdx}`} player={p} isHome={false} rating={getRating(p)} isTopRated={isTopRated(p)} eventStats={playerEventStats.get(p)} />
                           ))}
                         </View>
                       ))}
@@ -1163,7 +1353,7 @@ export default function MatchDetailsModal({
                             {homeLineupData.teamName}
                           </Text>
                           {homeLineupData.subs.map((s: any, idx: number) => (
-                            <SubPlayerRow key={getPlayerId(s) || idx} player={s} isHome={true} rating={getRating(s)} isTopRated={isTopRated(s)} />
+                            <SubPlayerRow key={getPlayerId(s) || idx} player={s} isHome={true} rating={getRating(s)} isTopRated={isTopRated(s)} eventStats={playerEventStats.get(s)} />
                           ))}
                         </View>
 
@@ -1173,7 +1363,7 @@ export default function MatchDetailsModal({
                             {awayLineupData.teamName}
                           </Text>
                           {awayLineupData.subs.map((s: any, idx: number) => (
-                            <SubPlayerRow key={getPlayerId(s) || idx} player={s} isHome={false} rating={getRating(s)} isTopRated={isTopRated(s)} />
+                            <SubPlayerRow key={getPlayerId(s) || idx} player={s} isHome={false} rating={getRating(s)} isTopRated={isTopRated(s)} eventStats={playerEventStats.get(s)} />
                           ))}
                         </View>
                       </View>
@@ -1371,6 +1561,139 @@ export default function MatchDetailsModal({
                       ))}
                     </View>
                   )}
+                </>
+              )}
+            </View>
+          )}
+
+          {/* TAB 6: PLAYER STATS (league leaderboards) */}
+          {activeTab === "players" && (
+            <View className="mb-6">
+              {loadingPlayers ? (
+                <ActivityIndicator color="#02DB54" className="my-6" />
+              ) : !hasPlayerLeaders ? (
+                <View className="py-12 px-4 items-center justify-center bg-[#131517] rounded-2xl border border-white/5 my-2">
+                  <Text className="text-[#02DB54] font-black text-sm mb-1">No Player Stats Available</Text>
+                  <Text className="text-gray-400 font-bold text-xs text-center">
+                    Player statistics aren't available for this competition.
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  {/* Category selector */}
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    className="mb-3"
+                    contentContainerStyle={{ gap: 6 }}
+                  >
+                    {LEADER_CATEGORIES.map((category) => {
+                      const isActive = leaderCategory === category.id;
+                      return (
+                        <TouchableOpacity
+                          key={category.id}
+                          onPress={() => setLeaderCategory(category.id)}
+                          className={`px-3.5 py-1.5 rounded-full ${
+                            isActive ? "bg-[#02DB54] border border-[#02DB54]" : "bg-[#181A1C] border border-white/10"
+                          }`}
+                        >
+                          <Text
+                            className={`font-extrabold text-[11px] ${
+                              isActive ? "text-black" : "text-gray-300"
+                            }`}
+                          >
+                            {category.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+
+                  <View className="bg-[#131517] rounded-2xl border border-white/10 overflow-hidden">
+                    <View className="flex-row items-center justify-between px-4 pt-3 pb-2 border-b border-white/10">
+                      <Text className="text-gray-400 font-extrabold text-[11px]" numberOfLines={1}>
+                        {match.league}
+                      </Text>
+                      <Text className="text-gray-500 font-bold text-[10px]">
+                        {activeLeaderCategory.label}
+                      </Text>
+                    </View>
+
+                    {leaderRows.length === 0 ? (
+                      <Text className="text-gray-400 font-bold text-xs text-center py-8">
+                        No {activeLeaderCategory.label.toLowerCase()} recorded yet this season.
+                      </Text>
+                    ) : (
+                      leaderRows.map((player, idx) => {
+                        const side = getLeaderSide(player);
+                        const sideColor = side === "home" ? "#86EFAC" : side === "away" ? "#93C5FD" : null;
+                        const [unitOne, unitMany] = activeLeaderCategory.unit;
+                        return (
+                          <View
+                            key={`${player.id}-${idx}`}
+                            className={`flex-row items-center px-4 py-2.5 ${idx > 0 ? "border-t border-white/5" : ""}`}
+                            style={sideColor ? { backgroundColor: `${sideColor}14` } : undefined}
+                          >
+                            <Text
+                              className={`font-black text-xs w-6 ${idx === 0 ? "text-[#02DB54]" : "text-gray-400"}`}
+                            >
+                              {idx + 1}
+                            </Text>
+                            <View className="w-9 h-9 rounded-full bg-[#181A1C] overflow-hidden items-center justify-center mr-3">
+                              {player.photo ? (
+                                <Image source={{ uri: player.photo }} className="w-9 h-9" resizeMode="cover" />
+                              ) : (
+                                <Text className="text-gray-400 font-black text-xs">
+                                  {player.name.charAt(0)}
+                                </Text>
+                              )}
+                            </View>
+                            <View className="flex-1 mr-2">
+                              <Text
+                                className="font-extrabold text-xs"
+                                style={{ color: sideColor || "#FFFFFF" }}
+                                numberOfLines={1}
+                              >
+                                {player.name}
+                              </Text>
+                              <View className="flex-row items-center gap-1.5 mt-0.5">
+                                {player.teamLogo ? (
+                                  <Image source={{ uri: player.teamLogo }} className="w-3.5 h-3.5" resizeMode="contain" />
+                                ) : null}
+                                <Text className="text-gray-500 font-bold text-[10px] flex-shrink" numberOfLines={1}>
+                                  {player.teamName}
+                                  {player.appearances ? ` · ${player.appearances} apps` : ""}
+                                </Text>
+                              </View>
+                            </View>
+                            <View className="items-end">
+                              <Text className="text-white font-black text-base">{player.value}</Text>
+                              <Text className="text-gray-500 font-bold text-[9px]">
+                                {leaderCategory === "topScorers" && player.penalties
+                                  ? `${player.penalties} pen`
+                                  : player.value === 1 ? unitOne : unitMany}
+                              </Text>
+                            </View>
+                          </View>
+                        );
+                      })
+                    )}
+                  </View>
+
+                  {/* Legend for the highlighted teams */}
+                  <View className="flex-row items-center justify-center gap-4 mt-3">
+                    {[
+                      { name: match.home?.name, color: "#86EFAC" },
+                      { name: match.away?.name, color: "#93C5FD" },
+                    ].map((team) => (
+                      <View key={team.color} className="flex-row items-center gap-1.5 flex-shrink">
+                        <View className="w-2 h-2 rounded-full" style={{ backgroundColor: team.color }} />
+                        <Text className="text-gray-400 font-bold text-[10px]" numberOfLines={1}>
+                          {team.name}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
                 </>
               )}
             </View>

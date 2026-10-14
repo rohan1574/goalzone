@@ -17,10 +17,14 @@ import {
     getTeamLogo,
     loadFootballDashboard,
     getFromMemoryCache,
-    getAllCachedFixtures,
     warmupFixturesCache,
     toggleServerMatchNotification,
 } from "../services/footballApi";
+import {
+    findMatchForNotification,
+    getNotificationTarget,
+    type MatchDetailsTab,
+} from "../services/notificationRouting";
 
 import * as Notifications from "expo-notifications";
 
@@ -231,6 +235,8 @@ export default function ExploreScreen() {
   );
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [detailsVisible, setDetailsVisible] = useState(false);
+  // A new object per notification tap, so the same tab can be requested again
+  const [detailsTabRequest, setDetailsTabRequest] = useState<{ tab: MatchDetailsTab } | null>(null);
   const [dateFixtures, setDateFixtures] = useState<any[]>([]);
   const [loadingFixtures, setLoadingFixtures] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -455,26 +461,20 @@ export default function ExploreScreen() {
     return () => tokenSubscription.remove();
   }, [isOnboardingCompleted]);
 
-  // Tapping a goal / kickoff alert opens that match (also works when the tap launched the app)
+  // Tapping a goal / kickoff alert opens that match on the Infor tab, a lineup alert on the
+  // Lineup tab (also works when the tap launched the app)
   const lastNotificationResponse = Notifications.useLastNotificationResponse();
   useEffect(() => {
     if (!lastNotificationResponse) return;
-    const { request } = lastNotificationResponse.notification;
-    const matchId =
-      request.content.data?.matchId ??
-      (request.trigger as any)?.remoteMessage?.data?.matchId;
+    const target = getNotificationTarget(lastNotificationResponse.notification);
     Notifications.clearLastNotificationResponse();
-    if (!matchId) return;
+    if (!target) return;
 
     (async () => {
-      const isTarget = (m: any) => String(getMatchEventId(m) || m?.id) === String(matchId);
-      let match = getAllCachedFixtures().find(isTarget);
-      try {
-        // The live feed has the current score, so prefer it while the match is on
-        match = (await fetchLiveMatches())?.find(isTarget) || match;
-      } catch (_) {}
+      const match = await findMatchForNotification(target);
       if (match) {
         setSelectedMatch(match);
+        setDetailsTabRequest({ tab: target.tab });
         setDetailsVisible(true);
       }
     })();
@@ -1037,6 +1037,7 @@ export default function ExploreScreen() {
       <MatchDetailsModal
         visible={detailsVisible}
         match={selectedMatch}
+        tabRequest={detailsTabRequest}
         onClose={() => setDetailsVisible(false)}
       />
       {/* Bottom Navigation Tab Bar & Banner Ad */}
