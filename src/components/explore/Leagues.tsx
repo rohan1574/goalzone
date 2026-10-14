@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, Image, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { Image as ExpoImage } from "expo-image";
 import { ChevronDown } from "lucide-react-native";
 import LiveMatchClock from "../common/LiveMatchClock";
 
@@ -165,7 +166,7 @@ const MatchCard = React.memo(function MatchCard({
       <View className="flex-1 px-4 gap-3">
         {/* Home Row */}
         <View className="flex-row items-center gap-3">
-          <Image source={match.home?.logo ? { uri: match.home.logo } : undefined} className="w-6 h-6" resizeMethod="resize" />
+          <ExpoImage source={match.home?.logo ? { uri: match.home.logo } : undefined} style={{ width: 24, height: 24 }} contentFit="contain" />
           <Text
             className="text-white font-extrabold text-[14px] tracking-wide"
             numberOfLines={1}
@@ -175,7 +176,7 @@ const MatchCard = React.memo(function MatchCard({
         </View>
         {/* Away Row */}
         <View className="flex-row items-center gap-3">
-          <Image source={match.away?.logo ? { uri: match.away.logo } : undefined} className="w-6 h-6" resizeMethod="resize" />
+          <ExpoImage source={match.away?.logo ? { uri: match.away.logo } : undefined} style={{ width: 24, height: 24 }} contentFit="contain" />
           <Text
             className="text-white font-extrabold text-[14px] tracking-wide"
             numberOfLines={1}
@@ -328,7 +329,7 @@ export default function Leagues({
           {/* League Header Title Accordion */}
           <View className="flex-row items-center justify-between mb-3.5">
             <View className="flex-row items-center gap-2.5">
-              <Image source={league?.leagueLogo ? { uri: league.leagueLogo } : undefined} className="w-6 h-6 rounded-full" resizeMethod="resize" />
+              <ExpoImage source={league?.leagueLogo ? { uri: league.leagueLogo } : undefined} style={{ width: 24, height: 24, borderRadius: 12 }} contentFit="contain" />
               <Text className="text-white font-extrabold text-base">
                 {league?.leagueName || "League"}
               </Text>

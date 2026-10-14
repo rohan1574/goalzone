@@ -5,9 +5,9 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Image,
   ActivityIndicator,
 } from "react-native";
+import { Image as ExpoImage } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Clock } from "lucide-react-native";
 import {
@@ -469,7 +469,7 @@ export default function LeagueDetailsModal({
                         {[match.home, match.away].map((team, i) => (
                           <View key={i} className="flex-row items-center gap-2.5">
                             {team.logo ? (
-                              <Image source={{ uri: team.logo }} className="w-6 h-6" resizeMode="contain" />
+                              <ExpoImage source={{ uri: team.logo }} style={{ width: 24, height: 24 }} contentFit="contain" />
                             ) : (
                               <View className="w-6 h-6 rounded-full bg-white/10" />
                             )}
@@ -529,7 +529,7 @@ export default function LeagueDetailsModal({
                             </Text>
                           </View>
                           <View className="flex-row items-center gap-2 flex-1 ml-1">
-                            {row.logo ? <Image source={{ uri: row.logo }} className="w-5 h-5" resizeMode="contain" /> : null}
+                            {row.logo ? <ExpoImage source={{ uri: row.logo }} style={{ width: 20, height: 20 }} contentFit="contain" /> : null}
                             <Text className="text-white text-xs font-extrabold flex-1" numberOfLines={1}>{row.name}</Text>
                           </View>
                           {(hasWdl ? [row.pl, row.w, row.d, row.l, row.gd] : [row.pl, row.gd]).map((v, i) => (

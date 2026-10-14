@@ -16,6 +16,20 @@ interface BannerAdComponentProps {
 }
 
 export default function BannerAdComponent({ size = BannerAdSize.ANCHORED_ADAPTIVE_BANNER }: BannerAdComponentProps) {
+  const [isReady, setIsReady] = React.useState(false);
+
+  React.useEffect(() => {
+    // Delay mounting until after screen transition / layout completes
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!isReady) {
+    return <View style={styles.container} />;
+  }
+
   return (
     <View style={styles.container}>
       <BannerAd

@@ -5,9 +5,9 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Image,
   ActivityIndicator,
 } from "react-native";
+import { Image as ExpoImage } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, RotateCw, MapPin } from "lucide-react-native";
 import Svg, { Path, Circle, Rect, Line as SvgLine } from "react-native-svg";
@@ -189,7 +189,7 @@ const PlayerCard = ({
     <View className="items-center my-1" style={{ width: 60 }}>
       <View className="relative items-center justify-center">
         {photoUrl && !imgError ? (
-          <Image
+          <ExpoImage
             source={{ uri: photoUrl }}
             style={{
               width: 36,
@@ -200,7 +200,7 @@ const PlayerCard = ({
               backgroundColor: "#1E293B",
             }}
             onError={() => setImgError(true)}
-            resizeMode="cover"
+            contentFit="cover"
           />
         ) : (
           <View
@@ -269,7 +269,7 @@ const SubPlayerRow = ({
   const avatar = (
     <View className="relative">
       {photoUrl && !imgError ? (
-        <Image
+        <ExpoImage
           source={{ uri: photoUrl }}
           style={{
             width: 22,
@@ -280,7 +280,7 @@ const SubPlayerRow = ({
             backgroundColor: "#1E293B",
           }}
           onError={() => setImgError(true)}
-          resizeMode="cover"
+          contentFit="cover"
         />
       ) : (
         <View className="w-5 h-5 rounded-full bg-white/10 items-center justify-center">
@@ -969,10 +969,10 @@ export default function MatchDetailsModal({
               {/* Home Team */}
               <View className="items-center flex-1">
                 <View className="w-16 h-16 bg-[#181A1C] border border-white/10 items-center justify-center rounded-2xl mb-2">
-                  <Image
+                  <ExpoImage
                     source={match.home?.logo ? { uri: match.home.logo } : undefined}
-                    className="w-11 h-11"
-                    resizeMode="contain"
+                    style={{ width: 44, height: 44 }}
+                    contentFit="contain"
                   />
                 </View>
                 <Text className="text-white font-extrabold text-xs text-center" numberOfLines={1}>
@@ -1014,10 +1014,10 @@ export default function MatchDetailsModal({
               {/* Away Team */}
               <View className="items-center flex-1">
                 <View className="w-16 h-16 bg-[#181A1C] border border-white/10 items-center justify-center rounded-2xl mb-2">
-                  <Image
+                  <ExpoImage
                     source={match.away?.logo ? { uri: match.away.logo } : undefined}
-                    className="w-11 h-11"
-                    resizeMode="contain"
+                    style={{ width: 44, height: 44 }}
+                    contentFit="contain"
                   />
                 </View>
                 <Text className="text-white font-extrabold text-xs text-center" numberOfLines={1}>
@@ -1432,7 +1432,7 @@ export default function MatchDetailsModal({
                               </View>
                               <View className="flex-row items-center gap-2 flex-1 ml-1">
                                 {row.logo ? (
-                                  <Image source={{ uri: row.logo }} className="w-5 h-5" resizeMode="contain" />
+                                  <ExpoImage source={{ uri: row.logo }} style={{ width: 20, height: 20 }} contentFit="contain" />
                                 ) : null}
                                 <Text
                                   className={`text-xs font-extrabold flex-1 ${
@@ -1540,7 +1540,7 @@ export default function MatchDetailsModal({
                                 {m.home?.name}
                               </Text>
                               {m.home?.logo ? (
-                                <Image source={{ uri: m.home.logo }} className="w-5 h-5" resizeMode="contain" />
+                                <ExpoImage source={{ uri: m.home.logo }} style={{ width: 20, height: 20 }} contentFit="contain" />
                               ) : null}
                             </View>
                             <View className="bg-black/50 px-3 py-1 rounded-full mx-3 min-w-[52px] items-center">
@@ -1550,7 +1550,7 @@ export default function MatchDetailsModal({
                             </View>
                             <View className="flex-1 flex-row items-center gap-2">
                               {m.away?.logo ? (
-                                <Image source={{ uri: m.away.logo }} className="w-5 h-5" resizeMode="contain" />
+                                <ExpoImage source={{ uri: m.away.logo }} style={{ width: 20, height: 20 }} contentFit="contain" />
                               ) : null}
                               <Text className="text-white font-bold text-xs flex-shrink" numberOfLines={1}>
                                 {m.away?.name}
@@ -1641,7 +1641,7 @@ export default function MatchDetailsModal({
                             </Text>
                             <View className="w-9 h-9 rounded-full bg-[#181A1C] overflow-hidden items-center justify-center mr-3">
                               {player.photo ? (
-                                <Image source={{ uri: player.photo }} className="w-9 h-9" resizeMode="cover" />
+                                <ExpoImage source={{ uri: player.photo }} style={{ width: 36, height: 36 }} contentFit="cover" />
                               ) : (
                                 <Text className="text-gray-400 font-black text-xs">
                                   {player.name.charAt(0)}
@@ -1658,7 +1658,7 @@ export default function MatchDetailsModal({
                               </Text>
                               <View className="flex-row items-center gap-1.5 mt-0.5">
                                 {player.teamLogo ? (
-                                  <Image source={{ uri: player.teamLogo }} className="w-3.5 h-3.5" resizeMode="contain" />
+                                  <ExpoImage source={{ uri: player.teamLogo }} style={{ width: 14, height: 14 }} contentFit="contain" />
                                 ) : null}
                                 <Text className="text-gray-500 font-bold text-[10px] flex-shrink" numberOfLines={1}>
                                   {player.teamName}

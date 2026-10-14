@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Image, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { Image as ExpoImage } from "expo-image";
 import { Check } from "lucide-react-native";
 import {
   fetchMatchPrediction,
@@ -181,7 +182,7 @@ export default function MatchPrediction({
                   }}
                 >
                   {logo ? (
-                    <Image source={{ uri: logo }} className="w-7 h-7" resizeMode="contain" />
+                    <ExpoImage source={{ uri: logo }} style={{ width: 28, height: 28 }} contentFit="contain" />
                   ) : (
                     <View className="w-7 h-7 rounded-full bg-white/10 items-center justify-center">
                       <Text className="text-white font-black text-xs">X</Text>

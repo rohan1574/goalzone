@@ -27,6 +27,9 @@ import {
 } from "../services/notificationRouting";
 
 import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const HAS_SEEN_SPLASH_KEY = "hasSeenOnboarding";
 
 // Configure local notification behavior
 Notifications.setNotificationHandler({
@@ -248,8 +251,24 @@ export default function ExploreScreen() {
     }, 60);
     return () => clearTimeout(handler);
   }, [searchQuery]);
-  const [isOnboardingCompleted, setIsOnboardingCompleted] =
-    useState<boolean>(false);
+  const [isSplashCheckDone, setIsSplashCheckDone] = useState<boolean>(false);
+  const [shouldShowSplash, setShouldShowSplash] = useState<boolean>(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(HAS_SEEN_SPLASH_KEY)
+      .then((val) => {
+        if (val === "true") {
+          setShouldShowSplash(false);
+        } else {
+          setShouldShowSplash(true);
+        }
+        setIsSplashCheckDone(true);
+      })
+      .catch(() => {
+        setShouldShowSplash(false);
+        setIsSplashCheckDone(true);
+      });
+  }, []);
   const interstitialLoadedRef = React.useRef(false);
   const pendingMatchRef = React.useRef<any>(null);
   const pendingTabRef = React.useRef<TabType | null>(null);
@@ -428,7 +447,7 @@ export default function ExploreScreen() {
   // the "popular_matches" topic (the backend sends alerts for all popular-league matches).
   // Asked once onboarding is done so the system prompt doesn't land on top of the splash.
   useEffect(() => {
-    if (!isOnboardingCompleted) return;
+    if (!isSplashCheckDone || shouldShowSplash) return;
     // The token listener also fires for the token fetched below; only subscribe each token once
     let subscribedToken: string | null = null;
     const subscribe = async (token: string) => {
@@ -459,7 +478,7 @@ export default function ExploreScreen() {
       if (token?.data) subscribe(String(token.data));
     });
     return () => tokenSubscription.remove();
-  }, [isOnboardingCompleted]);
+  }, [isSplashCheckDone, shouldShowSplash]);
 
   // Tapping a goal / kickoff alert opens that match on the Infor tab, a lineup alert on the
   // Lineup tab (also works when the tap launched the app)
@@ -943,13 +962,20 @@ export default function ExploreScreen() {
     }
   }, [debouncedSearchQuery, leaguesList]);
 
-  if (!isOnboardingCompleted) {
+  // While checking AsyncStorage (takes ~1-2 frames), keep dark background matching native splash
+  if (!isSplashCheckDone) {
+    return <View style={{ flex: 1, backgroundColor: "#0D0E0F" }} />;
+  }
+
+  // Only show splash screen once after initial install. Never show again on subsequent launches!
+  if (shouldShowSplash) {
     return (
       <SplashScreen
         onComplete={() => {
+          AsyncStorage.setItem(HAS_SEEN_SPLASH_KEY, "true").catch(() => {});
           pendingMatchRef.current = null;
           pendingTabRef.current = null;
-          setIsOnboardingCompleted(true);
+          setShouldShowSplash(false);
         }}
       />
     );

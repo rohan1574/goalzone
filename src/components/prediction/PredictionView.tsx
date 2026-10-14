@@ -3,10 +3,10 @@ import {
   ScrollView,
   View,
   Text,
-  Image,
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
+import { Image as ExpoImage } from "expo-image";
 import {
   Sparkles,
   Trophy,
@@ -109,7 +109,7 @@ const toUpcomingMatches = (fixtures: any[]): UpcomingMatch[] => {
 
 const TeamLogo = ({ team, size }: { team: Team; size: number }) =>
   team.logo ? (
-    <Image source={{ uri: team.logo }} style={{ width: size, height: size }} resizeMode="contain" />
+    <ExpoImage source={{ uri: team.logo }} style={{ width: size, height: size }} contentFit="contain" />
   ) : (
     <View
       className="bg-white/10 rounded-full items-center justify-center"
@@ -341,7 +341,7 @@ function PredictionView({ initialFixtures, isActive }: PredictionViewProps) {
             <View className="flex-row items-center justify-between mb-2">
               <View className="flex-row items-center gap-2 flex-1">
                 {currentMatch.leagueLogo ? (
-                  <Image source={{ uri: currentMatch.leagueLogo }} className="w-4 h-4" resizeMode="contain" />
+                  <ExpoImage source={{ uri: currentMatch.leagueLogo }} style={{ width: 16, height: 16 }} contentFit="contain" />
                 ) : null}
                 <Text className="text-gray-300 text-[10px] font-bold uppercase tracking-wider flex-1" numberOfLines={1}>
                   {currentMatch.league}

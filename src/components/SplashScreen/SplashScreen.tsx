@@ -205,18 +205,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       <View className="flex-1 bg-black">
         <StatusBar style="light" />
         <Animated.View style={{ flex: 1, opacity: splashOpacity }}>
-          {/* Background Image with Blur */}
-          <Image
-            source={stepData.image}
-            style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-            blurRadius={25}
-          />
-
-          {/* Dark Overlay */}
+          {/* Dark sleek background with subtle overlay */}
           <View
             className="absolute inset-0"
-            style={{ backgroundColor: "rgba(0,0,0,0.72)" }}
+            style={{ backgroundColor: "#060708" }}
           />
 
           {/* Center Content */}
@@ -225,15 +217,14 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               className="items-center justify-center mb-8"
               style={{ width: iconSize * 1.6, height: iconSize * 1.6 }}
             >
-              {/* Pulsing glow behind the icon */}
+              {/* Pulsing glow behind the icon (hardware accelerated without isolated layer) */}
               <Animated.View
                 style={{
                   position: "absolute",
-                  width: iconSize,
-                  height: iconSize,
+                  width: iconSize * 1.35,
+                  height: iconSize * 1.35,
                   borderRadius: iconSize,
-                  backgroundColor: "rgba(2,219,84,0.2)",
-                  boxShadow: "0 0 48px 16px rgba(2,219,84,0.55)",
+                  backgroundColor: "rgba(2,219,84,0.12)",
                   opacity: glowOpacity,
                   transform: [{ scale: glowScale }],
                 }}
@@ -317,14 +308,6 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                   transform: [{ translateX: progressTranslate }],
                 }}
               />
-            </View>
-
-            <Text className="text-[11px] text-gray-500 mb-3 tracking-wide text-center px-4">
-              This action may contain advertising
-            </Text>
-
-            <View className="w-full items-center mb-2">
-              <BannerAdComponent />
             </View>
           </View>
         </Animated.View>

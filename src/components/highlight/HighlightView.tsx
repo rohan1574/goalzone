@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Newspaper, Play, RotateCw } from "lucide-react-native";
 import {
   ActivityIndicator,
-  Image,
   Linking,
   RefreshControl,
   ScrollView,
@@ -11,6 +10,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { Image as ExpoImage } from "expo-image";
 import { fetchFootballNews, fetchVideoHighlights, VideoHighlight } from "../../services/footballApi";
 
 interface NewsItem {
@@ -65,12 +65,10 @@ const Thumbnail = ({ uri, style }: { uri?: string; style: any }) => {
     );
   }
   return (
-    <Image
+    <ExpoImage
       source={{ uri }}
       style={style}
-      resizeMode="cover"
-      // Decode at display size instead of full resolution
-      resizeMethod="resize"
+      contentFit="cover"
       onError={() => setFailed(true)}
     />
   );

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Image, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { Image as ExpoImage } from "expo-image";
 import { SvgUri } from "react-native-svg";
 
 interface RemoteLogoProps {
@@ -35,16 +36,16 @@ function RemoteLogo({ uri, label, size = 32, round, plate }: RemoteLogoProps) {
   if (plate) {
     return (
       <View style={{ ...box, borderRadius: size / 2 }} className="bg-white items-center justify-center">
-        <Image
+        <ExpoImage
           source={{ uri }}
           style={{ width: size * 0.72, height: size * 0.72 }}
-          resizeMode="contain"
+          contentFit="contain"
           onError={() => setFailed(true)}
         />
       </View>
     );
   }
-  return <Image source={{ uri }} style={box} resizeMode="contain" onError={() => setFailed(true)} />;
+  return <ExpoImage source={{ uri }} style={box} contentFit="contain" onError={() => setFailed(true)} />;
 }
 
 export default React.memo(RemoteLogo);

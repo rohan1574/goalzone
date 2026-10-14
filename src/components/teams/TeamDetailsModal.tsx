@@ -2,13 +2,13 @@ import { ArrowLeft, Clock } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   Modal,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Image as ExpoImage } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   fetchTeamByCountry,
@@ -62,9 +62,10 @@ const PlayerPhoto = ({ player }: { player: SquadPlayer }) => {
     );
   }
   return (
-    <Image
+    <ExpoImage
       source={{ uri: player.photo }}
-      className="w-9 h-9 rounded-full bg-[#1E293B]"
+      style={{ width: 36, height: 36, borderRadius: 18 }}
+      contentFit="cover"
       onError={() => setFailed(true)}
     />
   );

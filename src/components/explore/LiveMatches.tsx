@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity, Image } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { Image as ExpoImage } from "expo-image";
 import { ChevronRight } from "lucide-react-native";
 import Svg, { Rect, Circle, Line, Polygon, Path } from "react-native-svg";
 import LiveMatchClock from "../common/LiveMatchClock";
@@ -102,11 +103,10 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
                       </Svg>
                     </View>
                   ) : (
-                    <Image
+                    <ExpoImage
                       source={match?.leagueLogo ? { uri: match.leagueLogo } : undefined}
-                      className="w-14 h-14"
-                      resizeMode="contain"
-                      resizeMethod="resize"
+                      style={{ width: 56, height: 56 }}
+                      contentFit="contain"
                     />
                   )}
                 </View>
@@ -118,7 +118,7 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
                 <View className="flex-row justify-between items-center mt-1">
                   {/* Home Team */}
                   <View className="items-center flex-1">
-                    <Image source={match.home?.logo ? { uri: match.home.logo } : undefined} className="w-9 h-9" resizeMethod="resize" />
+                    <ExpoImage source={match.home?.logo ? { uri: match.home.logo } : undefined} style={{ width: 36, height: 36 }} contentFit="contain" />
                     <Text
                       className="text-gray-300 text-xs font-black mt-2 text-center"
                       numberOfLines={1}
@@ -139,7 +139,7 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
 
                   {/* Away Team */}
                   <View className="items-center flex-1">
-                    <Image source={match.away?.logo ? { uri: match.away.logo } : undefined} className="w-9 h-9" resizeMethod="resize" />
+                    <ExpoImage source={match.away?.logo ? { uri: match.away.logo } : undefined} style={{ width: 36, height: 36 }} contentFit="contain" />
                     <Text
                       className="text-gray-300 text-xs font-black mt-2 text-center"
                       numberOfLines={1}

@@ -280,7 +280,7 @@ function TeamsView({ apiLeagues, onPressDetails }: TeamsViewProps) {
           maxToRenderPerBatch={10}
           updateCellsBatchingPeriod={50}
           windowSize={5}
-          removeClippedSubviews={true}
+          removeClippedSubviews={false}
           stickySectionHeadersEnabled={false}
         />
       )}
