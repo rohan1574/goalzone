@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { cache } = require('./cache');
+const { formatLiveMinute } = require('./mappers');
 
 const APISPORTS_URL =
   process.env.APISPORTS_URL ||
@@ -65,9 +66,7 @@ function mapFixture(item) {
       logo: item.teams.away.logo,
     },
     score: `${item.goals.home ?? 0} - ${item.goals.away ?? 0}`,
-    minute: item.fixture.status.elapsed
-      ? `${item.fixture.status.elapsed}'`
-      : item.fixture.status.short,
+    minute: formatLiveMinute(item.fixture.status) || item.fixture.status.short,
     status: item.fixture.status.short,
   };
 }

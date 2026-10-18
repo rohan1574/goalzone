@@ -33,6 +33,8 @@ const {
   parseFixtureStats,
   parseFixtureEvents,
   parsePredictions,
+  isStaleLiveMatch,
+  formatLiveMinute,
 } = require("./mappers");
 
 // Initialize Firebase Admin SDK
@@ -352,43 +354,8 @@ app.get("/football-current-live", (req, res) => {
         logo: item.teams.away.logo,
       },
       score: `${item.goals.home ?? 0} - ${item.goals.away ?? 0}`,
-      minute: item.fixture.status.elapsed
-        ? (() => {
-            const el = item.fixture.status.elapsed;
-            const ex = item.fixture.status.extra != null ? parseInt(item.fixture.status.extra, 10) : null;
-            const st = item.fixture.status.short;
-            if (st === '1H' && el >= 45) {
-              const cur = el > 45 ? el - 45 : 0;
-              const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
-              if (targetExtra !== null && cur >= targetExtra) return 'HT';
-              return targetExtra !== null ? `45+${cur}' (+${targetExtra})` : `45'`;
-            }
-            if (st === '2H' && el >= 90) {
-              const cur = el > 90 ? el - 90 : 0;
-              const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
-              if (targetExtra !== null && cur >= targetExtra) return 'FT';
-              return targetExtra !== null ? `90+${cur}' (+${targetExtra})` : `90'`;
-            }
-            if (ex) return `${el}' (+${ex})`;
-            return `${el}'`;
-          })()
-        : item.fixture.status.short,
-      status: (() => {
-        const el = item.fixture?.status?.elapsed;
-        const ex = item.fixture?.status?.extra != null ? parseInt(item.fixture.status.extra, 10) : null;
-        const st = item.fixture?.status?.short;
-        if (st === '1H' && el >= 45) {
-          const cur = el > 45 ? el - 45 : 0;
-          const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
-          if (targetExtra !== null && cur >= targetExtra) return 'HT';
-        }
-        if (st === '2H' && el >= 90) {
-          const cur = el > 90 ? el - 90 : 0;
-          const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
-          if (targetExtra !== null && cur >= targetExtra) return 'FT';
-        }
-        return st;
-      })(),
+      minute: formatLiveMinute(item.fixture.status) || item.fixture.status.short,
+      status: item.fixture.status.short,
       extra: item.fixture.status.extra ?? null,
     }));
   })
@@ -665,41 +632,21 @@ function sanitizeFixturesStatus(data) {
   return data.map((item) => {
     if (!item) return item;
     const stUpper = String(item.status || "").trim().toUpperCase();
-    const minUpper = String(item.minute || "").trim().toUpperCase();
     if (stUpper === "FT" || stUpper === "AET" || stUpper === "PEN") return item;
 
-    // Check dynamic extra time in minute string or extra field
-    const bracketMatch = minUpper.match(/[\(\[]\+?(\d+)[\)\]]/);
-    const bracketExtra = bracketMatch ? parseInt(bracketMatch[1], 10) : null;
-    const propExtra = item.extra != null ? parseInt(item.extra, 10) : null;
-    const plusMatch = minUpper.match(/\+(\d+)/);
-    const plusExtra = plusMatch ? parseInt(plusMatch[1], 10) : null;
-    const targetExtra = bracketExtra || propExtra || plusExtra;
-    const elapsedExtra = plusExtra || 0;
-
-    // Dynamic completion: if elapsed extra time >= target extra time
-    if (targetExtra && elapsedExtra >= targetExtra) {
-      if (stUpper === "2H" || minUpper.startsWith("90")) {
-        return { ...item, status: "FT", minute: "FT" };
-      }
-      if (stUpper === "1H" || minUpper.startsWith("45")) {
-        return { ...item, status: "HT", minute: "HT" };
-      }
-    }
-
+    // No stoppage-based HT/FT here: the minute's "+N" is stoppage played so far, not the
+    // announced added time, so it says nothing about when the half ends.
     const ts = item.timestamp || (item.date ? Math.floor(new Date(item.date).getTime() / 1000) : null);
     const minsSinceKO = ts ? (Date.now() - ts * 1000) / 60000 : null;
 
-    if (minsSinceKO !== null && minsSinceKO >= 115) {
-      if (stUpper === "2H" || stUpper === "1H" || stUpper === "LIVE" || minUpper.includes("+") || minUpper.includes("'")) {
-        return {
-          ...item,
-          status: "FT",
-          minute: "FT",
-        };
-      }
+    if (isStaleLiveMatch(stUpper, ts)) {
+      return {
+        ...item,
+        status: "FT",
+        minute: "FT",
+      };
     }
-    if (minsSinceKO !== null && minsSinceKO >= 55 && minsSinceKO < 75 && stUpper === "1H") {
+    if (minsSinceKO !== null && minsSinceKO >= 60 && minsSinceKO < 75 && stUpper === "1H") {
       return {
         ...item,
         status: "HT",

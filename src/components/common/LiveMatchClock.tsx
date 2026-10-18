@@ -9,11 +9,23 @@ const NOT_STARTED_SET = new Set([
   "NS", "TBD", "TIMED", "SCHEDULED", "UPCOMING", "POSTPONED"
 ]);
 
+const REGULATION_LIVE_SET = new Set(["1H", "2H", "LIVE"]);
+const STALE_LIVE_MINUTES = 135;
+
+// End minute of the period a live status belongs to (stoppage is shown as end+N)
+const periodEndMinute = (status: string, minute: number) => {
+  if (status === "1H") return 45;
+  if (status === "2H") return 90;
+  if (status === "ET") return minute > 105 ? 120 : 105;
+  return null;
+};
+
 export const useLiveClock = (
   initialMinute?: string | number,
   status?: string,
   extraProp?: string | number,
-  timestamp?: number
+  timestamp?: number,
+  showSeconds: boolean = false
 ) => {
   const minStr = String(initialMinute || "").trim();
   const stUpper = String(status || "").trim().toUpperCase();
@@ -21,14 +33,17 @@ export const useLiveClock = (
 
   const isNotStarted = NOT_STARTED_SET.has(stUpper) || NOT_STARTED_SET.has(minUpper);
 
-  // 0. Kickoff duration check: if 115+ minutes have passed since match kickoff, match is FT
-  if (timestamp && !isNotStarted) {
+  // 0. Stale-feed fallback: a regulation match still "live" 135+ min after kickoff is over
+  // (2H stoppage can legitimately run ~120 min after kickoff). Extra time is never expired.
+  // Returned only after the hooks below: an early return here changes the hook count between
+  // renders and React throws "Rendered fewer hooks than expected" (a fatal JS crash).
+  let kickoffResult: "FT" | "HT" | null = null;
+  if (timestamp && !isNotStarted && (!stUpper || REGULATION_LIVE_SET.has(stUpper))) {
     const minsSinceKO = (Date.now() - timestamp * 1000) / 60000;
-    if (minsSinceKO >= 115) {
-      return "FT";
-    }
-    if (minsSinceKO >= 55 && minsSinceKO < 75 && (stUpper === "1H" || minUpper.startsWith("45"))) {
-      return "HT";
+    if (minsSinceKO >= STALE_LIVE_MINUTES) {
+      kickoffResult = "FT";
+    } else if (minsSinceKO >= 60 && minsSinceKO < 75 && (stUpper === "1H" || minUpper.startsWith("45"))) {
+      kickoffResult = "HT";
     }
   }
 
@@ -47,93 +62,45 @@ export const useLiveClock = (
 
   // Check for non-ticking statuses
   const isSpecial =
+    kickoffResult !== null ||
     isFinished ||
     isHalfTime ||
     isNotStarted ||
-    ["HT", "FT", "AET", "PEN", "PST", "CANC", "NS", "TBD", "SUSP", "INT"].includes(minUpper) ||
+    ["HT", "FT", "AET", "PEN", "PST", "CANC", "NS", "TBD", "SUSP", "INT", "BT", "P"].includes(minUpper) ||
     Boolean(
       stUpper &&
-        ["HT", "FT", "AET", "PEN", "PST", "CANC", "NS", "TBD", "SUSP", "INT"].includes(stUpper)
+        ["HT", "FT", "AET", "PEN", "PST", "CANC", "NS", "TBD", "SUSP", "INT", "BT", "P"].includes(stUpper)
     );
 
+  // "90+3'" / "67'" → { base, played }. `played` is stoppage minutes played so far: the API
+  // (fixture.status.extra) never gives the announced added time, so there is no target to
+  // count down to and the half only ends when the status changes.
   const parseMinute = (val: string, extraVal?: string | number) => {
-    // Extract bracketed total extra, e.g. (+5) or [5] or (5) or (+3)
-    const bracketMatch = val.match(/[\(\[]\+?(\d+)[\)\]]/);
-    const bracketExtra = bracketMatch ? parseInt(bracketMatch[1], 10) : null;
-
-    let propExtra: number | null = null;
-    if (extraVal !== undefined && extraVal !== null) {
-      const p = parseInt(String(extraVal).replace(/[^0-9]/g, ""), 10);
-      if (!isNaN(p) && p > 0) propExtra = p;
-    }
-
-    const totalExtra = bracketExtra ?? propExtra;
-
-    // Clean out brackets and apostrophes
+    // Drop legacy bracketed "(+5)" suffixes and apostrophes
     const clean = val
       .replace(/[\(\[][^\)\]]*[\)\]]/g, "")
-      .replace("'", "")
+      .replace(/'/g, "")
       .trim();
 
     if (clean.includes("+")) {
-      const parts = clean.split("+");
-      const base = parseInt(parts[0], 10);
-      const elapsedExtra = parseInt(parts[1], 10);
-      if (!isNaN(base)) {
-        const effectiveTotalExtra =
-          totalExtra ?? (!isNaN(elapsedExtra) && elapsedExtra > 0 ? elapsedExtra : null);
-        return {
-          base,
-          elapsedExtra: !isNaN(elapsedExtra) ? elapsedExtra : 0,
-          totalExtra: effectiveTotalExtra,
-        };
-      }
+      const [baseStr, playedStr] = clean.split("+");
+      const base = parseInt(baseStr, 10);
+      const played = parseInt(playedStr, 10);
+      // "90+0" falls through so the `extra` field can supply the stoppage
+      if (!isNaN(base) && played > 0) return { base, played };
     }
 
     const num = parseInt(clean, 10);
-    if (!isNaN(num)) {
-      // If 2H stoppage time: elapsed minute >= 90
-      if (stUpper === "2H" && num >= 90) {
-        const cur = num > 90 ? num - 90 : 0;
-        return {
-          base: 90,
-          elapsedExtra: cur,
-          totalExtra: totalExtra ?? (cur > 0 ? cur : null),
-        };
-      }
-      // If 1H stoppage time: elapsed minute >= 45
-      if (stUpper === "1H" && num >= 45) {
-        const cur = num > 45 ? num - 45 : 0;
-        return {
-          base: 45,
-          elapsedExtra: cur,
-          totalExtra: totalExtra ?? (cur > 0 ? cur : null),
-        };
-      }
-      // If extra time is explicitly announced and minute is 90+
-      if (num >= 90 && totalExtra) {
-        return {
-          base: 90,
-          elapsedExtra: num > 90 ? num - 90 : 0,
-          totalExtra,
-        };
-      }
-      // If extra time is explicitly announced and minute is 45-59
-      if (num >= 45 && num < 60 && totalExtra) {
-        return {
-          base: 45,
-          elapsedExtra: num > 45 ? num - 45 : 0,
-          totalExtra,
-        };
-      }
-      return {
-        base: num,
-        elapsedExtra: 0,
-        totalExtra,
-      };
-    }
+    if (isNaN(num)) return null;
 
-    return null;
+    const propExtra = parseInt(String(extraVal ?? "").replace(/[^0-9]/g, ""), 10);
+    if (!isNaN(propExtra) && propExtra > 0) return { base: num, played: propExtra };
+
+    // Stoppage reported as elapsed past the period end (e.g. 93 in 2H)
+    const end = periodEndMinute(stUpper, num);
+    if (end && num > end) return { base: end, played: num - end };
+
+    return { base: num, played: 0 };
   };
 
   const parsed = parseMinute(minStr, extraProp);
@@ -142,11 +109,12 @@ export const useLiveClock = (
   const [seconds, setSeconds] = useState(() => Math.floor((Date.now() / 1000) % 60));
   const [extraMinutesTicked, setExtraMinutesTicked] = useState(0);
 
-  const lastBaseExtraKey = `${parsed?.base}_${parsed?.elapsedExtra}`;
+  const lastBaseExtraKey = `${parsed?.base}_${parsed?.played}`;
   const lastBaseExtraRef = React.useRef(lastBaseExtraKey);
 
   useEffect(() => {
-    if (isSpecial || !parsed) return;
+    // CRITICAL PERFORMANCE: Only run the 1-second interval when showSeconds is explicitly enabled (e.g. Details Modal)
+    if (!showSeconds || isSpecial || !parsed) return;
 
     if (lastBaseExtraRef.current !== lastBaseExtraKey) {
       lastBaseExtraRef.current = lastBaseExtraKey;
@@ -164,7 +132,11 @@ export const useLiveClock = (
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [lastBaseExtraKey, isSpecial, extraProp, timestamp]);
+  }, [showSeconds, lastBaseExtraKey, isSpecial, extraProp, timestamp]);
+
+  if (kickoffResult) {
+    return kickoffResult;
+  }
 
   if (isFinished) {
     if (stUpper === "AET" || minUpper === "AET") return "AET";
@@ -184,25 +156,24 @@ export const useLiveClock = (
     return status || minStr || "Live";
   }
 
-  const secDisplay = seconds < 10 ? `0${seconds}` : `${seconds}`;
-
-  // Dynamic stoppage time completion (for whatever extra minutes this match was given: 5, 8, 4, 3, etc.)
-  const dynamicTargetExtra = parsed.totalExtra ?? (parsed.elapsedExtra > 0 ? parsed.elapsedExtra : null);
-
-  if (dynamicTargetExtra !== null && dynamicTargetExtra > 0) {
-    const curExtra = parsed.elapsedExtra + extraMinutesTicked;
-    // As soon as the dynamic extra time completes (curExtra >= dynamicTargetExtra):
-    if (curExtra >= dynamicTargetExtra) {
-      if (parsed.base === 45 || stUpper === "1H") return "HT";
-      if (parsed.base === 90 || stUpper === "2H") return "FT";
-      if (parsed.base === 105) return "HT";
-      if (parsed.base === 120) return "FT";
-      return "FT";
-    }
-    return `${parsed.base}+${curExtra}:${secDisplay}(+${dynamicTargetExtra})`;
+  // STATIC MODE (Used for all match list cards - 0 timers, 0 CPU re-renders)
+  if (!showSeconds) {
+    return parsed.played > 0 ? `${parsed.base}+${parsed.played}'` : `${parsed.base}'`;
   }
 
+  // DETAILED MODE WITH SECONDS (Used ONLY inside MatchDetailsModal for active match)
+  const secDisplay = seconds < 10 ? `0${seconds}` : `${seconds}`;
+
+  if (parsed.played > 0) {
+    return `${parsed.base}+${parsed.played + extraMinutesTicked}:${secDisplay}`;
+  }
+
+  // Ticking past the period end between polls rolls into stoppage (90' → 90+1) rather than 91'
   const currentMinute = parsed.base + extraMinutesTicked;
+  const periodEnd = periodEndMinute(stUpper, parsed.base);
+  if (periodEnd && parsed.base <= periodEnd && currentMinute > periodEnd) {
+    return `${periodEnd}+${currentMinute - periodEnd}:${secDisplay}`;
+  }
   return `${currentMinute}:${secDisplay}`;
 };
 
@@ -213,25 +184,29 @@ export interface LiveMatchClockProps {
   timestamp?: number;
   textClass?: string;
   showDot?: boolean;
+  showSeconds?: boolean;
 }
 
-export default function LiveMatchClock({
+function LiveMatchClock({
   minute,
   status,
   extra,
   timestamp,
   textClass = "text-[#02DB54] text-[10px] font-bold",
   showDot = true,
+  showSeconds = false,
 }: LiveMatchClockProps) {
-  const formatted = useLiveClock(minute, status, extra, timestamp);
-  const isTicking = formatted.includes(":");
+  const formatted = useLiveClock(minute, status, extra, timestamp, showSeconds);
+  const isLive = !["FT", "HT", "NS", "AET", "PEN", "PST", "CANC", "TBD"].includes(formatted);
 
   return (
     <View className="flex-row items-center gap-1 justify-center">
-      {showDot && isTicking && (
+      {showDot && isLive && (
         <View className="w-1.5 h-1.5 rounded-full bg-[#02DB54]" />
       )}
       <Text className={textClass}>{formatted}</Text>
     </View>
   );
 }
+
+export default React.memo(LiveMatchClock);

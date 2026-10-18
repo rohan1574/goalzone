@@ -103,6 +103,7 @@ function applyLiveUpdates(liveMatches) {
     updates.set(String(m.id), {
       score: `${m.homeScore} - ${m.awayScore}`,
       minute: m.minute,
+      extra: m.extra,
       status: m.status,
     });
   }

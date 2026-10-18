@@ -1,8 +1,7 @@
 import React from "react";
-import { ScrollView, TouchableOpacity, View, Text, RefreshControl } from "react-native";
-import { Trophy, ChevronRight } from "lucide-react-native";
+import { FlatList, View, Text, RefreshControl } from "react-native";
 import LiveMatches from "./LiveMatches";
-import Leagues from "./Leagues";
+import { LeagueSection, LeaguesEmpty, LeaguesLoadingBanner, POPULAR_LEAGUE_IDS, type LeagueGroup } from "./Leagues";
 
 interface Team {
   name: string;
@@ -19,22 +18,6 @@ interface Match {
   score: string;
   minute: string;
   status: string;
-}
-
-interface LeagueMatch {
-  id: string;
-  status: string;
-  time: string;
-  date?: string;
-  home: { name: string; logo: string };
-  away: { name: string; logo: string };
-}
-
-interface LeagueGroup {
-  leagueId: string;
-  leagueName: string;
-  leagueLogo: string;
-  matches: LeagueMatch[];
 }
 
 interface ExploreViewProps {
@@ -61,9 +44,36 @@ export default function ExploreView({
   selectedDate,
 }: ExploreViewProps) {
   const isSearching = !!searchQuery?.trim();
+
+  // Popular leagues only, unless the user is searching (search covers every league of the day)
+  const visibleLeagues = React.useMemo(() => {
+    if (!leaguesList) return [];
+    if (isSearching) return leaguesList;
+    return leaguesList.filter((league) => POPULAR_LEAGUE_IDS.has(String(league.leagueId)));
+  }, [leaguesList, isSearching]);
+
+  const renderLeague = React.useCallback(
+    ({ item }: { item: LeagueGroup }) => (
+      <View className="px-4">
+        <LeagueSection league={item} onPressDetails={onPressDetails} />
+      </View>
+    ),
+    [onPressDetails],
+  );
+
+  // Virtualized: a busy match day has hundreds of cards, and keeping them all mounted in a
+  // ScrollView made every redraw walk the whole tree on the UI thread (ANRs in dispatchDraw)
   return (
-    <ScrollView
-      className="flex-1"
+    <FlatList
+      style={{ flex: 1 }}
+      data={visibleLeagues}
+      keyExtractor={(league, idx) => league?.leagueId || `lg-${idx}`}
+      renderItem={renderLeague}
+      initialNumToRender={4}
+      maxToRenderPerBatch={4}
+      windowSize={7}
+      // Android defaults this to true; with Fabric it can crash in ReactClippingViewManager.addView
+      removeClippedSubviews={false}
       contentContainerStyle={{ paddingBottom: 140 }}
       refreshControl={
         <RefreshControl
@@ -73,30 +83,31 @@ export default function ExploreView({
           colors={["#02DB54"]}
         />
       }
-    >
-      {/* Search scope hint: results come from the selected day's fixtures */}
-      {isSearching && (
-        <Text className="text-gray-400 text-xs font-bold px-4 mt-4">
-          Results for "{searchQuery!.trim()}" on{" "}
-          {selectedDate?.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })}
-          {" · "}pick another day to search it
-        </Text>
-      )}
+      ListHeaderComponent={
+        <>
+          {/* Search scope hint: results come from the selected day's fixtures */}
+          {isSearching && (
+            <Text className="text-gray-400 text-xs font-bold px-4 mt-4">
+              Results for "{searchQuery!.trim()}" on{" "}
+              {selectedDate?.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })}
+              {" · "}pick another day to search it
+            </Text>
+          )}
 
-      {/* Horizontal Carousel of Live Matches (hidden while searching unless a live match matches) */}
-      {(!isSearching || liveMatches.length > 0) && (
-        <LiveMatches liveMatches={liveMatches} width={width} onPressDetails={onPressDetails} />
-      )}
+          {/* Horizontal Carousel of Live Matches (hidden while searching unless a live match matches) */}
+          {(!isSearching || liveMatches.length > 0) && (
+            <LiveMatches liveMatches={liveMatches} width={width} onPressDetails={onPressDetails} />
+          )}
 
-     
-
-      {/* Match Fixture lists categorized by League */}
-      <Leagues
-        leaguesList={leaguesList}
-        onPressDetails={onPressDetails}
-        loadingFixtures={loadingFixtures}
-        searchQuery={searchQuery}
-      />
-    </ScrollView>
+          {visibleLeagues.length > 0 && (
+            <View className="mt-6 px-4">
+              {loadingFixtures && <LeaguesLoadingBanner />}
+            </View>
+          )}
+        </>
+      }
+      ListEmptyComponent={<LeaguesEmpty loadingFixtures={loadingFixtures} searchQuery={searchQuery} />}
+      ListFooterComponent={visibleLeagues.length > 0 ? <View className="h-24" /> : null}
+    />
   );
 }

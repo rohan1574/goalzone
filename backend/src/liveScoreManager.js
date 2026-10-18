@@ -2,6 +2,7 @@ const { getMessaging } = require('./firebase');
 const { cache } = require('./cache');
 const { apiGet, getQuotaStatus } = require('./apiClient');
 const { applyLiveUpdates, onMatchesEnded, getNextKickoffMs, getNearbyFixtures } = require('./syncEngine');
+const { isStaleLiveMatch, formatLiveMinute } = require('./mappers');
 
 // ==========================================
 // 1. IN-MEMORY & DISK-BACKED CACHE
@@ -432,49 +433,12 @@ function normalizeApiResponse(rawResponse) {
       awayTeam: awayName,
       homeScore: homeScore,
       awayScore: awayScore,
-      minute: item.fixture?.status?.elapsed
-        ? (() => {
-            const el = item.fixture.status.elapsed;
-            const ex = item.fixture.status.extra != null ? parseInt(item.fixture.status.extra, 10) : null;
-            const st = item.fixture.status.short;
-            const ts = item.fixture?.timestamp;
-            const minsSinceKO = ts ? (Date.now() - ts * 1000) / 60000 : null;
-            if (minsSinceKO !== null && minsSinceKO >= 115) return 'FT';
-            if (st === '1H' && el >= 45) {
-              const cur = el > 45 ? el - 45 : 0;
-              const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
-              if (targetExtra !== null && cur >= targetExtra) return 'HT';
-              return targetExtra !== null ? `45+${cur}' (+${targetExtra})` : `45'`;
-            }
-            if (st === '2H' && el >= 90) {
-              const cur = el > 90 ? el - 90 : 0;
-              const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
-              if (targetExtra !== null && cur >= targetExtra) return 'FT';
-              return targetExtra !== null ? `90+${cur}' (+${targetExtra})` : `90'`;
-            }
-            if (ex) return `${el}' (+${ex})`;
-            return `${el}'`;
-          })()
-        : (item.status || 'LIVE'),
-      status: (() => {
-        const el = item.fixture?.status?.elapsed;
-        const ex = item.fixture?.status?.extra != null ? parseInt(item.fixture.status.extra, 10) : null;
-        const st = item.fixture?.status?.short || item.status || 'LIVE';
-        const ts = item.fixture?.timestamp;
-        const minsSinceKO = ts ? (Date.now() - ts * 1000) / 60000 : null;
-        if (minsSinceKO !== null && minsSinceKO >= 115) return 'FT';
-        if (st === '1H' && el >= 45) {
-          const cur = el > 45 ? el - 45 : 0;
-          const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
-          if (targetExtra !== null && cur >= targetExtra) return 'HT';
-        }
-        if (st === '2H' && el >= 90) {
-          const cur = el > 90 ? el - 90 : 0;
-          const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
-          if (targetExtra !== null && cur >= targetExtra) return 'FT';
-        }
-        return st;
-      })(),
+      minute: isStaleLiveMatch(item.fixture?.status?.short, item.fixture?.timestamp)
+        ? 'FT'
+        : formatLiveMinute(item.fixture?.status) || item.status || 'LIVE',
+      status: isStaleLiveMatch(item.fixture?.status?.short, item.fixture?.timestamp)
+        ? 'FT'
+        : item.fixture?.status?.short || item.status || 'LIVE',
       elapsed: item.fixture?.status?.elapsed ?? null,
       extra: item.fixture?.status?.extra ?? null,
       timestamp: item.fixture?.timestamp ?? null,

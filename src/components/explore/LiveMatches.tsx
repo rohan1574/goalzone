@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { Image as ExpoImage } from "expo-image";
 import { ChevronRight } from "lucide-react-native";
-import Svg, { Rect, Circle, Line, Polygon, Path } from "react-native-svg";
+import Svg, { Rect, Circle, Line, Polygon, Path, Text as SvgText } from "react-native-svg";
 import LiveMatchClock from "../common/LiveMatchClock";
 
 interface Team {
@@ -30,9 +30,10 @@ interface LiveMatchesProps {
   onPressDetails: (match: Match) => void;
 }
 
-export default function LiveMatches({ liveMatches, width, onPressDetails }: LiveMatchesProps) {
-  // Vector Soccer Field pattern
-  const SoccerFieldVector = () => (
+// Module-level so its identity is stable: declared inside LiveMatches it was a new component type
+// on every render, so React remounted every card's SVG field on each live poll / parent re-render
+const SoccerFieldVector = React.memo(function SoccerFieldVector() {
+  return (
     <View className="absolute inset-0 w-full h-full overflow-hidden opacity-60">
       <Svg height="100%" width="100%" viewBox="0 0 100 160">
         <Rect width="100" height="160" fill="#082c16" />
@@ -45,12 +46,114 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
       </Svg>
     </View>
   );
+});
 
+interface LiveMatchCardProps {
+  match: Match;
+  width: number;
+  onPressDetails: (match: Match) => void;
+}
+
+// The live poll rebuilds every match object every 15s; only re-render a card when what it shows changed
+const LiveMatchCard = React.memo(function LiveMatchCard({ match, width, onPressDetails }: LiveMatchCardProps) {
+  return (
+    <View
+      className="flex-row bg-[#131415] rounded-3xl overflow-hidden mr-4 border border-[#ffffff08]"
+      style={{ width: width * 0.82, height: 165 }}
+    >
+      {/* Left Panel: Soccer Field with League Crest */}
+      <View className="w-[36%] relative items-center justify-center bg-[#092d16]">
+        <SoccerFieldVector />
+        <View className="bg-[#131415] p-2.5 rounded-3xl border border-[#ffffff20] z-10">
+          {match?.league === "MLS" ? (
+            <View className="w-16 h-16 relative overflow-hidden items-center justify-center">
+              <Svg width="60" height="60" viewBox="0 0 100 100">
+                <Polygon points="10,10 90,10 90,60 50,90 10,60" fill="#ffffff" />
+                <Polygon points="14,14 86,14 86,58 50,85 14,58" fill="#1C3F94" />
+                <Path d="M14,14 L86,58" stroke="#ffffff" strokeWidth="5" />
+                <SvgText x="50" y="55" textAnchor="middle" fill="#ffffff" fontSize="18" fontWeight="900">MLS</SvgText>
+              </Svg>
+            </View>
+          ) : (
+            <ExpoImage
+              source={match?.leagueLogo ? { uri: match.leagueLogo } : undefined}
+              style={{ width: 56, height: 56 }}
+              contentFit="contain"
+            />
+          )}
+        </View>
+      </View>
+
+      {/* Right Panel: Teams, Score, and Details button */}
+      <View className="w-[64%] p-4 justify-between bg-[#131415]">
+        {/* Teams & Score Layout */}
+        <View className="flex-row justify-between items-center mt-1">
+          {/* Home Team */}
+          <View className="items-center flex-1">
+            <ExpoImage source={match.home?.logo ? { uri: match.home.logo } : undefined} style={{ width: 36, height: 36 }} contentFit="contain" />
+            <Text
+              className="text-gray-300 text-xs font-black mt-2 text-center"
+              numberOfLines={1}
+            >
+              {match.home?.short || match.home?.name || "HOM"}
+            </Text>
+          </View>
+
+          {/* Score & Time */}
+          <View className="items-center flex-1 mx-1">
+            <Text className="text-white text-xl font-extrabold tracking-tight">
+              {match.score}
+            </Text>
+            <View className="bg-black/60 px-2.5 py-0.5 rounded-full mt-1">
+              <LiveMatchClock minute={match.minute} status={match.status} extra={match.extra} timestamp={match.timestamp} showSeconds={false} />
+            </View>
+          </View>
+
+          {/* Away Team */}
+          <View className="items-center flex-1">
+            <ExpoImage source={match.away?.logo ? { uri: match.away.logo } : undefined} style={{ width: 36, height: 36 }} contentFit="contain" />
+            <Text
+              className="text-gray-300 text-xs font-black mt-2 text-center"
+              numberOfLines={1}
+            >
+              {match.away?.short || match.away?.name || "AWY"}
+            </Text>
+          </View>
+        </View>
+
+        {/* Details green button */}
+        <TouchableOpacity
+          onPress={() => onPressDetails(match)}
+          className="w-full bg-[#02DB54] py-2.5 rounded-full items-center active:bg-[#00FF55] mt-1"
+        >
+          <Text className="text-black font-extrabold text-sm tracking-wide">
+            Details
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}, (prev, next) =>
+  prev.width === next.width &&
+  prev.onPressDetails === next.onPressDetails &&
+  prev.match.id === next.match.id &&
+  prev.match.league === next.match.league &&
+  prev.match.score === next.match.score &&
+  prev.match.minute === next.match.minute &&
+  prev.match.status === next.match.status &&
+  prev.match.extra === next.match.extra &&
+  prev.match.timestamp === next.match.timestamp &&
+  prev.match.leagueLogo === next.match.leagueLogo &&
+  prev.match.home?.logo === next.match.home?.logo &&
+  prev.match.away?.logo === next.match.away?.logo
+);
+
+function LiveMatches({ liveMatches, width, onPressDetails }: LiveMatchesProps) {
   return (
     <View className="mt-4 px-4 bg-[#0D0E0F]">
       <View className="flex-row items-center justify-between mb-4">
         <View className="flex-row items-center gap-2">
-          <View className="w-2.5 h-2.5 bg-red-600 rounded-full animate-pulse mr-1" />
+          <View className="w-2.5 h-2.5 bg-red-600 rounded-full mr-1" />
           <Text className="text-white font-extrabold text-base tracking-wide uppercase">
             Live Matches
           </Text>
@@ -83,86 +186,18 @@ export default function LiveMatches({ liveMatches, width, onPressDetails }: Live
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingRight: 20 }}
         >
-          {(liveMatches ?? []).map((match) => (
-            <View
-              key={match?.id ?? Math.random().toString()}
-              className="flex-row bg-[#131415] rounded-3xl overflow-hidden mr-4 border border-[#ffffff08]"
-              style={{ width: width * 0.82, height: 165 }}
-            >
-              {/* Left Panel: Soccer Field with League Crest */}
-              <View className="w-[36%] relative items-center justify-center bg-[#092d16]">
-                <SoccerFieldVector />
-                <View className="bg-[#131415] p-2.5 rounded-3xl border border-[#ffffff20] z-10 shadow-lg">
-                  {match?.league === "MLS" ? (
-                    <View className="w-16 h-16 relative overflow-hidden items-center justify-center">
-                      <Svg width="60" height="60" viewBox="0 0 100 100">
-                        <Polygon points="10,10 90,10 90,60 50,90 10,60" fill="#ffffff" />
-                        <Polygon points="14,14 86,14 86,58 50,85 14,58" fill="#1C3F94" />
-                        <Path d="M14,14 L86,58" stroke="#ffffff" strokeWidth="5" />
-                        <Text className="text-[14px] font-black text-white text-center">MLS</Text>
-                      </Svg>
-                    </View>
-                  ) : (
-                    <ExpoImage
-                      source={match?.leagueLogo ? { uri: match.leagueLogo } : undefined}
-                      style={{ width: 56, height: 56 }}
-                      contentFit="contain"
-                    />
-                  )}
-                </View>
-              </View>
-
-              {/* Right Panel: Teams, Score, and Details button */}
-              <View className="w-[64%] p-4 justify-between bg-[#131415]">
-                {/* Teams & Score Layout */}
-                <View className="flex-row justify-between items-center mt-1">
-                  {/* Home Team */}
-                  <View className="items-center flex-1">
-                    <ExpoImage source={match.home?.logo ? { uri: match.home.logo } : undefined} style={{ width: 36, height: 36 }} contentFit="contain" />
-                    <Text
-                      className="text-gray-300 text-xs font-black mt-2 text-center"
-                      numberOfLines={1}
-                    >
-                      {match.home?.short || match.home?.name || "HOM"}
-                    </Text>
-                  </View>
-
-                  {/* Score & Time */}
-                  <View className="items-center flex-1 mx-1">
-                    <Text className="text-white text-xl font-extrabold tracking-tight">
-                      {match.score}
-                    </Text>
-                    <View className="bg-black/60 px-2.5 py-0.5 rounded-full mt-1">
-                      <LiveMatchClock minute={match.minute} status={match.status} extra={match.extra} timestamp={match.timestamp} />
-                    </View>
-                  </View>
-
-                  {/* Away Team */}
-                  <View className="items-center flex-1">
-                    <ExpoImage source={match.away?.logo ? { uri: match.away.logo } : undefined} style={{ width: 36, height: 36 }} contentFit="contain" />
-                    <Text
-                      className="text-gray-300 text-xs font-black mt-2 text-center"
-                      numberOfLines={1}
-                    >
-                      {match.away?.short || match.away?.name || "AWY"}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Details green button */}
-                <TouchableOpacity
-                  onPress={() => onPressDetails(match)}
-                  className="w-full bg-[#02DB54] py-2.5 rounded-full items-center active:bg-[#00FF55] shadow-sm shadow-[#02DB54]/20 mt-1"
-                >
-                  <Text className="text-black font-extrabold text-sm tracking-wide">
-                    Details
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+          {(liveMatches ?? []).map((match, idx) => (
+            <LiveMatchCard
+              key={match?.id || `live-${idx}`}
+              match={match}
+              width={width}
+              onPressDetails={onPressDetails}
+            />
           ))}
         </ScrollView>
       )}
     </View>
   );
 }
+
+export default React.memo(LiveMatches);

@@ -1006,6 +1006,7 @@ export default function MatchDetailsModal({
                       extra={match.extra}
                       timestamp={match.timestamp}
                       textClass="text-[#02DB54] text-[11px] font-black uppercase"
+                      showSeconds={true}
                     />
                   )}
                 </View>

@@ -17,18 +17,11 @@ interface LeagueMatch {
   timestamp?: number;
 }
 
-interface LeagueGroup {
+export interface LeagueGroup {
   leagueId: string;
   leagueName: string;
   leagueLogo: string;
   matches: LeagueMatch[];
-}
-
-interface LeaguesProps {
-  leaguesList: LeagueGroup[];
-  onPressDetails?: (match: any) => void;
-  loadingFixtures?: boolean;
-  searchQuery?: string;
 }
 
 const MatchCard = React.memo(function MatchCard({
@@ -133,16 +126,16 @@ const MatchCard = React.memo(function MatchCard({
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={handleCardPress}
-      className="relative bg-[#131415] rounded-3xl p-4.5 mb-3 border border-[#ffffff08] overflow-hidden flex-row justify-between items-center"
+      className="relative bg-[#131415] mx-4 mb-2 rounded-2xl px-4 py-3 border border-white/5 flex-row items-center overflow-hidden"
     >
-      {/* Glow indicator line on left */}
-      <View className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#02DB54] rounded-l-3xl shadow-lg shadow-[#02DB54]" />
+      {/* Flat indicator line on left (no expensive layer shadows) */}
+      <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#02DB54]" />
 
       {/* Left column: Match times / info */}
       <View className="w-[20%] pl-2 justify-center">
         {isLiveTicking ? (
           <View className="mb-1 items-start">
-            <LiveMatchClock minute={match.minute} status={match.status} extra={match.extra} timestamp={match.timestamp} />
+            <LiveMatchClock minute={match.minute} status={match.status} extra={match.extra} timestamp={match.timestamp} showSeconds={false} />
           </View>
         ) : (
           <Text className="text-gray-400 text-xs font-bold tracking-wider mb-1">
@@ -187,6 +180,16 @@ const MatchCard = React.memo(function MatchCard({
       </View>
 
     </TouchableOpacity>
+  );
+}, (prev, next) => {
+  return (
+    prev.match.id === next.match.id &&
+    prev.match.score === next.match.score &&
+    prev.match.minute === next.match.minute &&
+    prev.match.status === next.match.status &&
+    prev.match.time === next.match.time &&
+    prev.leagueId === next.leagueId &&
+    prev.onPressDetails === next.onPressDetails
   );
 });
 
@@ -261,29 +264,51 @@ export const POPULAR_LEAGUE_IDS = new Set([
   '239'   // Süper Lig
 ]);
 
-export default function Leagues({
-  leaguesList,
+// One league block (header + its match cards); ExploreView renders these as FlatList rows
+export const LeagueSection = React.memo(function LeagueSection({
+  league,
   onPressDetails,
+}: {
+  league: LeagueGroup;
+  onPressDetails?: (match: any) => void;
+}) {
+  return (
+    <View className="mb-6">
+      {/* League Header Title Accordion */}
+      <View className="flex-row items-center justify-between mb-3.5">
+        <View className="flex-row items-center gap-2.5">
+          <ExpoImage source={league?.leagueLogo ? { uri: league.leagueLogo } : undefined} style={{ width: 24, height: 24, borderRadius: 12 }} contentFit="contain" />
+          <Text className="text-white font-extrabold text-base">
+            {league?.leagueName || "League"}
+          </Text>
+        </View>
+        <ChevronDown size={18} color="#9BA1A6" />
+      </View>
+
+      {/* League Match Cards */}
+      {(league?.matches ?? []).map((match, mIdx) => (
+        <MatchCard
+          key={match?.id || `${league?.leagueId || 'lg'}-${mIdx}`}
+          match={match}
+          leagueName={league?.leagueName || ""}
+          leagueId={league?.leagueId || ""}
+          leagueLogo={league?.leagueLogo || ""}
+          onPressDetails={onPressDetails}
+        />
+      ))}
+    </View>
+  );
+});
+
+// Shown in place of the league list while the selected date loads, or when nothing matches
+export function LeaguesEmpty({
   loadingFixtures,
   searchQuery,
-}: LeaguesProps) {
-  const [displayLimit, setDisplayLimit] = React.useState(15);
-
-  const filteredLeaguesList = React.useMemo(() => {
-    if (!leaguesList) return [];
-    // If user is actively searching, do not filter by popular league IDs
-    if (searchQuery && searchQuery.trim()) {
-      return leaguesList;
-    }
-    return leaguesList.filter((league) => POPULAR_LEAGUE_IDS.has(String(league.leagueId)));
-  }, [leaguesList, searchQuery]);
-
-  // Reset display limit when leaguesList changes (e.g. date changed)
-  React.useEffect(() => {
-    setDisplayLimit(15);
-  }, [leaguesList]);
-
-  if (loadingFixtures && (!filteredLeaguesList || filteredLeaguesList.length === 0)) {
+}: {
+  loadingFixtures?: boolean;
+  searchQuery?: string;
+}) {
+  if (loadingFixtures) {
     return (
       <View className="mt-8 px-4 items-center justify-center py-12">
         <ActivityIndicator size="large" color="#02DB54" />
@@ -294,75 +319,30 @@ export default function Leagues({
     );
   }
 
-  if (!filteredLeaguesList || filteredLeaguesList.length === 0) {
-    return (
-      <View className="mt-8 px-4 items-center justify-center py-12 bg-[#131415] rounded-3xl mx-4 border border-white/5">
-        <Text className="text-white font-bold text-sm mb-1 text-center">
-          {searchQuery && searchQuery.trim()
-            ? `No matches found for "${searchQuery}"`
-            : "No popular league matches for this date."}
-        </Text>
-        {searchQuery && searchQuery.trim() && (
-          <Text className="text-gray-400 text-xs text-center px-4 mt-1">
-            Try searching another team name, short code (e.g. BAR, RMA, CHE), or change dates.
-          </Text>
-        )}
-      </View>
-    );
-  }
-
-  const visibleLeagues = filteredLeaguesList.slice(0, displayLimit);
-  const remainingCount = filteredLeaguesList.length - visibleLeagues.length;
-
   return (
-    <View className="mt-6 px-4 mb-24 bg-[#0D0E0F]">
-      {loadingFixtures && (
-        <View className="flex-row items-center justify-center py-2 mb-2 bg-[#131415] rounded-xl border border-white/5">
-          <ActivityIndicator size="small" color="#02DB54" />
-          <Text className="text-gray-400 font-semibold text-xs ml-2">
-            Loading matches for date...
-          </Text>
-        </View>
+    <View className="mt-8 px-4 items-center justify-center py-12 bg-[#131415] rounded-3xl mx-4 border border-white/5">
+      <Text className="text-white font-bold text-sm mb-1 text-center">
+        {searchQuery && searchQuery.trim()
+          ? `No matches found for "${searchQuery}"`
+          : "No popular league matches for this date."}
+      </Text>
+      {searchQuery && searchQuery.trim() && (
+        <Text className="text-gray-400 text-xs text-center px-4 mt-1">
+          Try searching another team name, short code (e.g. BAR, RMA, CHE), or change dates.
+        </Text>
       )}
-      {(visibleLeagues ?? []).map((league) => (
-        <View key={league?.leagueId ?? Math.random().toString()} className="mb-6">
-          {/* League Header Title Accordion */}
-          <View className="flex-row items-center justify-between mb-3.5">
-            <View className="flex-row items-center gap-2.5">
-              <ExpoImage source={league?.leagueLogo ? { uri: league.leagueLogo } : undefined} style={{ width: 24, height: 24, borderRadius: 12 }} contentFit="contain" />
-              <Text className="text-white font-extrabold text-base">
-                {league?.leagueName || "League"}
-              </Text>
-            </View>
-            <ChevronDown size={18} color="#9BA1A6" />
-          </View>
+    </View>
+  );
+}
 
-          {/* League Match Cards */}
-          {(league?.matches ?? []).map((match) => (
-            <MatchCard
-              key={match?.id ?? Math.random().toString()}
-              match={match}
-              leagueName={league?.leagueName || ""}
-              leagueId={league?.leagueId || ""}
-              leagueLogo={league?.leagueLogo || ""}
-              onPressDetails={onPressDetails}
-            />
-          ))}
-        </View>
-      ))}
-
-      {remainingCount > 0 && (
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => setDisplayLimit((prev) => prev + 20)}
-          className="bg-[#131415] py-3.5 px-6 rounded-2xl items-center justify-center flex-row gap-2 border border-white/10 my-4"
-        >
-          <Text className="text-[#02DB54] font-extrabold text-sm">
-            Show More Leagues ({remainingCount} remaining)
-          </Text>
-          <ChevronDown size={18} color="#02DB54" />
-        </TouchableOpacity>
-      )}
+// Banner above the league list while a refresh of the selected date is in flight
+export function LeaguesLoadingBanner() {
+  return (
+    <View className="flex-row items-center justify-center py-2 mb-2 bg-[#131415] rounded-xl border border-white/5">
+      <ActivityIndicator size="small" color="#02DB54" />
+      <Text className="text-gray-400 font-semibold text-xs ml-2">
+        Loading matches for date...
+      </Text>
     </View>
   );
 }

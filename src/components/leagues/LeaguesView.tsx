@@ -309,11 +309,11 @@ function LeaguesView({ apiLeagues, onPressDetails }: LeaguesViewProps) {
       const isFav = favorites.includes(item.id);
       return (
         <TouchableOpacity
-          className="relative bg-[#131415] mx-4 mb-2 rounded-2xl px-4 py-3 border border-white/5 flex-row items-center"
+          className="relative bg-[#131415] mx-4 mb-2 rounded-2xl px-4 py-3 border border-white/5 flex-row items-center overflow-hidden"
           onPress={() => { setSelectedLeague(item as League); setDetailsVisible(true); }}
           activeOpacity={0.75}
         >
-          <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#02DB54] rounded-l-2xl" />
+          <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#02DB54]" />
           <RemoteLogo uri={item.logo} label={item.name} size={28} plate />
           <Text className="text-white text-sm font-extrabold ml-3 flex-1" numberOfLines={1}>{item.name}</Text>
           <TouchableOpacity

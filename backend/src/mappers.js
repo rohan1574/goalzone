@@ -33,6 +33,41 @@ const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN', 'CANC', 'ABD', 'AWD', 'WO
 
 const teamShort = (team) => team.code || team.name.substring(0, 3).toUpperCase();
 
+// A match still reported as 1H/2H this long after kickoff is a stale feed, not a live game.
+// 2H stoppage can end ~120 min after kickoff, so this must stay well above that.
+// Extra time (ET/BT/P) is never time-expired: those matches legitimately run 150+ min.
+const STALE_LIVE_MINUTES = 135;
+const REGULATION_LIVE_STATUSES = new Set(['1H', '2H', 'LIVE']);
+
+function isStaleLiveMatch(statusShort, timestamp) {
+  if (!timestamp || !REGULATION_LIVE_STATUSES.has(statusShort)) return false;
+  return (Date.now() - timestamp * 1000) / 60000 >= STALE_LIVE_MINUTES;
+}
+
+// End minute of the period a live status belongs to, used to split elapsed into base + stoppage.
+const periodEndMinute = (statusShort, elapsed) => {
+  if (statusShort === '1H') return 45;
+  if (statusShort === '2H') return 90;
+  if (statusShort === 'ET') return elapsed > 105 ? 120 : 105;
+  return null;
+};
+
+/**
+ * fixture.status → "67'" / "90+3'". API-Football keeps `elapsed` at the period end (45, 90,
+ * 105, 120) during stoppage and counts the stoppage minutes played so far in `extra`.
+ * It does not expose the announced added time, so `extra` is never treated as a target.
+ */
+function formatLiveMinute(status) {
+  const el = parseInt(status?.elapsed, 10);
+  if (isNaN(el)) return null;
+  const ex = parseInt(status?.extra, 10);
+  if (ex > 0) return `${el}+${ex}'`;
+  // Some responses report stoppage as elapsed past the period end (e.g. 93 in 2H) with no `extra`
+  const end = periodEndMinute(status?.short, el);
+  if (end && el > end) return `${end}+${el - end}'`;
+  return `${el}'`;
+}
+
 /**
  * /fixtures?date= → list shown by /football-get-matches-by-date and /football-dashboard.
  * Both routes share one cache key, so this is the union of the fields either route used.
@@ -53,48 +88,14 @@ function mapDateFixtures(apiResponse) {
       ? fixtureDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "19:00";
 
-    const fixtureTimestamp = item.fixture.timestamp;
-    const minsSinceKO = fixtureTimestamp ? (Date.now() - fixtureTimestamp * 1000) / 60000 : null;
-    const isDurationExpired = minsSinceKO !== null && minsSinceKO >= 115;
-
-    const isFinished = FINISHED_STATUSES.has(statusShort) || (isDurationExpired && (statusShort === "2H" || statusShort === "1H" || statusShort === "LIVE"));
-    let finalStatus = isFinished
+    const isFinished =
+      FINISHED_STATUSES.has(statusShort) || isStaleLiveMatch(statusShort, item.fixture.timestamp);
+    const finalStatus = isFinished
       ? (statusShort === "AET" || statusShort === "PEN" ? statusShort : "FT")
       : statusShort;
-    let elapsedMinute = statusShort;
-
-    if (item.fixture.status.elapsed && !isFinished) {
-      const el = item.fixture.status.elapsed;
-      const ex = item.fixture.status.extra != null ? parseInt(item.fixture.status.extra, 10) : null;
-      if (statusShort === "1H" && el >= 45) {
-        const cur = el > 45 ? el - 45 : 0;
-        const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
-        if (targetExtra !== null && cur >= targetExtra) {
-          finalStatus = "HT";
-          elapsedMinute = "HT";
-        } else if (targetExtra !== null) {
-          elapsedMinute = `45+${cur}' (+${targetExtra})`;
-        } else {
-          elapsedMinute = `45'`;
-        }
-      } else if (statusShort === "2H" && el >= 90) {
-        const cur = el > 90 ? el - 90 : 0;
-        const targetExtra = ex !== null ? ex : (cur > 0 ? cur : null);
-        if (targetExtra !== null && cur >= targetExtra) {
-          finalStatus = "FT";
-          elapsedMinute = "FT";
-        } else if (targetExtra !== null) {
-          elapsedMinute = `90+${cur}' (+${targetExtra})`;
-        } else {
-          elapsedMinute = `90'`;
-        }
-      } else if (ex) {
-        elapsedMinute = `${el}' (+${ex})`;
-      } else {
-        elapsedMinute = `${el}'`;
-      }
-    }
-    const finalMinute = isFinished ? finalStatus : elapsedMinute;
+    const finalMinute = isFinished
+      ? finalStatus
+      : formatLiveMinute(item.fixture.status) || statusShort;
 
     return {
       id: String(item.fixture.id),
@@ -383,6 +384,8 @@ module.exports = {
   POPULAR_LEAGUE_IDS_SET,
   NOT_STARTED_STATUSES,
   FINISHED_STATUSES,
+  isStaleLiveMatch,
+  formatLiveMinute,
   mapDateFixtures,
   mapLeagueFixtures,
   mapStandings,

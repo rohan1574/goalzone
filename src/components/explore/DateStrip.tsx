@@ -49,6 +49,9 @@ function DateStrip({ selectedDate, onSelectDate }: DateStripProps) {
       data={days}
       horizontal
       showsHorizontalScrollIndicator={false}
+      // Android defaults this to true; with Fabric it crashes in ReactClippingViewManager.addView
+      // (IndexOutOfBoundsException) when the strip re-centres and its items are replaced
+      removeClippedSubviews={false}
       keyExtractor={(d) => String(d.getTime())}
       contentContainerStyle={{ paddingHorizontal: 16, gap: CHIP_GAP }}
       getItemLayout={(_, index) => ({

@@ -153,6 +153,13 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       cancelled = true;
       clearTimeout(timer);
       pulse.stop();
+      progress.stopAnimation();
+      glowPulse.stopAnimation();
+      iconScale.stopAnimation();
+      iconOpacity.stopAnimation();
+      textOpacity.stopAnimation();
+      textOffset.stopAnimation();
+      splashOpacity.stopAnimation();
     };
   }, [currentStep]);
 
@@ -160,11 +167,16 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   useEffect(() => {
     if (currentStep === 0) return;
     stepOpacity.setValue(0);
-    Animated.timing(stepOpacity, {
+    const anim = Animated.timing(stepOpacity, {
       toValue: 1,
       duration: 350,
       useNativeDriver: true,
-    }).start();
+    });
+    anim.start();
+    return () => {
+      anim.stop();
+      stepOpacity.stopAnimation();
+    };
   }, [currentStep]);
 
   const finishOnboarding = () => {
