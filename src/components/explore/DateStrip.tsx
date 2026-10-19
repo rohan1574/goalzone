@@ -34,10 +34,16 @@ function DateStrip({ selectedDate, onSelectDate }: DateStripProps) {
   );
   const selectedIndex = dayDiff(selectedDate, base) + DAYS_BEFORE;
 
+  const isFirstMount = useRef(true);
+
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     const id = setTimeout(() => {
       try {
-        listRef.current?.scrollToIndex({ index: selectedIndex, viewPosition: 0.5, animated: true });
+        listRef.current?.scrollToIndex({ index: selectedIndex, viewPosition: 0.5, animated: false });
       } catch (_) {}
     }, 50);
     return () => clearTimeout(id);
@@ -49,8 +55,6 @@ function DateStrip({ selectedDate, onSelectDate }: DateStripProps) {
       data={days}
       horizontal
       showsHorizontalScrollIndicator={false}
-      // Android defaults this to true; with Fabric it crashes in ReactClippingViewManager.addView
-      // (IndexOutOfBoundsException) when the strip re-centres and its items are replaced
       removeClippedSubviews={false}
       keyExtractor={(d) => String(d.getTime())}
       contentContainerStyle={{ paddingHorizontal: 16, gap: CHIP_GAP }}
@@ -60,7 +64,13 @@ function DateStrip({ selectedDate, onSelectDate }: DateStripProps) {
         index,
       })}
       initialScrollIndex={Math.max(0, selectedIndex - 2)}
-      onScrollToIndexFailed={() => {}}
+      onScrollToIndexFailed={(info) => {
+        setTimeout(() => {
+          try {
+            listRef.current?.scrollToIndex({ index: info.index, viewPosition: 0.5, animated: false });
+          } catch (_) {}
+        }, 80);
+      }}
       renderItem={({ item, index }) => {
         const isSelected = index === selectedIndex;
         const isToday = item.getTime() === todayKey;

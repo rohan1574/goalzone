@@ -184,6 +184,7 @@ function LiveMatches({ liveMatches, width, onPressDetails }: LiveMatchesProps) {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          removeClippedSubviews={false}
           contentContainerStyle={{ paddingRight: 20 }}
         >
           {(liveMatches ?? []).map((match, idx) => (

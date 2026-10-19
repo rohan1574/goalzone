@@ -505,8 +505,25 @@ export default function ExploreScreen() {
       try {
         const freshLive = await fetchLiveMatches();
         if (freshLive && Array.isArray(freshLive) && freshLive.length > 0) {
-          // 1. Update dashboard live matches silently
-          setApiData((prev: any) => (prev ? { ...prev, live: freshLive } : prev));
+          // 1. Only update dashboard live matches if something actually changed
+          setApiData((prev: any) => {
+            if (!prev) return prev;
+            const prevLive = prev.live || [];
+            if (prevLive.length !== freshLive.length) {
+              return { ...prev, live: freshLive };
+            }
+            const isDiff = freshLive.some((fl: any, i: number) => {
+              const pl = prevLive[i];
+              if (!pl) return true;
+              return (
+                fl.id !== pl.id ||
+                fl.score !== pl.score ||
+                fl.minute !== pl.minute ||
+                fl.status !== pl.status
+              );
+            });
+            return isDiff ? { ...prev, live: freshLive } : prev;
+          });
 
           // 2. If a match is currently open in MatchDetailsModal, update its score & minute
           setSelectedMatch((prevSelected: any) => {
@@ -515,17 +532,26 @@ export default function ExploreScreen() {
               (m: any) => String(getMatchEventId(m) || m.id) === String(prevSelected.id)
             );
             if (updated) {
-              return {
-                ...prevSelected,
-                score: updated.score || getMatchScore(updated).display || prevSelected.score,
-                minute: updated.minute || getMatchStatus(updated) || prevSelected.minute,
-                status: updated.status || prevSelected.status,
-              };
+              const newScore = updated.score || getMatchScore(updated).display || prevSelected.score;
+              const newMin = updated.minute || getMatchStatus(updated) || prevSelected.minute;
+              const newSt = updated.status || prevSelected.status;
+              if (
+                prevSelected.score !== newScore ||
+                prevSelected.minute !== newMin ||
+                prevSelected.status !== newSt
+              ) {
+                return {
+                  ...prevSelected,
+                  score: newScore,
+                  minute: newMin,
+                  status: newSt,
+                };
+              }
             }
             return prevSelected;
           });
 
-          // 3. Update matching live fixtures in dateFixtures list
+          // 3. Update matching live fixtures in dateFixtures list ONLY if changed
           setDateFixtures((prevFixtures: any[]) => {
             if (!prevFixtures || prevFixtures.length === 0) return prevFixtures;
             let hasChanged = false;
@@ -1009,7 +1035,7 @@ export default function ExploreScreen() {
         />
       )}
 
-      {/* Dynamic Main Body Content: Lazy-mount + persistent tabs for instant navigation */}
+      {/* Dynamic Main Body Content: Explore always kept in DOM; other tabs unmounted when inactive to save C++ memory */}
       {/* Explore: Always mounted (default tab) */}
       <View style={{ flex: 1, display: activeTab === "explore" ? "flex" : "none" }}>
         <ExploreView
@@ -1025,9 +1051,9 @@ export default function ExploreScreen() {
         />
       </View>
 
-      {/* Leagues: Lazy mount on first visit, then persist */}
-      {mountedTabs.has("leagues") && (
-        <View style={{ flex: 1, display: activeTab === "leagues" ? "flex" : "none" }}>
+      {/* Leagues: Mounted only when active to avoid maintaining duplicate native trees */}
+      {activeTab === "leagues" && (
+        <View style={{ flex: 1 }}>
           <LeaguesView
             apiLeagues={apiData?.leagues}
             onPressDetails={handlePressDetails}
@@ -1035,24 +1061,24 @@ export default function ExploreScreen() {
         </View>
       )}
 
-      {/* Highlight: Lazy mount on first visit, then persist */}
-      {mountedTabs.has("highlight") && (
-        <View style={{ flex: 1, display: activeTab === "highlight" ? "flex" : "none" }}>
-          <HighlightView isActive={activeTab === "highlight"} />
+      {/* Highlight: Mounted only when active */}
+      {activeTab === "highlight" && (
+        <View style={{ flex: 1 }}>
+          <HighlightView isActive={true} />
         </View>
       )}
 
-      {/* Teams: Lazy mount on first visit, then persist */}
-      {mountedTabs.has("teams") && (
-        <View style={{ flex: 1, display: activeTab === "teams" ? "flex" : "none" }}>
+      {/* Teams: Mounted only when active */}
+      {activeTab === "teams" && (
+        <View style={{ flex: 1 }}>
           <TeamsView apiTeams={apiData?.teams} apiLeagues={apiData?.leagues} onPressDetails={handlePressDetails} />
         </View>
       )}
 
-      {/* Prediction: Lazy mount on first visit, then persist */}
-      {mountedTabs.has("prediction") && (
-        <View style={{ flex: 1, display: activeTab === "prediction" ? "flex" : "none" }}>
-          <PredictionView initialFixtures={apiData?.fixtures} isActive={activeTab === "prediction"} />
+      {/* Prediction: Mounted only when active */}
+      {activeTab === "prediction" && (
+        <View style={{ flex: 1 }}>
+          <PredictionView initialFixtures={apiData?.fixtures} isActive={true} />
         </View>
       )}
 

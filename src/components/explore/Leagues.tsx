@@ -298,6 +298,22 @@ export const LeagueSection = React.memo(function LeagueSection({
       ))}
     </View>
   );
+}, (prev, next) => {
+  if (prev.league?.leagueId !== next.league?.leagueId) return false;
+  if (prev.league?.matches?.length !== next.league?.matches?.length) return false;
+  if (prev.onPressDetails !== next.onPressDetails) return false;
+  const prevMatches = prev.league?.matches || [];
+  const nextMatches = next.league?.matches || [];
+  return prevMatches.every((pm, i) => {
+    const nm = nextMatches[i];
+    return (
+      nm &&
+      pm.id === nm.id &&
+      pm.score === nm.score &&
+      pm.minute === nm.minute &&
+      pm.status === nm.status
+    );
+  });
 });
 
 // Shown in place of the league list while the selected date loads, or when nothing matches
