@@ -26,7 +26,7 @@ export default function BannerAdComponent({ size = BannerAdSize.ANCHORED_ADAPTIV
     return () => clearTimeout(timer);
   }, []);
 
-  if (!isReady) {
+  if (!isReady || !adUnitId || adUnitId.trim() === "") {
     return <View style={styles.container} />;
   }
 

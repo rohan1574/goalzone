@@ -39,14 +39,19 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 
 export default function RootLayout() {
   useEffect(() => {
-    mobileAds()
-      .initialize()
-      .then((adapterStatuses) => {
-        console.log("AdMob SDK Initialized Successfully:", adapterStatuses);
-      })
-      .catch((err) => {
-        console.error("AdMob SDK Initialization Error:", err);
-      });
+    // Defer AdMob SDK initialization so it doesn't block critical app startup or FCM broadcast receivers
+    const timer = setTimeout(() => {
+      mobileAds()
+        .initialize()
+        .then((adapterStatuses) => {
+          console.log("AdMob SDK Initialized Successfully:", adapterStatuses);
+        })
+        .catch((err) => {
+          console.error("AdMob SDK Initialization Error:", err);
+        });
+    }, 1500);
+
+    return () => clearTimeout(timer);
   }, []);
 
   return (

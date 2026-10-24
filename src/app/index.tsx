@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { Dimensions, View, Platform } from "react-native";
+import { Dimensions, View, Platform, AppState } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
     fetchFixturesByDate,
@@ -87,9 +87,11 @@ const interstitialAdUnitId = __DEV__
       default: TestIds.INTERSTITIAL,
     }) || "ca-app-pub-9215418195647603/2094618125");
 
-const interstitialAd = InterstitialAd.createForAdRequest(interstitialAdUnitId, {
-  requestNonPersonalizedAdsOnly: true,
-});
+const interstitialAd = interstitialAdUnitId
+  ? InterstitialAd.createForAdRequest(interstitialAdUnitId, {
+      requestNonPersonalizedAdsOnly: true,
+    })
+  : null;
 
 // Mock Data matching screenshot exactly as fallbacks
 const MOCK_LIVE_MATCHES = [
@@ -279,6 +281,7 @@ export default function ExploreScreen() {
 
   // Load interstitial ad safely in background after app has mounted
   useEffect(() => {
+    if (!interstitialAd) return;
     const unsubscribeLoaded = interstitialAd.addAdEventListener(
       AdEventType.LOADED,
       () => {
@@ -503,9 +506,12 @@ export default function ExploreScreen() {
     })();
   }, [lastNotificationResponse]);
 
-  // Real-time live score auto-update without manual refresh (polls every 15s silently)
+  // Real-time live score auto-update: polls every 15s silently when foregrounded;
+  // safely pauses when app is backgrounded or screen turns off to prevent SCREEN_OFF ANRs
   useEffect(() => {
-    const livePollInterval = setInterval(async () => {
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+    const poll = async () => {
       try {
         const freshLive = await fetchLiveMatches();
         if (freshLive && Array.isArray(freshLive) && freshLive.length > 0) {
@@ -586,9 +592,37 @@ export default function ExploreScreen() {
       } catch (err) {
         // Silent background fail
       }
-    }, 15000);
+    };
 
-    return () => clearInterval(livePollInterval);
+    const startPolling = () => {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(poll, 15000);
+    };
+
+    const stopPolling = () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    };
+
+    if (AppState.currentState === "active") {
+      startPolling();
+    }
+
+    const appStateSub = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") {
+        poll(); // immediate refresh when user resumes the app
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    });
+
+    return () => {
+      stopPolling();
+      appStateSub.remove();
+    };
   }, []);
 
   const handleRefresh = React.useCallback(() => {
@@ -1015,17 +1049,6 @@ export default function ExploreScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0E0F" }}>
       <StatusBar style="light" />
 
-      {/* Top Banner Ad */}
-      <View
-        style={{
-          width: "100%",
-          alignItems: "center",
-          backgroundColor: "#0D0E0F",
-          paddingVertical: 2,
-        }}
-      >
-        <BannerAdComponent />
-      </View>
 
       {/* Modular Header */}
       {activeTab === "explore" && (
@@ -1089,13 +1112,15 @@ export default function ExploreScreen() {
       {/* Full-Screen Bouncing Football Loading Overlay - Only on fresh boot without any cache */}
       <LoadingModal visible={loading && !apiData} />
 
-      {/* Match Details Modal */}
-      <MatchDetailsModal
-        visible={detailsVisible}
-        match={selectedMatch}
-        tabRequest={detailsTabRequest}
-        onClose={() => setDetailsVisible(false)}
-      />
+      {/* Match Details Modal (Mounted on-demand only when opened to save RAM on 2-3GB devices) */}
+      {detailsVisible && selectedMatch && (
+        <MatchDetailsModal
+          visible={detailsVisible}
+          match={selectedMatch}
+          tabRequest={detailsTabRequest}
+          onClose={() => setDetailsVisible(false)}
+        />
+      )}
       {/* Bottom Navigation Tab Bar & Banner Ad */}
       <View
         style={{

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Newspaper, Play, RotateCw } from "lucide-react-native";
 import {
   ActivityIndicator,
+  AppState,
   Linking,
   RefreshControl,
   ScrollView,
@@ -161,16 +162,25 @@ function HighlightView({ isActive = true }: HighlightViewProps) {
   const featuredNews = news.slice(0, FEATURED_COUNT);
   const latestNews = news.slice(FEATURED_COUNT);
 
-  // Featured news carousel: advances every few seconds while visible; a manual swipe restarts the timer
+  const [appState, setAppState] = useState(AppState.currentState);
+
   useEffect(() => {
-    if (!isActive || subTab !== "news" || featuredNews.length <= 1) return;
+    const sub = AppState.addEventListener("change", (nextState) => {
+      setAppState(nextState);
+    });
+    return () => sub.remove();
+  }, []);
+
+  // Featured news carousel: advances every few seconds while visible; pauses when app is backgrounded
+  useEffect(() => {
+    if (!isActive || subTab !== "news" || appState !== "active" || featuredNews.length <= 1) return;
     const timer = setTimeout(() => {
       const next = (activeIndex + 1) % featuredNews.length;
       carouselRef.current?.scrollTo({ x: next * cardWidth, animated: true });
       setActiveIndex(next);
     }, CAROUSEL_INTERVAL_MS);
     return () => clearTimeout(timer);
-  }, [isActive, subTab, activeIndex, featuredNews.length, cardWidth]);
+  }, [isActive, subTab, appState, activeIndex, featuredNews.length, cardWidth]);
 
   const refreshControl = (
     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#02DB54" colors={["#02DB54"]} />

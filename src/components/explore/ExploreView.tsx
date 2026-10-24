@@ -69,9 +69,9 @@ export default function ExploreView({
       data={visibleLeagues}
       keyExtractor={(league, idx) => league?.leagueId || `lg-${idx}`}
       renderItem={renderLeague}
-      initialNumToRender={4}
-      maxToRenderPerBatch={4}
-      windowSize={7}
+      initialNumToRender={3}
+      maxToRenderPerBatch={3}
+      windowSize={4}
       // Android defaults this to true; with Fabric it can crash in ReactClippingViewManager.addView
       removeClippedSubviews={false}
       contentContainerStyle={{ paddingBottom: 140 }}

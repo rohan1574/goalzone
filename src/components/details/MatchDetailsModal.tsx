@@ -6,11 +6,12 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  AppState,
 } from "react-native";
 import { Image as ExpoImage } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, RotateCw, MapPin } from "lucide-react-native";
-import Svg, { Path, Circle, Rect, Line as SvgLine } from "react-native-svg";
+
 import {
   fetchHomeTeamLineup,
   fetchAwayTeamLineup,
@@ -796,31 +797,40 @@ export default function MatchDetailsModal({
     loadPlayerLeaders,
   ]);
 
+  const [appState, setAppState] = useState(AppState.currentState);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (nextState) => {
+      setAppState(nextState);
+    });
+    return () => sub.remove();
+  }, []);
+
   // Live Timeline Events: Auto-refresh every 1 minute while viewing a live match
   // (on every tab, since the scorers under the team names are always visible)
   useEffect(() => {
-    if (!visible || !match?.id || !isLive) return;
+    if (!visible || !match?.id || !isLive || appState !== "active") return;
     const eventsInterval = setInterval(() => {
       loadEvents(false);
     }, 60000); // 1 minute auto-refresh for live match events/timeline
     return () => clearInterval(eventsInterval);
-  }, [visible, match?.id, isLive, loadEvents]);
+  }, [visible, match?.id, isLive, appState, loadEvents]);
 
   // Live Match Statistics: Auto-refresh every 5 minutes while viewing a live match on stats tab
   useEffect(() => {
-    if (!visible || !match?.id || !isLive || activeTab !== "stats") return;
+    if (!visible || !match?.id || !isLive || activeTab !== "stats" || appState !== "active") return;
     const statsInterval = setInterval(() => {
       loadStats(false);
     }, 300000); // 5 minutes auto-refresh for live match statistics
     return () => clearInterval(statsInterval);
-  }, [visible, match?.id, isLive, activeTab, loadStats]);
+  }, [visible, match?.id, isLive, activeTab, appState, loadStats]);
 
   // Keep live ratings moving while the user is looking at the lineup
   useEffect(() => {
-    if (!visible || !isLive || activeTab !== "lineup") return;
+    if (!visible || !isLive || activeTab !== "lineup" || appState !== "active") return;
     const interval = setInterval(loadRatings, LIVE_RATINGS_REFRESH_MS);
     return () => clearInterval(interval);
-  }, [visible, isLive, activeTab, loadRatings]);
+  }, [visible, isLive, activeTab, appState, loadRatings]);
 
   if (!match) return null;
 
@@ -921,6 +931,8 @@ export default function MatchDetailsModal({
     });
   }
 
+  if (!visible || !match) return null;
+
   return (
     <Modal
       animationType="slide"
@@ -947,13 +959,11 @@ export default function MatchDetailsModal({
         <ScrollView className="flex-1 px-4 mt-3" showsVerticalScrollIndicator={false}>
           {/* Main Scorecard Panel */}
           <View className="bg-[#131517] rounded-3xl p-5 border border-[#ffffff08] mb-5 relative overflow-hidden">
-            {/* Background Wavy Lines SVG */}
-            <View className="absolute inset-0 opacity-15 justify-center items-center">
-              <Svg height="100%" width="100%" viewBox="0 0 100 100">
-                <Path d="M0,40 Q25,10 50,40 T100,40" fill="none" stroke="#02DB54" strokeWidth="0.8" />
-                <Path d="M0,55 Q25,25 50,55 T100,55" fill="none" stroke="#FFFFFF" strokeWidth="0.8" />
-                <Path d="M0,70 Q25,40 50,70 T100,70" fill="none" stroke="#02DB54" strokeWidth="0.8" />
-              </Svg>
+            {/* Background Decorative Lines (lightweight Views instead of SVG to avoid ANR) */}
+            <View className="absolute inset-0 justify-center items-center pointer-events-none">
+              <View className="w-full h-[1px] bg-[#02DB54]/15 mb-6" />
+              <View className="w-full h-[1px] bg-white/15 mb-6" />
+              <View className="w-full h-[1px] bg-[#02DB54]/15" />
             </View>
 
             {/* League Details */}
@@ -1288,18 +1298,17 @@ export default function MatchDetailsModal({
                 <View>
                   {/* Soccer Pitch Container */}
                   <View className="bg-[#0F2314] rounded-2xl p-3 border border-[#02DB54]/30 relative overflow-hidden min-h-[540px] flex-col justify-between">
-                    {/* Soccer Pitch Markings Overlay */}
-                    <Svg height="100%" width="100%" style={{ position: "absolute" }}>
-                      <Rect x="4%" y="2%" width="92%" height="96%" fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.2} />
+                    {/* Soccer Pitch Markings Overlay (lightweight Views instead of SVG to avoid ANR) */}
+                    <View style={{ position: "absolute", top: "2%", left: "4%", right: "4%", bottom: "2%" }} className="border border-white/20 pointer-events-none">
                       {/* Penalty box top */}
-                      <Rect x="25%" y="2%" width="50%" height="15%" fill="none" stroke="#FFFFFF" strokeWidth="1.2" opacity={0.2} />
-                      {/* Penalty box bottom */}
-                      <Rect x="25%" y="83%" width="50%" height="15%" fill="none" stroke="#FFFFFF" strokeWidth="1.2" opacity={0.2} />
+                      <View style={{ position: "absolute", top: 0, left: "22%", right: "22%", height: "15%" }} className="border border-white/20 border-t-0" />
                       {/* Center line */}
-                      <SvgLine x1="4%" y1="50%" x2="96%" y2="50%" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
+                      <View style={{ position: "absolute", top: "50%", left: 0, right: 0 }} className="h-[1.5px] bg-white/25" />
                       {/* Center circle */}
-                      <Circle cx="50%" cy="50%" r="42" fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity={0.25} />
-                    </Svg>
+                      <View style={{ position: "absolute", top: "50%", left: "50%", width: 84, height: 84, marginLeft: -42, marginTop: -42, borderRadius: 42 }} className="border-[1.5px] border-white/25" />
+                      {/* Penalty box bottom */}
+                      <View style={{ position: "absolute", bottom: 0, left: "22%", right: "22%", height: "15%" }} className="border border-white/20 border-b-0" />
+                    </View>
 
                     {/* Home Team (Top Half Pitch) */}
                     <View className="flex-1 justify-around py-2">

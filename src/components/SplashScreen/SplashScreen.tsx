@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   TouchableOpacity,
   Animated,
@@ -12,6 +11,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Image as ExpoImage } from "expo-image";
 import BannerAdComponent from "../ads/BannerAdComponent";
 
 interface OnboardingStep {
@@ -266,10 +266,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                   borderColor: "rgba(255,255,255,0.12)",
                 }}
               >
-                <Image
+                <ExpoImage
                   source={require("../../../assets/images/icon.png")}
-                  className="w-full h-full"
-                  resizeMode="cover"
+                  style={{ width: "100%", height: "100%" }}
+                  contentFit="cover"
                 />
               </Animated.View>
             </View>
@@ -333,10 +333,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       <StatusBar style="light" />
 
       {/* Full-screen Image */}
-      <Image
+      <ExpoImage
         source={stepData.image}
         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" }}
-        resizeMode="cover"
+        contentFit="cover"
       />
 
       {/* Top Dark Overlay for Status bar & Skip button readability */}

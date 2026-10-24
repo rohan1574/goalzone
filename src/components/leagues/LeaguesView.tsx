@@ -407,20 +407,22 @@ function LeaguesView({ apiLeagues, onPressDetails }: LeaguesViewProps) {
           renderSectionHeader={renderSectionHeader}
           contentContainerStyle={{ paddingBottom: 140, paddingTop: 8 }}
           showsVerticalScrollIndicator={false}
-          maxToRenderPerBatch={15}
-          windowSize={8}
-          initialNumToRender={20}
+          maxToRenderPerBatch={8}
+          windowSize={4}
+          initialNumToRender={10}
           removeClippedSubviews={false}
         />
       )}
 
-      {/* Modal Detail Screen */}
-      <LeagueDetailsModal
-        visible={detailsVisible}
-        league={selectedLeague}
-        onClose={() => setDetailsVisible(false)}
-        onPressDetails={onPressDetails}
-      />
+      {/* Modal Detail Screen - Mounted on-demand only when opened */}
+      {detailsVisible && selectedLeague && (
+        <LeagueDetailsModal
+          visible={detailsVisible}
+          league={selectedLeague}
+          onClose={() => setDetailsVisible(false)}
+          onPressDetails={onPressDetails}
+        />
+      )}
     </View>
   );
 }

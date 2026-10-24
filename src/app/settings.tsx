@@ -45,7 +45,7 @@ export default function SettingsScreen() {
       <ScrollView style={{ flex: 1 }} className="px-4 py-6">
 
         {/* SETTINGS OPTION LIST CARD WITH GREEN GLOW LEFT BORDER */}
-        <View className="bg-[#131415] border border-white/5 border-l-[3px] border-l-[#02DB54] rounded-2xl overflow-hidden shadow-xl">
+        <View className="bg-[#131415] border border-white/5 border-l-[3px] border-l-[#02DB54] rounded-2xl overflow-hidden">
           
           {/* 1. Language Row */}
           {/* <TouchableOpacity 

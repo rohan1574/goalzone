@@ -154,7 +154,9 @@ function TeamsView({ apiLeagues, onPressDetails }: TeamsViewProps) {
         type: "team" as const,
         id: c.name, // country name: TeamDetailsModal resolves it to the national team id
         name: String(c.name).replace(/-/g, " "),
-        logo: c.flag || `https://media.api-sports.io/flags/${String(c.code).toLowerCase()}.svg`,
+        logo: c.code
+          ? `https://flagcdn.com/w80/${String(c.code).toLowerCase()}.png`
+          : (c.flag || ""),
         category: NATIONAL_TEAMS,
         country: c.name,
       }));
@@ -276,27 +278,31 @@ function TeamsView({ apiLeagues, onPressDetails }: TeamsViewProps) {
           contentContainerStyle={{ paddingBottom: 150, paddingTop: 8 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          initialNumToRender={12}
-          maxToRenderPerBatch={10}
+          initialNumToRender={8}
+          maxToRenderPerBatch={6}
           updateCellsBatchingPeriod={50}
-          windowSize={5}
+          windowSize={3}
           removeClippedSubviews={false}
           stickySectionHeadersEnabled={false}
         />
       )}
 
-      <TeamDetailsModal
-        visible={teamDetailsVisible}
-        team={selectedTeam}
-        onClose={() => setTeamDetailsVisible(false)}
-        onPressDetails={onPressDetails}
-      />
-      <LeagueDetailsModal
-        visible={leagueDetailsVisible}
-        league={selectedLeague}
-        onClose={() => setLeagueDetailsVisible(false)}
-        onPressDetails={onPressDetails}
-      />
+      {teamDetailsVisible && selectedTeam && (
+        <TeamDetailsModal
+          visible={teamDetailsVisible}
+          team={selectedTeam}
+          onClose={() => setTeamDetailsVisible(false)}
+          onPressDetails={onPressDetails}
+        />
+      )}
+      {leagueDetailsVisible && selectedLeague && (
+        <LeagueDetailsModal
+          visible={leagueDetailsVisible}
+          league={selectedLeague}
+          onClose={() => setLeagueDetailsVisible(false)}
+          onPressDetails={onPressDetails}
+        />
+      )}
     </View>
   );
 }

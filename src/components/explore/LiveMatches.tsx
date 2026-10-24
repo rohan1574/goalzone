@@ -1,8 +1,6 @@
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import { Image as ExpoImage } from "expo-image";
-import { ChevronRight } from "lucide-react-native";
-import Svg, { Rect, Circle, Line, Polygon, Path, Text as SvgText } from "react-native-svg";
 import LiveMatchClock from "../common/LiveMatchClock";
 
 interface Team {
@@ -30,24 +28,6 @@ interface LiveMatchesProps {
   onPressDetails: (match: Match) => void;
 }
 
-// Module-level so its identity is stable: declared inside LiveMatches it was a new component type
-// on every render, so React remounted every card's SVG field on each live poll / parent re-render
-const SoccerFieldVector = React.memo(function SoccerFieldVector() {
-  return (
-    <View className="absolute inset-0 w-full h-full overflow-hidden opacity-60">
-      <Svg height="100%" width="100%" viewBox="0 0 100 160">
-        <Rect width="100" height="160" fill="#082c16" />
-        <Line x1="0" y1="80" x2="100" y2="80" stroke="#ffffff30" strokeWidth="1" />
-        <Circle cx="50" cy="80" r="18" fill="none" stroke="#ffffff30" strokeWidth="1" />
-        <Rect x="15" y="0" width="70" height="25" fill="none" stroke="#ffffff30" strokeWidth="1" />
-        <Rect x="28" y="0" width="44" height="10" fill="none" stroke="#ffffff30" strokeWidth="1" />
-        <Rect x="15" y="135" width="70" height="25" fill="none" stroke="#ffffff30" strokeWidth="1" />
-        <Rect x="28" y="135" width="44" height="10" fill="none" stroke="#ffffff30" strokeWidth="1" />
-      </Svg>
-    </View>
-  );
-});
-
 interface LiveMatchCardProps {
   match: Match;
   width: number;
@@ -61,26 +41,20 @@ const LiveMatchCard = React.memo(function LiveMatchCard({ match, width, onPressD
       className="flex-row bg-[#131415] rounded-3xl overflow-hidden mr-4 border border-[#ffffff08]"
       style={{ width: width * 0.82, height: 165 }}
     >
-      {/* Left Panel: Soccer Field with League Crest */}
-      <View className="w-[36%] relative items-center justify-center bg-[#092d16]">
-        <SoccerFieldVector />
-        <View className="bg-[#131415] p-2.5 rounded-3xl border border-[#ffffff20] z-10">
-          {match?.league === "MLS" ? (
-            <View className="w-16 h-16 relative overflow-hidden items-center justify-center">
-              <Svg width="60" height="60" viewBox="0 0 100 100">
-                <Polygon points="10,10 90,10 90,60 50,90 10,60" fill="#ffffff" />
-                <Polygon points="14,14 86,14 86,58 50,85 14,58" fill="#1C3F94" />
-                <Path d="M14,14 L86,58" stroke="#ffffff" strokeWidth="5" />
-                <SvgText x="50" y="55" textAnchor="middle" fill="#ffffff" fontSize="18" fontWeight="900">MLS</SvgText>
-              </Svg>
-            </View>
-          ) : (
-            <ExpoImage
-              source={match?.leagueLogo ? { uri: match.leagueLogo } : undefined}
-              style={{ width: 56, height: 56 }}
-              contentFit="contain"
-            />
-          )}
+      {/* Left Panel: Lightweight pitch styling with League Crest (0 heavy SVGs) */}
+      <View className="w-[36%] relative items-center justify-center bg-[#072412]">
+        {/* Minimal pitch lines using pure lightweight Views */}
+        <View className="absolute inset-2 border border-white/10 rounded-2xl pointer-events-none items-center justify-center">
+          <View className="w-full h-[1px] bg-white/10" />
+          <View className="absolute w-8 h-8 rounded-full border border-white/10" />
+        </View>
+
+        <View className="bg-[#131415] p-2.5 rounded-2xl border border-white/15 z-10">
+          <ExpoImage
+            source={match?.leagueLogo ? { uri: match.leagueLogo } : undefined}
+            style={{ width: 44, height: 44 }}
+            contentFit="contain"
+          />
         </View>
       </View>
 
@@ -149,6 +123,34 @@ const LiveMatchCard = React.memo(function LiveMatchCard({ match, width, onPressD
 );
 
 function LiveMatches({ liveMatches, width, onPressDetails }: LiveMatchesProps) {
+  // All live matches without any limit
+  const matches = React.useMemo(() => {
+    if (!liveMatches || !Array.isArray(liveMatches)) return [];
+    return liveMatches;
+  }, [liveMatches]);
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: Match }) => (
+      <LiveMatchCard
+        match={item}
+        width={width}
+        onPressDetails={onPressDetails}
+      />
+    ),
+    [width, onPressDetails]
+  );
+
+  const cardItemWidth = width * 0.82 + 16;
+
+  const getItemLayout = React.useCallback(
+    (_: any, index: number) => ({
+      length: cardItemWidth,
+      offset: cardItemWidth * index,
+      index,
+    }),
+    [cardItemWidth]
+  );
+
   return (
     <View className="mt-4 px-4 bg-[#0D0E0F]">
       <View className="flex-row items-center justify-between mb-4">
@@ -158,14 +160,10 @@ function LiveMatches({ liveMatches, width, onPressDetails }: LiveMatchesProps) {
             Live Matches
           </Text>
         </View>
-        {/* <TouchableOpacity className="flex-row items-center">
-          <Text className="text-gray-400 text-sm font-bold mr-1">See all</Text>
-          <ChevronRight size={16} color="#9BA1A6" />
-        </TouchableOpacity> */}
       </View>
 
-      {/* Horizontal scroll of Live Matches or No Live Matches Card */}
-      {(!liveMatches || !Array.isArray(liveMatches) || liveMatches.length === 0) ? (
+      {/* Horizontal FlatList of ALL Live Matches (virtualized for ultra-fast performance) */}
+      {matches.length === 0 ? (
         <View
           className="bg-[#131415] rounded-3xl p-5 items-center justify-center border border-[#ffffff08] self-center"
           style={{ width: width - 32, height: 110 }}
@@ -181,21 +179,19 @@ function LiveMatches({ liveMatches, width, onPressDetails }: LiveMatchesProps) {
           </Text>
         </View>
       ) : (
-        <ScrollView
+        <FlatList
+          data={matches}
           horizontal
           showsHorizontalScrollIndicator={false}
+          initialNumToRender={3}
+          maxToRenderPerBatch={3}
+          windowSize={5}
           removeClippedSubviews={false}
+          getItemLayout={getItemLayout}
+          keyExtractor={(match, idx) => match?.id || `live-${idx}`}
+          renderItem={renderItem}
           contentContainerStyle={{ paddingRight: 20 }}
-        >
-          {(liveMatches ?? []).map((match, idx) => (
-            <LiveMatchCard
-              key={match?.id || `live-${idx}`}
-              match={match}
-              width={width}
-              onPressDetails={onPressDetails}
-            />
-          ))}
-        </ScrollView>
+        />
       )}
     </View>
   );

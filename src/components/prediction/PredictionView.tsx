@@ -217,7 +217,9 @@ function PredictionView({ initialFixtures, isActive }: PredictionViewProps) {
   }, [currentMatch?.id]);
 
   const stats = useMemo(() => computeStats(myPicks), [myPicks]);
-  const levelProgress = (stats.levelXp / stats.xpPerLevel) * 100;
+  const levelProgress = stats.xpPerLevel > 0
+    ? Math.min(Math.max((stats.levelXp / stats.xpPerLevel) * 100, 0), 100)
+    : 0;
 
   return (
     <ScrollView
@@ -416,11 +418,11 @@ function PredictionView({ initialFixtures, isActive }: PredictionViewProps) {
                 <View>
                   <SplitBar
                     labels={[
-                      `${currentMatch.home.short} ${model.percent.home}%`,
-                      `Draw ${model.percent.draw}%`,
-                      `${currentMatch.away.short} ${model.percent.away}%`,
+                      `${currentMatch.home.short} ${model?.percent?.home ?? 0}%`,
+                      `Draw ${model?.percent?.draw ?? 0}%`,
+                      `${currentMatch.away.short} ${model?.percent?.away ?? 0}%`,
                     ]}
-                    values={[model.percent.home, model.percent.draw, model.percent.away]}
+                    values={[model?.percent?.home ?? 0, model?.percent?.draw ?? 0, model?.percent?.away ?? 0]}
                   />
 
                   {model.winner || model.advice ? (
@@ -437,26 +439,30 @@ function PredictionView({ initialFixtures, isActive }: PredictionViewProps) {
                     </View>
                   ) : null}
 
-                  {model.comparison.length > 0 ? (
+                  {Array.isArray(model.comparison) && model.comparison.length > 0 ? (
                     <View className="mt-4">
                       <View className="flex-row justify-between mb-2">
                         <Text className="text-[10px] font-black" style={{ color: HOME_COLOR }}>{currentMatch.home.short}</Text>
                         <Text className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Comparison</Text>
                         <Text className="text-[10px] font-black" style={{ color: AWAY_COLOR }}>{currentMatch.away.short}</Text>
                       </View>
-                      {model.comparison.map((row) => (
-                        <View key={row.key} className="mb-2.5">
-                          <View className="flex-row justify-between mb-1">
-                            <Text className="text-white text-[11px] font-bold">{Math.round(row.home)}%</Text>
-                            <Text className="text-gray-400 text-[11px] font-bold">{row.label}</Text>
-                            <Text className="text-white text-[11px] font-bold">{Math.round(row.away)}%</Text>
+                      {model.comparison.map((row) => {
+                        const homeVal = Number.isFinite(row.home) ? row.home : 0;
+                        const awayVal = Number.isFinite(row.away) ? row.away : 0;
+                        return (
+                          <View key={row.key} className="mb-2.5">
+                            <View className="flex-row justify-between mb-1">
+                              <Text className="text-white text-[11px] font-bold">{Math.round(homeVal)}%</Text>
+                              <Text className="text-gray-400 text-[11px] font-bold">{row.label}</Text>
+                              <Text className="text-white text-[11px] font-bold">{Math.round(awayVal)}%</Text>
+                            </View>
+                            <View className="h-1.5 flex-row rounded-full overflow-hidden bg-white/5">
+                              <View style={{ flex: Math.max(homeVal, 0.1), backgroundColor: HOME_COLOR }} />
+                              <View style={{ flex: Math.max(awayVal, 0.1), backgroundColor: AWAY_COLOR }} />
+                            </View>
                           </View>
-                          <View className="h-1.5 flex-row rounded-full overflow-hidden bg-white/5">
-                            <View style={{ flex: Math.max(row.home, 0.1), backgroundColor: HOME_COLOR }} />
-                            <View style={{ flex: Math.max(row.away, 0.1), backgroundColor: AWAY_COLOR }} />
-                          </View>
-                        </View>
-                      ))}
+                        );
+                      })}
                     </View>
                   ) : null}
                   <Text className="text-gray-600 text-[10px] font-bold mt-2">
@@ -471,15 +477,15 @@ function PredictionView({ initialFixtures, isActive }: PredictionViewProps) {
             ) : (
               <View>
                 <Text className="text-gray-400 text-[10px] font-extrabold uppercase tracking-widest text-center mb-3">
-                  Last {h2h.totalMatches} meetings
+                  Last {h2h.totalMatches ?? 0} meetings
                 </Text>
                 <SplitBar
                   labels={[
-                    `${currentMatch.home.short} ${h2h.homeWins}`,
-                    `Draws ${h2h.draws}`,
-                    `${currentMatch.away.short} ${h2h.awayWins}`,
+                    `${currentMatch.home.short} ${h2h?.homeWins ?? 0}`,
+                    `Draws ${h2h?.draws ?? 0}`,
+                    `${currentMatch.away.short} ${h2h?.awayWins ?? 0}`,
                   ]}
-                  values={[h2h.homeWins, h2h.draws, h2h.awayWins]}
+                  values={[h2h?.homeWins ?? 0, h2h?.draws ?? 0, h2h?.awayWins ?? 0]}
                 />
 
                 {h2h.avgGoals != null ? (

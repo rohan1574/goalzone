@@ -1,0 +1,12 @@
+diff --git a/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/uimanager/BlendModeHelper.kt b/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/uimanager/BlendModeHelper.kt
+index 686918c..a18f149 100644
+--- a/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/uimanager/BlendModeHelper.kt
++++ b/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/uimanager/BlendModeHelper.kt
+@@ -60,6 +60,5 @@ internal object BlendModeHelper {
+   }
+ 
+   @JvmStatic
+-  fun needsIsolatedLayer(view: ViewGroup): Boolean =
+-      view.children.any { it.getTag(R.id.mix_blend_mode) != null }
++  fun needsIsolatedLayer(view: ViewGroup): Boolean = false
+ }
